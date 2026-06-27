@@ -13,6 +13,7 @@ model User {
   password  String
   avatarUrl String?
   bio       String?
+  bannerUrl String?
   createdAt DateTime @default(now())
 
   favorites  Favorite[]
@@ -42,6 +43,8 @@ model Recipe {
   id           Int      @id @default(autoincrement())
   title        String
   description  String?
+  category  String?
+  cuisine   String?
   ingredients  String[]
   instructions String[]
   imageUrl     String?
