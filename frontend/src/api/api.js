@@ -1,61 +1,64 @@
-import axios from 'axios';
+import axios from 'axios'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-});
+})
 
-// Attach JWT to every request if present
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+  const token = localStorage.getItem('token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export const register = async (name, email, password) => {
-  const { data } = await api.post('/auth/register', { name, email, password });
-  return data;
-};
+  const { data } = await api.post('/auth/register', { name, email, password })
+  return data
+}
 
 export const login = async (email, password) => {
-  const { data } = await api.post('/auth/login', { email, password });
-  return data;
-};
+  const { data } = await api.post('/auth/login', { email, password })
+  return data
+}
 
 export const getMe = async () => {
-  const { data } = await api.get('/auth/me');
-  return data;
-};
+  const { data } = await api.get('/auth/me')
+  return data
+}
 
-// ─── Recipes ─────────────────────────────────────────────────────────────────
+// ─── Recipes ──────────────────────────────────────────────────────────────────
 
 export const getRecipes = async (params = {}) => {
-  const { data } = await api.get('/recipes', { params });
-  return data;
-};
+  const { data } = await api.get('/recipes', { params })
+  return data
+}
 
 export const getRecipeById = async (id) => {
-  const { data } = await api.get(`/recipes/${id}`);
-  return data;
-};
+  const { data } = await api.get(`/recipes/${id}`)
+  return data
+}
 
-// FormData — image upload via multipart/form-data
 export const uploadRecipe = async (formData) => {
   const { data } = await api.post('/recipes', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return data;
-};
+  })
+  return data
+}
+
+export const updateRecipe = async (id, formData) => {
+  const { data } = await api.put(`/recipes/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
 
 export const deleteRecipe = async (id) => {
-  const { data } = await api.delete(`/recipes/${id}`);
-  return data;
-};
+  const { data } = await api.delete(`/recipes/${id}`)
+  return data
+}
 
-// ─── Favorites ───────────────────────────────────────────────────────────────
+// ─── Favorites ────────────────────────────────────────────────────────────────
 
 export const getFavorites = async () => {
   const { data } = await api.get('/favorites')
@@ -72,7 +75,6 @@ export const addFavorite = async (recipe) => {
     })
     return data
   }
-
   const { data } = await api.post('/favorites', { recipeId: recipe.id })
   return data
 }
@@ -84,11 +86,48 @@ export const removeFavorite = async (recipe) => {
   return data
 }
 
+// ─── Profile ──────────────────────────────────────────────────────────────────
+
+export const getProfile = async (userId) => {
+  const { data } = await api.get(`/profile/${userId}`)
+  return data
+}
+
+export const updateProfile = async (fields) => {
+  const { data } = await api.put('/profile/me', fields)
+  return data
+}
+
+export const uploadAvatar = async (formData) => {
+  const { data } = await api.post('/profile/me/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
+export const uploadBanner = async (formData) => {
+  const { data } = await api.post('/profile/me/banner', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
+// ─── Follow ───────────────────────────────────────────────────────────────────
+
+export const followUser = async (userId) => {
+  const { data } = await api.post(`/users/${userId}/follow`)
+  return data
+}
+
+export const unfollowUser = async (userId) => {
+  const { data } = await api.delete(`/users/${userId}/follow`)
+  return data
+}
+
 // ─── TheMealDB (External) ─────────────────────────────────────────────────────
 
 const MEAL_DB_BASE = 'https://www.themealdb.com/api/json/v1/1'
 
-// Converts flat strIngredient1...20 + strMeasure1...20 into a clean array
 export const normalizeMeal = (meal) => {
   const ingredients = []
   for (let i = 1; i <= 20; i++) {
@@ -110,7 +149,6 @@ export const normalizeMeal = (meal) => {
       ? meal.strInstructions.split('\n').filter((s) => s.trim())
       : [],
     ingredients,
-    // First 120 chars of raw instructions as a preview
     description: meal.strInstructions
       ? meal.strInstructions.slice(0, 120).trim() + '...'
       : 'No description available.',
@@ -142,4 +180,10 @@ export const getCategories = async () => {
   return data.categories || []
 }
 
-export default api;
+export const getCuisines = async () => {
+  const res = await fetch(`${MEAL_DB_BASE}/list.php?a=list`)
+  const data = await res.json()
+  return data.meals || [] // each item has strArea
+}
+
+export default api

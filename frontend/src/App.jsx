@@ -9,6 +9,7 @@ import About from './pages/About/About';
 import SavedRecipes from './pages/SavedRecipes/SavedRecipes';
 import Login from './pages/Login/Login';
 import Register from './pages/Login/Register';
+import Profile from './pages/Profile/Profile';
 import './App.css';
 
 function App() {
@@ -19,15 +20,15 @@ function App() {
       <div id="main">
         <Router>
           <Navbar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/recipes" element={<Recipes searchTerm={searchTerm} />} />
-            <Route path="/recipe-details" element={<RecipeDetails />} />
+            <Route path="/recipes/:id" element={<RecipeDetails />} />
             <Route path="/saved" element={<SavedRecipes />} />
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/profile/:userId" element={<Profile />} />
           </Routes>
         </Router>
       </div>
