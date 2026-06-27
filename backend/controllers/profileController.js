@@ -1,5 +1,5 @@
 const prisma = require('../lib/prismaClient')
-const cloudinary = require('../lib/cloudinary')
+const { cloudinary } = require('../lib/cloudinary')
 
 const getProfile = async (req, res) => {
   const { userId } = req.params
@@ -12,6 +12,7 @@ const getProfile = async (req, res) => {
         name: true,
         email: true,
         avatarUrl: true,
+        bannerUrl: true,
         bio: true,
         createdAt: true,
         _count: {
@@ -54,7 +55,6 @@ const getProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' })
     }
 
-    // If requesting user is logged in, check if they follow this profile
     let isFollowing = false
     if (req.user) {
       const follow = await prisma.follow.findUnique({
@@ -85,7 +85,14 @@ const updateProfile = async (req, res) => {
         ...(name && { name }),
         ...(bio !== undefined && { bio }),
       },
-      select: { id: true, name: true, email: true, avatarUrl: true, bio: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        bannerUrl: true,
+        bio: true,
+      },
     })
 
     res.json(updated)
@@ -101,6 +108,21 @@ const uploadAvatar = async (req, res) => {
   }
 
   try {
+    // Delete old avatar from Cloudinary if exists
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { avatarUrl: true },
+    })
+
+    if (currentUser?.avatarUrl) {
+      const publicId = currentUser.avatarUrl
+        .split('/')
+        .slice(-2)
+        .join('/')
+        .split('.')[0]
+      await cloudinary.uploader.destroy(publicId)
+    }
+
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: 'foodvalley/avatars',
       transformation: [{ width: 300, height: 300, crop: 'fill', gravity: 'face' }],
@@ -109,7 +131,14 @@ const uploadAvatar = async (req, res) => {
     const updated = await prisma.user.update({
       where: { id: req.user.id },
       data: { avatarUrl: result.secure_url },
-      select: { id: true, name: true, email: true, avatarUrl: true, bio: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        bannerUrl: true,
+        bio: true,
+      },
     })
 
     res.json(updated)
@@ -119,4 +148,50 @@ const uploadAvatar = async (req, res) => {
   }
 }
 
-module.exports = { getProfile, updateProfile, uploadAvatar }
+const uploadBanner = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No image file provided' })
+  }
+
+  try {
+    // Delete old banner from Cloudinary if exists
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { bannerUrl: true },
+    })
+
+    if (currentUser?.bannerUrl) {
+      const publicId = currentUser.bannerUrl
+        .split('/')
+        .slice(-2)
+        .join('/')
+        .split('.')[0]
+      await cloudinary.uploader.destroy(publicId)
+    }
+
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'foodvalley/banners',
+      transformation: [{ width: 1200, height: 400, crop: 'fill' }],
+    })
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { bannerUrl: result.secure_url },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        bannerUrl: true,
+        bio: true,
+      },
+    })
+
+    res.json(updated)
+  } catch (error) {
+    console.error('uploadBanner error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+module.exports = { getProfile, updateProfile, uploadAvatar, uploadBanner }

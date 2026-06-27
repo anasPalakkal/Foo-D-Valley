@@ -1,9 +1,9 @@
 const prisma = require('../lib/prismaClient')
 const { cloudinary } = require('../lib/cloudinary')
 
-// POST /api/recipes — upload a new recipe
+// POST /api/recipes
 const createRecipe = async (req, res) => {
-  const { title, description, ingredients, instructions } = req.body
+  const { title, description, ingredients, instructions, category, cuisine } = req.body
 
   if (!title || !ingredients || !instructions) {
     return res.status(400).json({ message: 'Title, ingredients and instructions are required' })
@@ -16,12 +16,17 @@ const createRecipe = async (req, res) => {
       data: {
         title,
         description: description || null,
-        ingredients: Array.isArray(ingredients) ? ingredients : ingredients.split(','),
-        instructions: Array.isArray(instructions) ? instructions : instructions.split(','),
+        category: category || null,
+        cuisine: cuisine || null,
+        ingredients: Array.isArray(ingredients) ? ingredients : JSON.parse(ingredients),
+        instructions: Array.isArray(instructions) ? instructions : JSON.parse(instructions),
         imageUrl,
         isExternal: false,
-        authorId: req.user.id
-      }
+        author: { connect: { id: req.user.id } },
+      },
+      include: {
+        author: { select: { id: true, name: true } },
+      },
     })
 
     res.status(201).json(recipe)
@@ -31,17 +36,69 @@ const createRecipe = async (req, res) => {
   }
 }
 
-// GET /api/recipes — get all user uploaded recipes
+// PUT /api/recipes/:id
+const updateRecipe = async (req, res) => {
+  const id = parseInt(req.params.id)
+  const { title, description, ingredients, instructions, category, cuisine } = req.body
+
+  try {
+    const existing = await prisma.recipe.findUnique({ where: { id } })
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Recipe not found' })
+    }
+
+    if (existing.authorId !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' })
+    }
+
+    let imageUrl = existing.imageUrl
+
+    if (req.file) {
+      // Delete old image from Cloudinary
+      if (existing.imageUrl) {
+        const publicId = existing.imageUrl.split('/').slice(-2).join('/').split('.')[0]
+        await cloudinary.uploader.destroy(publicId)
+      }
+      imageUrl = req.file.path
+    }
+
+    const updated = await prisma.recipe.update({
+      where: { id },
+      data: {
+        ...(title && { title }),
+        ...(description !== undefined && { description }),
+        ...(category !== undefined && { category }),
+        ...(cuisine !== undefined && { cuisine }),
+        ...(ingredients && {
+          ingredients: Array.isArray(ingredients) ? ingredients : JSON.parse(ingredients),
+        }),
+        ...(instructions && {
+          instructions: Array.isArray(instructions) ? instructions : JSON.parse(instructions),
+        }),
+        imageUrl,
+      },
+      include: {
+        author: { select: { id: true, name: true } },
+      },
+    })
+
+    res.json(updated)
+  } catch (error) {
+    console.error('Update recipe error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// GET /api/recipes
 const getRecipes = async (req, res) => {
   try {
     const recipes = await prisma.recipe.findMany({
       where: { isExternal: false },
       include: {
-        author: {
-          select: { id: true, name: true }
-        }
+        author: { select: { id: true, name: true } },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     res.json(recipes)
@@ -51,7 +108,7 @@ const getRecipes = async (req, res) => {
   }
 }
 
-// GET /api/recipes/:id — get single recipe
+// GET /api/recipes/:id
 const getRecipeById = async (req, res) => {
   const id = parseInt(req.params.id)
 
@@ -59,10 +116,8 @@ const getRecipeById = async (req, res) => {
     const recipe = await prisma.recipe.findUnique({
       where: { id },
       include: {
-        author: {
-          select: { id: true, name: true }
-        }
-      }
+        author: { select: { id: true, name: true } },
+      },
     })
 
     if (!recipe) {
@@ -76,7 +131,7 @@ const getRecipeById = async (req, res) => {
   }
 }
 
-// DELETE /api/recipes/:id — delete a recipe (only author can delete)
+// DELETE /api/recipes/:id
 const deleteRecipe = async (req, res) => {
   const id = parseInt(req.params.id)
 
@@ -91,7 +146,6 @@ const deleteRecipe = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this recipe' })
     }
 
-    // delete image from cloudinary if exists
     if (recipe.imageUrl) {
       const publicId = recipe.imageUrl.split('/').slice(-2).join('/').split('.')[0]
       await cloudinary.uploader.destroy(publicId)
@@ -106,4 +160,4 @@ const deleteRecipe = async (req, res) => {
   }
 }
 
-module.exports = { createRecipe, getRecipes, getRecipeById, deleteRecipe }
+module.exports = { createRecipe, updateRecipe, getRecipes, getRecipeById, deleteRecipe }

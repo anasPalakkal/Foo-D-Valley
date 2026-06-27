@@ -6,6 +6,23 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
 }
 
+// Fields returned in every auth response — keep in sync with getMe
+const userSelect = {
+  id: true,
+  name: true,
+  email: true,
+  avatarUrl: true,
+  bannerUrl: true,
+  bio: true,
+  _count: {
+    select: {
+      followers: true,
+      following: true,
+      recipes: true,
+    },
+  },
+}
+
 const register = async (req, res) => {
   const { name, email, password } = req.body
 
@@ -22,15 +39,13 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword }
+      data: { name, email, password: hashedPassword },
+      select: userSelect,
     })
 
     const token = generateToken(user.id)
 
-    res.status(201).json({
-      token,
-      user: { id: user.id, name: user.name, email: user.email }
-    })
+    res.status(201).json({ token, user })
   } catch (error) {
     console.error('Register error:', error)
     res.status(500).json({ message: 'Internal server error' })
@@ -45,7 +60,11 @@ const login = async (req, res) => {
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } })
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { ...userSelect, password: true },
+    })
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
@@ -57,20 +76,21 @@ const login = async (req, res) => {
 
     const token = generateToken(user.id)
 
-    res.json({
-      token,
-      user: { id: user.id, name: user.name, email: user.email }
-    })
+    // Strip password before sending
+    const { password: _pw, ...safeUser } = user
+
+    res.json({ token, user: safeUser })
   } catch (error) {
     console.error('Login error:', error)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
+
 const getMe = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, name: true, email: true }
+      select: userSelect,
     })
 
     if (!user) {
