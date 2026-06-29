@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import RecipeList from '../../components/RecipeList/RecipeList'
-import { useNavigate, Link } from 'react-router-dom'
-import { getCategories, getMealsByCategory, getRecipes, normalizeMeal } from '../../api/api.js'
+import { useNavigate } from 'react-router-dom'
+import { getCategories, getMealsByCategory, getRecipes } from '../../api/api.js'
+import RecipeCard from '../../components/RecipeCard/RecipeCard'
+import Footer from '../../components/Footer/Footer'
 import styles from './Recipes.module.css'
-import Footer from '../../components/Footer/Footer';
 
 const PAGE_SIZE = 12
 
-// Normalize internal DB recipe to the same shape RecipeList expects
 const normalizeInternal = (recipe) => ({
   id: recipe.id,
   externalId: null,
@@ -34,13 +33,11 @@ const Recipes = ({ searchTerm }) => {
       setLoading(true)
       setError('')
       try {
-        // Fetch all categories then all meals per category in parallel
         const categories = await getCategories()
         const mealArrays = await Promise.all(
           categories.map((cat) => getMealsByCategory(cat.strCategory).catch(() => []))
         )
 
-        // Deduplicate — meals can appear in multiple category results
         const seen = new Set()
         const uniqueExternal = mealArrays.flat().filter((meal) => {
           if (seen.has(meal.externalId)) return false
@@ -48,12 +45,15 @@ const Recipes = ({ searchTerm }) => {
           return true
         })
 
-        // Fetch internal user-uploaded recipes
         const internalRaw = await getRecipes()
         const internalMeals = internalRaw.map(normalizeInternal)
 
-        // Internal recipes first, then TheMealDB
-        setAllRecipes([...internalMeals, ...uniqueExternal])
+        // Merge and sort A-Z by default — no internal-first bias
+        const merged = [...internalMeals, ...uniqueExternal].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        )
+
+        setAllRecipes(merged)
       } catch (err) {
         console.error('Error fetching recipes:', err)
         setError('Failed to load recipes. Please try again.')
@@ -65,12 +65,10 @@ const Recipes = ({ searchTerm }) => {
     fetchAll()
   }, [])
 
-  // Reset to page 1 on search change
   useEffect(() => {
     setPage(1)
   }, [searchTerm])
 
-  // Filter client-side — no API calls on search
   const filtered = useMemo(() => {
     if (!searchTerm?.trim()) return allRecipes
     const q = searchTerm.toLowerCase()
@@ -97,7 +95,6 @@ const Recipes = ({ searchTerm }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Show max 7 page buttons with ellipsis for large page counts
   const getPageNumbers = () => {
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -118,6 +115,13 @@ const Recipes = ({ searchTerm }) => {
       <div className={styles['recipes-container']}>
         <h2>All Recipes</h2>
 
+        {!loading && !error && (
+          <p className={styles['results-count']}>
+            {filtered.length} recipe{filtered.length !== 1 ? 's' : ''}
+            {searchTerm?.trim() ? ` for "${searchTerm}"` : ''}
+          </p>
+        )}
+
         {loading && (
           <div className={styles['loading-wrap']}>
             <div className={styles.spinner} />
@@ -135,7 +139,15 @@ const Recipes = ({ searchTerm }) => {
 
         {!loading && !error && filtered.length > 0 && (
           <>
-            <RecipeList recipes={paginated} onSelect={handleSelectRecipe} />
+            <div className={styles['recipe-grid']}>
+              {paginated.map((recipe) => (
+                <RecipeCard
+                  key={recipe.isExternal ? `ext_${recipe.externalId}` : recipe.id}
+                  recipe={recipe}
+                  onSelect={handleSelectRecipe}
+                />
+              ))}
+            </div>
 
             {totalPages > 1 && (
               <div className={styles.pagination}>
