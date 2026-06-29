@@ -12,17 +12,6 @@ const RecipeList = ({ recipes, onSelect }) => {
         >
           <img src={recipe.image} alt={recipe.name} />
           <h3>{recipe.name}</h3>
-          <div className={styles['recipe-popup']}>
-            <div className={styles['popup-image']}>
-              <img src={recipe.image} alt={recipe.name} />
-            </div>
-            <div className={styles['popup-text']}>
-              <p><strong>Origin:</strong> {recipe.area || 'Unknown'}</p>
-              <p><strong>Category:</strong> {recipe.category || 'Unknown'}</p>
-              <p><strong>Ingredients:</strong> {recipe.ingredients?.length || 0}</p>
-              <p className={styles.description}>{recipe.description}</p>
-            </div>
-          </div>
         </div>
       ))}
     </div>
