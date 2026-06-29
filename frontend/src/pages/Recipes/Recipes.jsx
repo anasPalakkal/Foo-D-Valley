@@ -3,6 +3,7 @@ import RecipeList from '../../components/RecipeList/RecipeList'
 import { useNavigate, Link } from 'react-router-dom'
 import { getCategories, getMealsByCategory, getRecipes, normalizeMeal } from '../../api/api.js'
 import styles from './Recipes.module.css'
+import Footer from '../../components/Footer/Footer';
 
 const PAGE_SIZE = 12
 
@@ -174,23 +175,7 @@ const Recipes = ({ searchTerm }) => {
           </>
         )}
       </div>
-
-      <footer className={styles['site-footer']}>
-        <div className={styles['footer-content']}>
-          <div className={styles['footer-logo']}>
-            <Link to="/" className={styles['footer-logo-link']}>
-              Foo <span className={styles['logo-d']}>D</span> Valley
-            </Link>
-          </div>
-          <p>© 2025 Foo D Valley. All rights reserved.</p>
-          <button
-            className={styles['back-to-top']}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          >
-            Back to Top
-          </button>
-        </div>
-      </footer>
+      <Footer />
     </>
   )
 }

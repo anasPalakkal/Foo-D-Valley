@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Home.module.css';
+import Footer from '../../components/Footer/Footer';
 
 const Home = () => {
   const [recipes, setRecipes] = useState([]);
@@ -83,28 +84,7 @@ const Home = () => {
           <Link to="/recipes" className={styles['more-button']}>View More Recipes</Link>
         </div>
       </div>
-
-      <footer className={styles['site-footer']}>
-        <div className={styles['footer-content']}>
-          <div className={styles['footer-logo-text']}>
-            <a href="/" className={styles['footer-logo-link']}>
-              Foo<span className={styles['logo-d']}>D</span> Valley
-            </a>
-          </div>
-          <div className={styles['footer-links']}>
-            <a href="/">Home</a>
-            <a href="/recipes">Recipes</a>
-            <a href="/saved">Favorites</a>
-            <a href="/about">About</a>
-          </div>
-          <p style={{ marginTop: '20px', fontSize: '0.9rem', color: '#b0413e' }}>
-            © 2025 Foo D Valley. All rights reserved.
-          </p>
-          <button className={styles['back-to-top']} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            Back to Top
-          </button>
-        </div>
-      </footer>
+      <Footer/>
     </>
   );
 };

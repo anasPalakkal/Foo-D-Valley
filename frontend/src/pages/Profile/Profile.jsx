@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import Footer from '../../components/Footer/Footer';
 import {
   getProfile,
   getRecipeById,
@@ -166,6 +167,7 @@ const Profile = () => {
   const followingCount = profile._count?.following ?? 0
 
   return (
+    <>
     <div className={styles.page}>
       {/* Banner */}
       <div className={styles.banner}>
@@ -404,6 +406,8 @@ const Profile = () => {
         />
       )}
     </div>
+    <Footer/>
+    </>
   )
 }
 
