@@ -149,9 +149,7 @@ export const normalizeMeal = (meal) => {
       ? meal.strInstructions.split('\n').filter((s) => s.trim())
       : [],
     ingredients,
-    description: meal.strInstructions
-      ? meal.strInstructions.slice(0, 120).trim() + '...'
-      : 'No description available.',
+    description: null, // TheMealDB has no real description field — don't fake one
     isExternal: true,
   }
 }
