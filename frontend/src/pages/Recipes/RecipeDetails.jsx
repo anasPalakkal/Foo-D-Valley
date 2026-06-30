@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { FaHeart } from 'react-icons/fa'
+import { FaHeart, FaArrowLeft, FaExternalLinkAlt } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
 import { getRecipeById, getMealById, getFavorites, addFavorite, removeFavorite } from '../../api/api'
-import styles from './Recipes.module.css'
-import Footer from '../../components/Footer/Footer';
+import styles from './RecipeDetails.module.css'
+import Footer from '../../components/Footer/Footer'
 
 const RecipeDetails = () => {
   const { id } = useParams()
@@ -30,7 +30,6 @@ const RecipeDetails = () => {
           data = await getMealById(actualId)
         } else {
           const raw = await getRecipeById(actualId)
-          // Normalize internal recipe to a common shape
           data = {
             id: raw.id,
             name: raw.title,
@@ -96,60 +95,105 @@ const RecipeDetails = () => {
     }
   }
 
-  if (loading) return <p style={{ padding: '40px', textAlign: 'center' }}>Loading...</p>
-  if (error || !recipe) return <p style={{ padding: '40px', textAlign: 'center' }}>{error}</p>
+  if (loading) {
+    return (
+      <div className={styles['loading-wrap']}>
+        <div className={styles.spinner} />
+        <p>Loading recipe...</p>
+      </div>
+    )
+  }
+
+  if (error || !recipe) {
+    return <p className={styles.error}>{error}</p>
+  }
 
   return (
     <>
-      <div className={styles['recipe-details']}>
-        <div className={styles['top-bar']}>
-          <button onClick={() => navigate(-1)} className={styles['back-button']}>
-            ← Back
-          </button>
-          <button
-            className={styles['heart-button']}
-            onClick={handleToggleSave}
-            disabled={saving}
-          >
-            <FaHeart style={{ color: isSaved ? 'crimson' : 'gray', fontSize: '24px' }} />
-          </button>
+      <div className={styles.page}>
+        <button onClick={() => navigate(-1)} className={styles['back-button']}>
+          <FaArrowLeft /> Back
+        </button>
+
+        <div className={styles.layout}>
+
+          {/* ── Left column ── */}
+          <div className={styles.left}>
+            <div className={styles.imageWrap}>
+              {recipe.image && (
+                <img src={recipe.image} alt={recipe.name} className={styles.image} />
+              )}
+              <button
+                className={styles['heart-button']}
+                onClick={handleToggleSave}
+                disabled={saving}
+                aria-label="Save recipe"
+              >
+                <FaHeart className={isSaved ? styles.heartActive : styles.heartInactive} />
+              </button>
+            </div>
+
+            <h1 className={styles.title}>{recipe.name}</h1>
+
+            <div className={styles.metaRow}>
+              {recipe.category && <span className={styles.badge}>{recipe.category}</span>}
+              {recipe.area && <span className={styles.badge}>{recipe.area}</span>}
+            </div>
+
+            {recipe.description && (
+              <p className={styles.description}>{recipe.description}</p>
+            )}
+          </div>
+
+          {/* ── Right column ── */}
+          <div className={styles.right}>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Ingredients</h2>
+              <ul className={styles.ingredientList}>
+                {recipe.ingredients.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </section>
+
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Instructions</h2>
+              <ol className={styles.instructionList}>
+                {recipe.instructions.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            </section>
+          </div>
         </div>
 
-        <h2>{recipe.name}</h2>
-
-        {recipe.image && (
-          <img src={recipe.image} alt={recipe.name} className={styles['recipe-image']} />
-        )}
-
-        {recipe.author && (
-          <p>
-            <strong>By:</strong>{' '}
-            <Link to={`/profile/${recipe.author.id}`} style={{ color: '#b0413e' }}>
-              {recipe.author.name}
+        {/* ── Author / source strip ── */}
+        <div className={styles.attributionStrip}>
+          {!recipe.isExternal && recipe.author ? (
+            <Link to={`/profile/${recipe.author.id}`} className={styles.authorLink}>
+              {recipe.author.avatarUrl ? (
+                <img src={recipe.author.avatarUrl} alt={recipe.author.name} className={styles.authorAvatar} />
+              ) : (
+                <div className={styles.authorFallback}>
+                  {recipe.author.name?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span>Posted by <strong>{recipe.author.name}</strong></span>
             </Link>
-          </p>
-        )}
-
-        {recipe.category && <p><strong>Category:</strong> {recipe.category}</p>}
-        {recipe.area && <p><strong>Cuisine:</strong> {recipe.area}</p>}
-        {recipe.description && <p>{recipe.description}</p>}
-
-        <h3>Ingredients</h3>
-        <ul>
-          {recipe.ingredients.map((item, i) => (
-            <li key={i}>{item}</li>
-          ))}
-        </ul>
-
-        <h3>Instructions</h3>
-        <ol>
-          {recipe.instructions.map((step, i) => (
-            <li key={i}>{step}</li>
-          ))}
-        </ol>
+          ) : (
+            <a
+              href={`https://www.themealdb.com/meal/${recipe.externalId}`}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.sourceLink}
+            >
+              <span>Recipe from <strong>TheMealDB</strong></span>
+              <FaExternalLinkAlt className={styles.externalIcon} />
+            </a>
+          )}
+        </div>
       </div>
-      <Footer/>
-
+      <Footer />
     </>
   )
 }
