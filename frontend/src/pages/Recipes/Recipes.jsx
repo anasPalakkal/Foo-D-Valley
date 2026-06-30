@@ -54,7 +54,8 @@ const Recipes = ({ searchTerm }) => {
         ])
 
         setCategoryList(categories.map((c) => c.strCategory))
-        setCuisineList(cuisinesRaw.map((c) => c.strArea))
+        const uniqueCuisines = Array.from(new Set(cuisinesRaw.map((c) => c.strArea)))
+        setCuisineList(uniqueCuisines)
 
         // Tag each external meal with its category at fetch time
         // filter.php only returns idMeal/strMeal/strMealThumb — no category on the object

@@ -39,10 +39,14 @@ const PostRecipeModal = ({ onClose, onSuccess, editRecipe = null }) => {
       if (editRecipe.imageUrl) setImagePreview(editRecipe.imageUrl)
     }
   }, [editRecipe])
-
+  
   useEffect(() => {
     getCategories().then((cats) => setCategories(cats))
-    getCuisines().then((areas) => setCuisines(areas))
+    getCuisines().then((areas) => {
+      // Dedupe — TheMealDB sometimes returns duplicate strArea entries
+      const unique = Array.from(new Map(areas.map((a) => [a.strArea, a])).values())
+      setCuisines(unique)
+    })
   }, [])
 
   const handleField = (key, value) => {
@@ -68,9 +72,19 @@ const PostRecipeModal = ({ onClose, onSuccess, editRecipe = null }) => {
     }))
   }
 
+  const ACCEPTED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
+
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setError('Unsupported image format. Please use JPG, PNG, or WEBP.')
+      e.target.value = '' // reset input so the same invalid file can be re-selected after fixing
+      return
+    }
+
+    setError('')
     setForm((prev) => ({ ...prev, image: file }))
     setImagePreview(URL.createObjectURL(file))
   }

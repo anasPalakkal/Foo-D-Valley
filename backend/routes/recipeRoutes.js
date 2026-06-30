@@ -8,12 +8,12 @@ const {
   deleteRecipe,
 } = require('../controllers/recipeController')
 const { protect } = require('../middleware/authMiddleware')
-const { upload } = require('../lib/cloudinary')
+const { upload, handleUploadError } = require('../lib/cloudinary')
 
 router.get('/', getRecipes)
 router.get('/:id', getRecipeById)
-router.post('/', protect, upload.single('image'), createRecipe)
-router.put('/:id', protect, upload.single('image'), updateRecipe)
+router.post('/', protect, upload.single('image'), handleUploadError, createRecipe)
+router.put('/:id', protect, upload.single('image'), handleUploadError, updateRecipe)
 router.delete('/:id', protect, deleteRecipe)
 
 module.exports = router

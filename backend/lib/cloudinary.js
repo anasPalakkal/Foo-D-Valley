@@ -19,4 +19,16 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage })
 
-module.exports = { cloudinary, upload }
+// Catches Multer/Cloudinary upload failures (bad format, size limit, etc.)
+// and returns clean JSON instead of an unhandled error object.
+const handleUploadError = (err, req, res, next) => {
+  if (err) {
+    console.error('Upload error:', err)
+    return res.status(400).json({
+      message: err.message || 'Image upload failed. Please use JPG, PNG, or WEBP.',
+    })
+  }
+  next()
+}
+
+module.exports = { cloudinary, upload, handleUploadError }
