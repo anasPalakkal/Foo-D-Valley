@@ -1,6 +1,13 @@
 import React, { useState } from 'react'
-import { FaChevronDown, FaSlidersH, FaTimes } from 'react-icons/fa'
+import { FaSlidersH, FaTimes } from 'react-icons/fa'
+import CustomSelect from '../CustomSelect/CustomSelect'
 import styles from './RecipeFilters.module.css'
+
+const SORT_OPTIONS = [
+  { value: 'az', label: 'A – Z' },
+  { value: 'za', label: 'Z – A' },
+  { value: 'newest', label: 'Newest (Community)' },
+]
 
 const RecipeFilters = ({
   categories,
@@ -16,64 +23,36 @@ const RecipeFilters = ({
     filters.cuisine !== 'all' ||
     filters.sort !== 'az'
 
+  const categoryOptions = [{ value: 'all', label: 'All Categories' }, ...categories.map((c) => ({ value: c, label: c }))]
+  const cuisineOptions = [{ value: 'all', label: 'All Cuisines' }, ...cuisines.map((c) => ({ value: c, label: c }))]
+
   return (
     <>
       {/* ── Desktop filter bar ── */}
       <div className={styles.bar}>
         <div className={styles.controls}>
+          <CustomSelect
+            value={filters.sort}
+            options={SORT_OPTIONS}
+            onChange={(v) => onChange('sort', v)}
+          />
+          <CustomSelect
+            value={filters.category}
+            options={categoryOptions}
+            onChange={(v) => onChange('category', v)}
+          />
+          <CustomSelect
+            value={filters.cuisine}
+            options={cuisineOptions}
+            onChange={(v) => onChange('cuisine', v)}
+          />
 
-          {/* Sort */}
-          <div className={styles.selectWrap}>
-            <select
-              value={filters.sort}
-              onChange={(e) => onChange('sort', e.target.value)}
-              className={styles.select}
-            >
-              <option value="az">A – Z</option>
-              <option value="za">Z – A</option>
-              <option value="newest">Newest (Community)</option>
-            </select>
-            <FaChevronDown className={styles.chevron} />
-          </div>
-
-          {/* Category */}
-          <div className={styles.selectWrap}>
-            <select
-              value={filters.category}
-              onChange={(e) => onChange('category', e.target.value)}
-              className={styles.select}
-            >
-              <option value="all">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-            <FaChevronDown className={styles.chevron} />
-          </div>
-
-          {/* Cuisine */}
-          <div className={styles.selectWrap}>
-            <select
-              value={filters.cuisine}
-              onChange={(e) => onChange('cuisine', e.target.value)}
-              className={styles.select}
-            >
-              <option value="all">All Cuisines</option>
-              {cuisines.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <FaChevronDown className={styles.chevron} />
-          </div>
-
-          {/* Community toggle */}
           <button
             className={`${styles.communityBtn} ${filters.source === 'community' ? styles.communityBtnActive : ''}`}
             onClick={() => onChange('source', filters.source === 'community' ? 'all' : 'community')}
           >
             Community Only
           </button>
-
         </div>
 
         {hasActiveFilters && (
@@ -93,7 +72,6 @@ const RecipeFilters = ({
           Filters {hasActiveFilters && <span className={styles.activeDot} />}
         </button>
 
-        {/* Active chips */}
         <div className={styles.chips}>
           {filters.sort !== 'az' && (
             <span className={styles.chip}>
@@ -135,52 +113,17 @@ const RecipeFilters = ({
 
             <div className={styles.drawerSection}>
               <label className={styles.drawerLabel}>Sort</label>
-              <div className={styles.selectWrap}>
-                <select
-                  value={filters.sort}
-                  onChange={(e) => onChange('sort', e.target.value)}
-                  className={styles.select}
-                >
-                  <option value="az">A – Z</option>
-                  <option value="za">Z – A</option>
-                  <option value="newest">Newest (Community)</option>
-                </select>
-                <FaChevronDown className={styles.chevron} />
-              </div>
+              <CustomSelect value={filters.sort} options={SORT_OPTIONS} onChange={(v) => onChange('sort', v)} />
             </div>
 
             <div className={styles.drawerSection}>
               <label className={styles.drawerLabel}>Category</label>
-              <div className={styles.selectWrap}>
-                <select
-                  value={filters.category}
-                  onChange={(e) => onChange('category', e.target.value)}
-                  className={styles.select}
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-                <FaChevronDown className={styles.chevron} />
-              </div>
+              <CustomSelect value={filters.category} options={categoryOptions} onChange={(v) => onChange('category', v)} />
             </div>
 
             <div className={styles.drawerSection}>
               <label className={styles.drawerLabel}>Cuisine</label>
-              <div className={styles.selectWrap}>
-                <select
-                  value={filters.cuisine}
-                  onChange={(e) => onChange('cuisine', e.target.value)}
-                  className={styles.select}
-                >
-                  <option value="all">All Cuisines</option>
-                  {cuisines.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-                <FaChevronDown className={styles.chevron} />
-              </div>
+              <CustomSelect value={filters.cuisine} options={cuisineOptions} onChange={(v) => onChange('cuisine', v)} />
             </div>
 
             <div className={styles.drawerSection}>

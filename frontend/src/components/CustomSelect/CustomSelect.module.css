@@ -1,0 +1,119 @@
+.wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #fff;
+  border: 1.5px solid #ffd0bd;
+  border-radius: 8px;
+  color: #b0413e;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: 'Segoe UI', sans-serif;
+  white-space: nowrap;
+}
+
+.trigger:hover {
+  border-color: #ff7043;
+}
+
+.triggerOpen {
+  border-color: #ff7043;
+  box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.15);
+}
+
+.triggerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  font-size: 0.7rem;
+  color: #b0413e;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown menu ── */
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1.5px solid #ffd0bd;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(176, 65, 62, 0.18);
+  z-index: 50;
+  list-style: none;
+  padding: 6px;
+}
+
+.option {
+  padding: 9px 12px;
+  font-size: 0.88rem;
+  color: #444;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.option:hover {
+  background-color: #fff0eb;
+  color: #ff7043;
+}
+
+.optionActive {
+  background-color: #ff7043;
+  color: #fff;
+  font-weight: 600;
+}
+
+.optionActive:hover {
+  background-color: #e64a19;
+  color: #fff;
+}
+
+/* ── Scrollbar styling for the menu ── */
+.menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.menu::-webkit-scrollbar-thumb {
+  background-color: #ffd0bd;
+  border-radius: 10px;
+}
+
+.menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── Mobile — full width inside drawer ── */
+@media (max-width: 768px) {
+  .wrap {
+    width: 100%;
+  }
+
+  .trigger {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .menu {
+    width: 100%;
+  }
+}
