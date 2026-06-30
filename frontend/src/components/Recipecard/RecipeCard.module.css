@@ -33,8 +33,8 @@
   transform: scale(1.06);
 }
 
-/* ── Source badge (top-right corner of image) ── */
-.sourceBadge {
+/* ── Community badge only ── */
+.communityBadge {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -44,15 +44,7 @@
   letter-spacing: 0.05em;
   padding: 3px 8px;
   border-radius: 6px;
-}
-
-.community {
   background-color: #ff7043;
-  color: #fff;
-}
-
-.external {
-  background-color: rgba(0, 0, 0, 0.45);
   color: #fff;
 }
 
@@ -70,7 +62,6 @@
   font-weight: 600;
   color: #b0413e;
   line-height: 1.35;
-  /* clamp to 2 lines */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -93,7 +84,7 @@
   font-weight: 500;
 }
 
-/* ── Author row (community only) ── */
+/* ── Author row ── */
 .author {
   display: flex;
   align-items: center;
@@ -141,27 +132,12 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .imageWrap {
-    height: 140px;
-  }
-
-  .title {
-    font-size: 0.9rem;
-  }
-
-  .body {
-    padding: 10px 12px 12px;
-    gap: 6px;
-  }
+  .imageWrap { height: 140px; }
+  .title { font-size: 0.9rem; }
+  .body { padding: 10px 12px 12px; gap: 6px; }
+  .communityBadge { font-size: 0.62rem; padding: 2px 6px; }
 }
 
 @media (max-width: 480px) {
-  .imageWrap {
-    height: 120px;
-  }
-
-  .sourceBadge {
-    font-size: 0.62rem;
-    padding: 2px 6px;
-  }
+  .imageWrap { height: 120px; }
 }

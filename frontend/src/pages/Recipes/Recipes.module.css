@@ -10,16 +10,8 @@
 .recipes-container h2 {
   text-align: center;
   font-size: 2rem;
-  margin-bottom: 8px;
-  color: #b0413e;
-}
-
-/* ============ Results count ============ */
-.results-count {
-  text-align: center;
-  font-size: 0.9rem;
-  color: #999;
   margin-bottom: 24px;
+  color: #b0413e;
 }
 
 /* ============ Recipe grid ============ */
@@ -76,7 +68,7 @@
   gap: 6px;
   margin-top: 48px;
   margin-bottom: 48px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* never wrap on desktop */
 }
 
 .page-btn {
@@ -94,6 +86,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .page-btn:hover:not(:disabled) {
@@ -119,9 +112,10 @@
 
 .page-ellipsis {
   color: #aaa;
-  padding: 0 4px;
+  padding: 0 2px;
   font-size: 0.9rem;
   line-height: 40px;
+  flex-shrink: 0;
 }
 
 /* ============ Responsive ============ */
@@ -146,6 +140,7 @@
     font-size: 1.6rem;
   }
 
+  /* Compact pagination — fits one row */
   .pagination {
     gap: 4px;
     margin-top: 32px;
@@ -153,10 +148,17 @@
   }
 
   .page-btn {
-    min-width: 36px;
-    height: 36px;
-    font-size: 0.82rem;
-    padding: 0 8px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 6px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+  }
+
+  .page-ellipsis {
+    font-size: 0.78rem;
+    line-height: 32px;
+    padding: 0 1px;
   }
 }
 
@@ -168,5 +170,19 @@
 
   .recipes-container {
     padding: 16px 12px 0;
+  }
+
+  /* Even more compact on small phones */
+  .page-btn {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 4px;
+    font-size: 0.72rem;
+    border-radius: 5px;
+  }
+
+  .page-ellipsis {
+    font-size: 0.72rem;
+    line-height: 28px;
   }
 }
