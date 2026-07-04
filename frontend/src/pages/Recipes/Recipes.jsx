@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { getCategories, getMealsByCategory, getRecipes, getCuisines } from '../../api/api.js'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { getCategories, getMealsByCategory, getRecipes, getCuisines, normalizeInternal } from '../../api/api.js'
 import RecipeCard from '../../components/RecipeCard/RecipeCard'
 import RecipeFilters from '../../components/RecipeFilters/RecipeFilters'
 import Footer from '../../components/Footer/Footer'
@@ -9,31 +9,25 @@ import styles from './Recipes.module.css'
 const PAGE_SIZE = 12
 const DEFAULT_FILTERS = { category: 'all', cuisine: 'all', source: 'all', sort: 'az' }
 
-const normalizeInternal = (recipe) => ({
-  id: recipe.id,
-  externalId: null,
-  name: recipe.title,
-  image: recipe.imageUrl || null,
-  category: recipe.category || null,
-  area: recipe.cuisine || null,
-  description: recipe.description || null,
-  ingredients: recipe.ingredients || [],
-  instructions: recipe.instructions || [],
-  isExternal: false,
-  author: recipe.author || null,
-  createdAt: recipe.createdAt || null,
-})
-
 const Recipes = ({ searchTerm }) => {
   const [allRecipes, setAllRecipes] = useState([])
   const [categoryList, setCategoryList] = useState([])
   const [cuisineList, setCuisineList] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [page, setPage] = useState(1)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+  
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Derive filters structure from URL search parameters dynamically
+  const filters = {
+    category: searchParams.get('category') || DEFAULT_FILTERS.category,
+    cuisine: searchParams.get('cuisine') || DEFAULT_FILTERS.cuisine,
+    source: searchParams.get('source') || DEFAULT_FILTERS.source,
+    sort: searchParams.get('sort') || DEFAULT_FILTERS.sort,
+  }
 
   // Track mobile breakpoint for pagination window size
   useEffect(() => {
@@ -92,13 +86,26 @@ const Recipes = ({ searchTerm }) => {
     fetchAll()
   }, [])
 
-  useEffect(() => { setPage(1) }, [searchTerm, filters])
+  // Safely depend on stringified params to prevent stale values/infinite layout resets
+  useEffect(() => { setPage(1) }, [searchTerm, searchParams.toString()])
 
   const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (value === DEFAULT_FILTERS[key]) {
+        next.delete(key)
+      } else {
+        next.set(key, value)
+      }
+      return next
+    })
   }
 
-  const handleReset = () => setFilters(DEFAULT_FILTERS)
+  // Wipes filter parameters but ensures search keyword string is preserved if present
+  const handleReset = () => {
+    const search = searchParams.get('search')
+    setSearchParams(search ? { search } : {})
+  }
 
   const filtered = useMemo(() => {
     let result = [...allRecipes]
@@ -159,9 +166,8 @@ const Recipes = ({ searchTerm }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Mobile shows max 3 neighbors, desktop shows max 5
   const getPageNumbers = () => {
-    const delta = isMobile ? 1 : 2 // pages shown each side of current
+    const delta = isMobile ? 1 : 2
     if (totalPages <= (isMobile ? 5 : 7)) {
       return Array.from({ length: totalPages }, (_, i) => i + 1)
     }

@@ -39,7 +39,7 @@ const PostRecipeModal = ({ onClose, onSuccess, editRecipe = null }) => {
       if (editRecipe.imageUrl) setImagePreview(editRecipe.imageUrl)
     }
   }, [editRecipe])
-  
+
   useEffect(() => {
     getCategories().then((cats) => setCategories(cats))
     getCuisines().then((areas) => {
@@ -113,8 +113,8 @@ const PostRecipeModal = ({ onClose, onSuccess, editRecipe = null }) => {
       const result = isEdit
         ? await updateRecipe(editRecipe.id, fd)
         : await uploadRecipe(fd)
-      onSuccess(result, isEdit)
       onClose()
+      onSuccess?.(result, isEdit)
     } catch (err) {
       setError(err?.response?.data?.message || 'Something went wrong.')
     } finally {

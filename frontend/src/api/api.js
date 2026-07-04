@@ -29,6 +29,21 @@ export const getMe = async () => {
 
 // ─── Recipes ──────────────────────────────────────────────────────────────────
 
+export const normalizeInternal = (recipe) => ({
+  id: recipe.id,
+  externalId: null,
+  name: recipe.title,
+  image: recipe.imageUrl || null,
+  category: recipe.category || null,
+  area: recipe.cuisine || null,
+  description: recipe.description || null,
+  ingredients: recipe.ingredients || [],
+  instructions: recipe.instructions || [],
+  isExternal: false,
+  author: recipe.author || null,
+  createdAt: recipe.createdAt || null,
+})
+
 export const getRecipes = async (params = {}) => {
   const { data } = await api.get('/recipes', { params })
   return data
@@ -149,7 +164,7 @@ export const normalizeMeal = (meal) => {
       ? meal.strInstructions.split('\n').filter((s) => s.trim())
       : [],
     ingredients,
-    description: null, // TheMealDB has no real description field — don't fake one
+    description: null,
     isExternal: true,
   }
 }
@@ -181,7 +196,7 @@ export const getCategories = async () => {
 export const getCuisines = async () => {
   const res = await fetch(`${MEAL_DB_BASE}/list.php?a=list`)
   const data = await res.json()
-  return data.meals || [] // each item has strArea
+  return data.meals || []
 }
 
 export default api

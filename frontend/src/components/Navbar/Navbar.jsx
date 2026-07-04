@@ -34,6 +34,23 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
 
+  // Sync URL search parameter to global state (handles deep-linking & hero search redirection)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlSearch = params.get('search');
+
+    if (urlSearch !== null) {
+      if (urlSearch !== searchTerm) {
+        setSearchTerm(urlSearch);
+      }
+    } else if (location.pathname === '/recipes') {
+      // Clear input when navigating directly to /recipes cleanly via navbar links
+      if (!location.search && searchTerm !== '') {
+        setSearchTerm('');
+      }
+    }
+  }, [location.search, location.pathname, searchTerm, setSearchTerm]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -61,7 +78,7 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     if (!searchTerm.trim()) return;
     saveSearchHistory(searchTerm.trim());
     setSearchHistory(getSearchHistory());
-    if (location.pathname !== '/recipes') navigate('/recipes');
+    navigate(`/recipes?search=${encodeURIComponent(searchTerm.trim())}`);
   };
 
   const handleOverlaySearch = (e) => {
@@ -71,7 +88,7 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     setSearchHistory(getSearchHistory());
     setSearchTerm(searchInput.trim());
     setSearchOpen(false);
-    navigate('/recipes');
+    navigate(`/recipes?search=${encodeURIComponent(searchInput.trim())}`);
   };
 
   const handleHistoryClick = (term) => {
@@ -80,7 +97,7 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     saveSearchHistory(term);
     setSearchHistory(getSearchHistory());
     setSearchOpen(false);
-    navigate('/recipes');
+    navigate(`/recipes?search=${encodeURIComponent(term)}`);
   };
 
   const handleDeleteHistory = (e, term) => {
