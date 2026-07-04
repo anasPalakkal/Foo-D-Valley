@@ -3,7 +3,7 @@ import { getMe, login as apiLogin, register as apiRegister } from '../api/api'
 
 const AuthContext = createContext(null)
 
-const normalizeUser = (user) => ({
+export const normalizeUser = (user) => ({
   ...user,
   followersCount: user._count?.followers ?? 0,
   followingCount: user._count?.following ?? 0,

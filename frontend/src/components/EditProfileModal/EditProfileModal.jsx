@@ -3,6 +3,7 @@ import { updateProfile, uploadAvatar, uploadBanner } from '../../api/api'
 import { useAuth } from '../../context/AuthContext'
 import styles from './EditProfileModal.module.css'
 import { IoClose, IoCamera } from 'react-icons/io5'
+import { normalizeUser } from '../../context/AuthContext'
 
 const EditProfileModal = ({ profile, onClose, onSuccess }) => {
   const { updateUser } = useAuth()
@@ -62,7 +63,7 @@ const EditProfileModal = ({ profile, onClose, onSuccess }) => {
       }
 
       // Sync AuthContext so navbar reflects changes immediately
-      updateUser(updatedUser)
+      updateUser(normalizeUser(updatedUser))
       onSuccess(updatedUser)
       onClose()
     } catch (err) {

@@ -1,5 +1,6 @@
 const prisma = require('../lib/prismaClient')
 const { cloudinary } = require('../lib/cloudinary')
+const { userSelect } = require('./authController')
 
 const getProfile = async (req, res) => {
   const { userId } = req.params
@@ -85,19 +86,12 @@ const updateProfile = async (req, res) => {
         ...(name && { name }),
         ...(bio !== undefined && { bio }),
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        bannerUrl: true,
-        bio: true,
-      },
+      select: userSelect,
     })
 
     res.json(updated)
   } catch (error) {
-    console.error('updateProfile error:', error)
+    console.error('Update profile error:', error)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -108,7 +102,6 @@ const uploadAvatar = async (req, res) => {
   }
 
   try {
-    // Delete old avatar from Cloudinary if exists
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { avatarUrl: true },
@@ -131,14 +124,7 @@ const uploadAvatar = async (req, res) => {
     const updated = await prisma.user.update({
       where: { id: req.user.id },
       data: { avatarUrl: result.secure_url },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        bannerUrl: true,
-        bio: true,
-      },
+      select: userSelect,
     })
 
     res.json(updated)
@@ -154,7 +140,6 @@ const uploadBanner = async (req, res) => {
   }
 
   try {
-    // Delete old banner from Cloudinary if exists
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { bannerUrl: true },
@@ -177,14 +162,7 @@ const uploadBanner = async (req, res) => {
     const updated = await prisma.user.update({
       where: { id: req.user.id },
       data: { bannerUrl: result.secure_url },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        bannerUrl: true,
-        bio: true,
-      },
+      select: userSelect,
     })
 
     res.json(updated)

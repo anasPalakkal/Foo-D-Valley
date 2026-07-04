@@ -6,7 +6,7 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
 }
 
-// Fields returned in every auth response — keep in sync with getMe
+// Fields returned in every auth/profile response — keep in sync across authController and profileController
 const userSelect = {
   id: true,
   name: true,
@@ -104,4 +104,4 @@ const getMe = async (req, res) => {
   }
 }
 
-module.exports = { register, login, getMe }
+module.exports = { register, login, getMe, userSelect }
