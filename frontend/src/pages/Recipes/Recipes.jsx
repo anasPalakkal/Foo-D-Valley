@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { getCategories, getMealsByCategory, getRecipes, getCuisines, normalizeInternal } from '../../api/api.js'
+import { getCategories, getMealsByCategory, getRecipes, getCuisines, normalizeInternal, getBatchLikeCounts } from '../../api/api.js'
 import RecipeCard from '../../components/RecipeCard/RecipeCard'
 import RecipeFilters from '../../components/RecipeFilters/RecipeFilters'
 import Footer from '../../components/Footer/Footer'
@@ -17,11 +17,10 @@ const Recipes = ({ searchTerm }) => {
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
-  
+
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // Derive filters structure from URL search parameters dynamically
   const filters = {
     category: searchParams.get('category') || DEFAULT_FILTERS.category,
     cuisine: searchParams.get('cuisine') || DEFAULT_FILTERS.cuisine,
@@ -29,7 +28,6 @@ const Recipes = ({ searchTerm }) => {
     sort: searchParams.get('sort') || DEFAULT_FILTERS.sort,
   }
 
-  // Track mobile breakpoint for pagination window size
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 768)
     window.addEventListener('resize', onResize)
@@ -51,8 +49,6 @@ const Recipes = ({ searchTerm }) => {
         const uniqueCuisines = Array.from(new Set(cuisinesRaw.map((c) => c.strArea)))
         setCuisineList(uniqueCuisines)
 
-        // Tag each external meal with its category at fetch time
-        // filter.php only returns idMeal/strMeal/strMealThumb — no category on the object
         const mealArrays = await Promise.all(
           categories.map((cat) =>
             getMealsByCategory(cat.strCategory)
@@ -70,9 +66,26 @@ const Recipes = ({ searchTerm }) => {
 
         const internalMeals = internalRaw.map(normalizeInternal)
 
-        const merged = [...internalMeals, ...uniqueExternal].sort((a, b) =>
+        let merged = [...internalMeals, ...uniqueExternal].sort((a, b) =>
           a.name.localeCompare(b.name)
         )
+
+        // Attach like counts in one batched request instead of per-card N+1 calls
+        try {
+          const recipeIds = internalMeals.map((r) => r.id)
+          const externalIds = uniqueExternal.map((r) => r.externalId)
+          const { recipeCounts, externalCounts } = await getBatchLikeCounts(recipeIds, externalIds)
+
+          merged = merged.map((r) => ({
+            ...r,
+            likesCount: r.isExternal
+              ? externalCounts[r.externalId] || 0
+              : recipeCounts[r.id] || 0,
+          }))
+        } catch {
+          // Non-critical — cards just show 0 likes if this fails
+          merged = merged.map((r) => ({ ...r, likesCount: 0 }))
+        }
 
         setAllRecipes(merged)
       } catch (err) {
@@ -86,7 +99,6 @@ const Recipes = ({ searchTerm }) => {
     fetchAll()
   }, [])
 
-  // Safely depend on stringified params to prevent stale values/infinite layout resets
   useEffect(() => { setPage(1) }, [searchTerm, searchParams.toString()])
 
   const handleFilterChange = (key, value) => {
@@ -101,7 +113,6 @@ const Recipes = ({ searchTerm }) => {
     })
   }
 
-  // Wipes filter parameters but ensures search keyword string is preserved if present
   const handleReset = () => {
     const search = searchParams.get('search')
     setSearchParams(search ? { search } : {})
@@ -129,7 +140,6 @@ const Recipes = ({ searchTerm }) => {
       )
     }
 
-    // Cuisine only reliable on community recipes
     if (filters.cuisine !== 'all') {
       result = result.filter(
         (r) => !r.isExternal && r.area?.toLowerCase() === filters.cuisine.toLowerCase()
@@ -140,6 +150,8 @@ const Recipes = ({ searchTerm }) => {
       result.sort((a, b) => a.name.localeCompare(b.name))
     } else if (filters.sort === 'za') {
       result.sort((a, b) => b.name.localeCompare(a.name))
+    } else if (filters.sort === 'popular') {
+      result.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0))
     } else if (filters.sort === 'newest') {
       const community = result
         .filter((r) => !r.isExternal && r.createdAt)

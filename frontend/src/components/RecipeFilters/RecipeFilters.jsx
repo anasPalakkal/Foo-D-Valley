@@ -7,6 +7,7 @@ const SORT_OPTIONS = [
   { value: 'az', label: 'A – Z' },
   { value: 'za', label: 'Z – A' },
   { value: 'newest', label: 'Newest (Community)' },
+  { value: 'popular', label: 'Most Liked' },
 ]
 
 const RecipeFilters = ({

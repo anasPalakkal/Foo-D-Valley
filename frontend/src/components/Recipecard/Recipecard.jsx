@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { FaHeart } from 'react-icons/fa';
 import styles from './RecipeCard.module.css';
 
 const RecipeCard = ({ recipe, onSelect }) => {
@@ -20,9 +21,13 @@ const RecipeCard = ({ recipe, onSelect }) => {
     <div className={styles.card} onClick={handleClick}>
       <div className={styles.imageWrap}>
         <img src={recipe.image} alt={recipe.name} className={styles.image} />
-        {/* Only show badge for community recipes */}
         {!recipe.isExternal && (
           <span className={styles.communityBadge}>Community</span>
+        )}
+        {recipe.likesCount > 0 && (
+          <span className={styles.likesBadge}>
+            <FaHeart /> {recipe.likesCount}
+          </span>
         )}
       </div>
 

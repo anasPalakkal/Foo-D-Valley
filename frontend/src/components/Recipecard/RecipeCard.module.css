@@ -130,6 +130,25 @@
   color: #ff7043;
 }
 
+.likesBadge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+
+.likesBadge svg {
+  font-size: 0.68rem;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .imageWrap { height: 140px; }
