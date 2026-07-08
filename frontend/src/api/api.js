@@ -73,6 +73,44 @@ export const deleteRecipe = async (id) => {
   return data
 }
 
+// ─── Likes ────────────────────────────────────────────────────────────────────
+
+export const getLikeStatus = async (id, isExternal) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.get(`/recipes/${id}/likes`, { params })
+  return data
+}
+
+export const likeRecipe = async (id, isExternal) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.post(`/recipes/${id}/like`, null, { params })
+  return data
+}
+
+export const unlikeRecipe = async (id, isExternal) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.delete(`/recipes/${id}/like`, { params })
+  return data
+}
+
+// ─── Comments ─────────────────────────────────────────────────────────────────
+
+export const getComments = async (id, isExternal) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.get(`/recipes/${id}/comments`, { params })
+  return data
+}
+
+export const postComment = async (id, isExternal, content) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.post(`/recipes/${id}/comments`, { content }, { params })
+  return data
+}
+export const getBatchLikeCounts = async (recipeIds, externalIds) => {
+  const { data } = await api.post('/recipes/likes/batch', { recipeIds, externalIds })
+  return data
+}
+
 // ─── Favorites ────────────────────────────────────────────────────────────────
 
 export const getFavorites = async () => {
