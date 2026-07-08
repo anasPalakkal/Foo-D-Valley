@@ -1,6 +1,16 @@
 const prisma = require('../lib/prismaClient')
 const { cloudinary } = require('../lib/cloudinary')
 
+const attachIsLiked = async (recipes, userId) => {
+  const recipeIds = recipes.map((r) => r.id)
+  const likes = await prisma.recipeLike.findMany({
+    where: { userId, recipeId: { in: recipeIds } },
+    select: { recipeId: true },
+  })
+  const likedSet = new Set(likes.map((l) => l.recipeId))
+  return recipes.map((r) => ({ ...r, isLiked: likedSet.has(r.id) }))
+}
+
 // POST /api/recipes
 const createRecipe = async (req, res) => {
   const { title, description, ingredients, instructions, category, cuisine } = req.body
@@ -55,7 +65,6 @@ const updateRecipe = async (req, res) => {
     let imageUrl = existing.imageUrl
 
     if (req.file) {
-      // Delete old image from Cloudinary
       if (existing.imageUrl) {
         const publicId = existing.imageUrl.split('/').slice(-2).join('/').split('.')[0]
         await cloudinary.uploader.destroy(publicId)
@@ -90,18 +99,28 @@ const updateRecipe = async (req, res) => {
   }
 }
 
-// GET /api/recipes
+// GET /api/recipes?sort=popular
 const getRecipes = async (req, res) => {
+  const { sort } = req.query
+
   try {
     const recipes = await prisma.recipe.findMany({
       where: { isExternal: false },
       include: {
         author: { select: { id: true, name: true } },
+        _count: { select: { likes: true, comments: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy:
+        sort === 'popular'
+          ? { likes: { _count: 'desc' } }
+          : { createdAt: 'desc' },
     })
 
-    res.json(recipes)
+    const result = req.user
+      ? await attachIsLiked(recipes, req.user.id)
+      : recipes.map((r) => ({ ...r, isLiked: false }))
+
+    res.json(result)
   } catch (error) {
     console.error('Get recipes error:', error)
     res.status(500).json({ message: 'Internal server error' })
@@ -117,6 +136,7 @@ const getRecipeById = async (req, res) => {
       where: { id },
       include: {
         author: { select: { id: true, name: true } },
+        _count: { select: { likes: true, comments: true } },
       },
     })
 
@@ -124,7 +144,15 @@ const getRecipeById = async (req, res) => {
       return res.status(404).json({ message: 'Recipe not found' })
     }
 
-    res.json(recipe)
+    let isLiked = false
+    if (req.user) {
+      const like = await prisma.recipeLike.findUnique({
+        where: { userId_recipeId: { userId: req.user.id, recipeId: id } },
+      })
+      isLiked = !!like
+    }
+
+    res.json({ ...recipe, isLiked })
   } catch (error) {
     console.error('Get recipe error:', error)
     res.status(500).json({ message: 'Internal server error' })
