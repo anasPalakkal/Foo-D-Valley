@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { FaHeart, FaArrowLeft, FaExternalLinkAlt } from 'react-icons/fa'
+import { FaHeart, FaArrowLeft, FaExternalLinkAlt, FaRegCommentDots, FaLink } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
-import { getRecipeById, getMealById, getFavorites, addFavorite, removeFavorite } from '../../api/api'
+import {
+  getRecipeById,
+  getMealById,
+  getFavorites,
+  addFavorite,
+  removeFavorite,
+  getLikeStatus,
+  likeRecipe,
+  unlikeRecipe,
+  getComments,
+  postComment,
+} from '../../api/api'
 import styles from './RecipeDetails.module.css'
 import Footer from '../../components/Footer/Footer'
 
@@ -19,6 +30,20 @@ const RecipeDetails = () => {
   const [error, setError] = useState('')
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Likes
+  const [isLiked, setIsLiked] = useState(false)
+  const [likesCount, setLikesCount] = useState(0)
+  const [likeBusy, setLikeBusy] = useState(false)
+
+  // Comments
+  const [comments, setComments] = useState([])
+  const [commentText, setCommentText] = useState('')
+  const [postingComment, setPostingComment] = useState(false)
+  const [commentError, setCommentError] = useState('')
+
+  // Share
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const fetch = async () => {
@@ -73,6 +98,35 @@ const RecipeDetails = () => {
     check()
   }, [user, recipe])
 
+  // Load like status + count once recipe resolves
+  useEffect(() => {
+    if (!recipe) return
+    const loadLikes = async () => {
+      try {
+        const result = await getLikeStatus(actualId, isExternal)
+        setIsLiked(result.isLiked)
+        setLikesCount(result.likesCount)
+      } catch {
+        // Non-critical, leave defaults
+      }
+    }
+    loadLikes()
+  }, [recipe, actualId, isExternal])
+
+  // Load comments once recipe resolves
+  useEffect(() => {
+    if (!recipe) return
+    const loadComments = async () => {
+      try {
+        const result = await getComments(actualId, isExternal)
+        setComments(result)
+      } catch {
+        // Non-critical
+      }
+    }
+    loadComments()
+  }, [recipe, actualId, isExternal])
+
   const handleToggleSave = async () => {
     if (!user) return navigate('/login')
     setSaving(true)
@@ -92,6 +146,61 @@ const RecipeDetails = () => {
       // Non-critical
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleToggleLike = async () => {
+    if (!user) return navigate('/login')
+    if (likeBusy) return
+    setLikeBusy(true)
+
+    // Optimistic update
+    const prevLiked = isLiked
+    const prevCount = likesCount
+    setIsLiked(!prevLiked)
+    setLikesCount(prevLiked ? prevCount - 1 : prevCount + 1)
+
+    try {
+      const result = prevLiked
+        ? await unlikeRecipe(actualId, isExternal)
+        : await likeRecipe(actualId, isExternal)
+      setIsLiked(result.liked)
+      setLikesCount(result.likesCount)
+    } catch {
+      // Roll back on failure
+      setIsLiked(prevLiked)
+      setLikesCount(prevCount)
+    } finally {
+      setLikeBusy(false)
+    }
+  }
+
+  const handlePostComment = async (e) => {
+    e.preventDefault()
+    if (!user) return navigate('/login')
+    if (!commentText.trim()) return
+
+    setPostingComment(true)
+    setCommentError('')
+    try {
+      const newComment = await postComment(actualId, isExternal, commentText.trim())
+      setComments((prev) => [newComment, ...prev])
+      setCommentText('')
+    } catch {
+      setCommentError('Could not post comment. Try again.')
+    } finally {
+      setPostingComment(false)
+    }
+  }
+
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}/recipes/${id}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Clipboard blocked — silently fail, non-critical feature
     }
   }
 
@@ -143,6 +252,25 @@ const RecipeDetails = () => {
             {recipe.description && (
               <p className={styles.description}>{recipe.description}</p>
             )}
+
+            {/* ── Like / comment / share action row ── */}
+            <div className={styles.actionRow}>
+              <button
+                className={`${styles.actionButton} ${isLiked ? styles.actionButtonActive : ''}`}
+                onClick={handleToggleLike}
+                disabled={likeBusy}
+              >
+                <FaHeart /> {likesCount}
+              </button>
+
+              <a href="#comments" className={styles.actionButton}>
+                <FaRegCommentDots /> {comments.length}
+              </a>
+
+              <button className={styles.actionButton} onClick={handleCopyLink}>
+                <FaLink /> {copied ? 'Copied' : 'Share'}
+              </button>
+            </div>
           </div>
 
           {/* ── Right column ── */}
@@ -191,6 +319,59 @@ const RecipeDetails = () => {
               <FaExternalLinkAlt className={styles.externalIcon} />
             </a>
           )}
+        </div>
+
+        {/* ── Comments section ── */}
+        <div id="comments" className={styles.commentsSection}>
+          <h2 className={styles.sectionTitle}>Comments ({comments.length})</h2>
+
+          {user ? (
+            <form onSubmit={handlePostComment} className={styles.commentForm}>
+              <textarea
+                className={styles.commentInput}
+                placeholder="Share your thoughts..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                rows={3}
+              />
+              {commentError && <p className={styles.commentError}>{commentError}</p>}
+              <button
+                type="submit"
+                className={styles.commentSubmit}
+                disabled={postingComment || !commentText.trim()}
+              >
+                {postingComment ? 'Posting...' : 'Post Comment'}
+              </button>
+            </form>
+          ) : (
+            <p className={styles.commentLoginPrompt}>
+              <Link to="/login">Log in</Link> to leave a comment.
+            </p>
+          )}
+
+          <div className={styles.commentList}>
+            {comments.length === 0 && (
+              <p className={styles.noComments}>No comments yet. Be the first to share your thoughts.</p>
+            )}
+            {comments.map((c) => (
+              <div key={c.id} className={styles.commentItem}>
+                {c.user?.avatarUrl ? (
+                  <img src={c.user.avatarUrl} alt={c.user.name} className={styles.commentAvatar} />
+                ) : (
+                  <div className={styles.commentAvatarFallback}>
+                    {c.user?.name?.charAt(0).toUpperCase() || '?'}
+                  </div>
+                )}
+                <div className={styles.commentBody}>
+                  <div className={styles.commentMeta}>
+                    <strong>{c.user?.name || 'Unknown'}</strong>
+                    <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <p>{c.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <Footer />
