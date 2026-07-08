@@ -22,6 +22,9 @@ model User {
   // Self-referential many-to-many for follow system
   following Follow[] @relation("Following")
   followers Follow[] @relation("Followers")
+
+  recipeLikes    RecipeLike[]
+  recipeComments RecipeComment[]
 }
 
 model Follow {
@@ -55,6 +58,9 @@ model Recipe {
   authorId  Int
   author    User       @relation(fields: [authorId], references: [id])
   favorites Favorite[]
+
+  likes    RecipeLike[]
+  comments RecipeComment[]
 }
 
 model Favorite {
@@ -74,4 +80,36 @@ model Favorite {
 
   @@unique([userId, recipeId])
   @@unique([userId, externalId])
+}
+
+model RecipeLike {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  recipeId Int?
+  recipe   Recipe? @relation(fields: [recipeId], references: [id])
+
+  isExternal Boolean @default(false)
+  externalId String?
+
+  @@unique([userId, recipeId])
+  @@unique([userId, externalId])
+}
+
+model RecipeComment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  recipeId Int?
+  recipe   Recipe? @relation(fields: [recipeId], references: [id])
+
+  isExternal Boolean @default(false)
+  externalId String?
 }
