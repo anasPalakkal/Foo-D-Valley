@@ -207,6 +207,18 @@ export const normalizeMeal = (meal) => {
   }
 }
 
+// ─── Account ──────────────────────────────────────────────────────────────────
+
+export const changePassword = async (currentPassword, newPassword) => {
+  const { data } = await api.put('/profile/me/password', { currentPassword, newPassword })
+  return data
+}
+
+export const deleteAccount = async (password) => {
+  const { data } = await api.delete('/profile/me', { data: { password } })
+  return data
+}
+
 export const searchMeals = async (query = '') => {
   const res = await fetch(`${MEAL_DB_BASE}/search.php?s=${query}`)
   const data = await res.json()

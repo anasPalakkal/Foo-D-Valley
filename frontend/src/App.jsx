@@ -10,9 +10,10 @@ import SavedRecipes from './pages/SavedRecipes/SavedRecipes'
 import Login from './pages/Login/Login'
 import Register from './pages/Login/Register'
 import Profile from './pages/Profile/Profile'
+import Settings from './pages/Settings/Settings'
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import './App.css'
 
-// Syncs searchTerm state with ?search= query param on /recipes
 const SearchSync = ({ setSearchTerm }) => {
   const location = useLocation()
 
@@ -43,6 +44,14 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile/:userId" element={<Profile />} />
+              <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </Router>
       </div>
