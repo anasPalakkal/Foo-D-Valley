@@ -2,9 +2,13 @@ const prisma = require('../lib/prismaClient')
 
 const getLikesCount = async (id, isExternal) => {
   if (isExternal) {
-    return prisma.recipeLike.count({ where: { externalId: id } })
+    return prisma.recipeLike.count({
+      where: { externalId: id, user: { isDeleted: false } },
+    })
   }
-  return prisma.recipeLike.count({ where: { recipeId: parseInt(id) } })
+  return prisma.recipeLike.count({
+    where: { recipeId: parseInt(id), user: { isDeleted: false } },
+  })
 }
 
 // GET /api/recipes/:id/likes?type=external
@@ -93,20 +97,20 @@ const getBatchLikeCounts = async (req, res) => {
   try {
     const recipeGroups = recipeIds.length
       ? await prisma.recipeLike.groupBy({
-          by: ['recipeId'],
-          where: { recipeId: { in: recipeIds.map(Number) } },
-          _count: true,
-        })
+        by: ['recipeId'],
+        where: { recipeId: { in: recipeIds.map(Number) }, user: { isDeleted: false } },
+        _count: true,
+      })
       : []
 
     const externalGroups = externalIds.length
       ? await prisma.recipeLike.groupBy({
-          by: ['externalId'],
-          where: { externalId: { in: externalIds } },
-          _count: true,
-        })
+        by: ['externalId'],
+        where: { externalId: { in: externalIds }, user: { isDeleted: false } },
+        _count: true,
+      })
       : []
-
+      
     const recipeCounts = {}
     recipeGroups.forEach((g) => { recipeCounts[g.recipeId] = g._count })
 
