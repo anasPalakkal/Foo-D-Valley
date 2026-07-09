@@ -6,8 +6,10 @@ const getComments = async (req, res) => {
   const isExternal = req.query.type === 'external'
 
   try {
-    const where = isExternal ? { externalId: id } : { recipeId: parseInt(id) }
-
+    const where = isExternal
+  ? { externalId: id, user: { isDeleted: false } }
+  : { recipeId: parseInt(id), user: { isDeleted: false } }
+  
     const comments = await prisma.recipeComment.findMany({
       where,
       orderBy: { createdAt: 'desc' },

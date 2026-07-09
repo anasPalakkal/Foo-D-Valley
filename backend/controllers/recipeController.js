@@ -105,7 +105,7 @@ const getRecipes = async (req, res) => {
 
   try {
     const recipes = await prisma.recipe.findMany({
-      where: { isExternal: false },
+      where: { isExternal: false, author: { isDeleted: false } },
       include: {
         author: { select: { id: true, name: true } },
         _count: { select: { likes: true, comments: true } },
@@ -132,8 +132,8 @@ const getRecipeById = async (req, res) => {
   const id = parseInt(req.params.id)
 
   try {
-    const recipe = await prisma.recipe.findUnique({
-      where: { id },
+    const recipe = await prisma.recipe.findFirst({
+      where: { id, author: { isDeleted: false } },
       include: {
         author: { select: { id: true, name: true } },
         _count: { select: { likes: true, comments: true } },
