@@ -34,7 +34,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  // Sync URL search parameter to global state (handles deep-linking & hero search redirection)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const urlSearch = params.get('search');
@@ -44,7 +43,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
         setSearchTerm(urlSearch);
       }
     } else if (location.pathname === '/recipes') {
-      // Clear input when navigating directly to /recipes cleanly via navbar links
       if (!location.search && searchTerm !== '') {
         setSearchTerm('');
       }
@@ -118,7 +116,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
   return (
     <>
       <nav className={styles.navbar}>
-        {/* Hamburger — mobile only */}
         <button
           className={styles.hamburger}
           onClick={() => setMenuOpen((prev) => !prev)}
@@ -126,24 +123,19 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
           {menuOpen ? <FaTimes /> : <FaBars />}
         </button>
 
-        {/* Logo */}
         <div className={styles.logo}>
           <Link to="/">
             Foo <span className={styles.logoD}>D</span> Valley
           </Link>
         </div>
 
-        {/* Desktop Nav Links */}
         <ul className={`${styles.navLinks} ${menuOpen ? styles.navLinksOpen : ''}`}>
           <li><Link to="/" className={isActive('/') ? styles.activeLink : ''}>Home</Link></li>
           <li><Link to="/recipes" className={isActive('/recipes') ? styles.activeLink : ''}>Recipes</Link></li>
-          <li><Link to="/saved" className={isActive('/saved') ? styles.activeLink : ''}>Favorites</Link></li>
           <li><Link to="/about" className={isActive('/about') ? styles.activeLink : ''}>About</Link></li>
         </ul>
 
-        {/* Right Section */}
         <div className={styles.rightSection}>
-          {/* Desktop Search */}
           <form className={styles.desktopSearch} onSubmit={handleDesktopSearch}>
             <div className={styles.searchWrapper}>
               <FaSearch className={styles.searchIcon} />
@@ -156,7 +148,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
             </div>
           </form>
 
-          {/* Mobile Search Icon */}
           <button
             className={styles.mobileSearchBtn}
             onClick={() => setSearchOpen(true)}
@@ -164,7 +155,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
             <FaSearch />
           </button>
 
-          {/* Auth */}
           {user ? (
             <div className={styles.avatarWrapper} ref={dropdownRef}>
               <button
@@ -203,19 +193,16 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
         </div>
       </nav>
 
-      {/* Mobile Menu Drawer */}
       {menuOpen && (
         <div className={styles.mobileMenu}>
           <ul className={styles.mobileMenuLinks}>
             <li><Link to="/" className={isActive('/') ? styles.mobileActiveLink : ''}>Home</Link></li>
             <li><Link to="/recipes" className={isActive('/recipes') ? styles.mobileActiveLink : ''}>Recipes</Link></li>
-            <li><Link to="/saved" className={isActive('/saved') ? styles.mobileActiveLink : ''}>Favorites</Link></li>
             <li><Link to="/about" className={isActive('/about') ? styles.mobileActiveLink : ''}>About</Link></li>
           </ul>
         </div>
       )}
 
-      {/* Search Overlay */}
       {searchOpen && (
         <div className={styles.searchOverlay} onClick={() => setSearchOpen(false)}>
           <div className={styles.searchOverlayInner} onClick={(e) => e.stopPropagation()}>
