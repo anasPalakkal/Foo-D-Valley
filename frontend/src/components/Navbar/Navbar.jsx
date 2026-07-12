@@ -2,9 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaSearch, FaBars, FaTimes, FaClock } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { getCategories } from '../../api/api.js';
+import CategoryDropdown from '../CategoryDropdown/CategoryDropdown';
 import styles from './Navbar.module.css';
 
 const MAX_HISTORY = 5;
+const CATEGORY_CLOSE_DELAY = 200; // ms — small buffer so the panel doesn't flicker shut mid-mouse-travel
 
 const getSearchHistory = () => {
   try {
@@ -30,9 +33,19 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [searchHistory, setSearchHistory] = useState(getSearchHistory());
+  const [categoryList, setCategoryList] = useState([]);
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
+  const [desktopCategoriesOpen, setDesktopCategoriesOpen] = useState(false);
 
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
+  const closeTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    getCategories()
+      .then((cats) => setCategoryList(cats.map((c) => c.strCategory)))
+      .catch(() => setCategoryList([])); // non-critical — nav still works without it
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -63,6 +76,8 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     setMenuOpen(false);
     setDropdownOpen(false);
     setSearchOpen(false);
+    setMobileCategoriesOpen(false);
+    setDesktopCategoriesOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -70,6 +85,27 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
       searchInputRef.current.focus();
     }
   }, [searchOpen]);
+
+  // Clear any pending close timer on unmount so it doesn't fire against an unmounted component
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
+
+  const openDesktopCategories = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setDesktopCategoriesOpen(true);
+  };
+
+  const scheduleCloseDesktopCategories = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setDesktopCategoriesOpen(false);
+    }, CATEGORY_CLOSE_DELAY);
+  };
 
   const handleDesktopSearch = (e) => {
     e.preventDefault();
@@ -132,6 +168,13 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
         <ul className={`${styles.navLinks} ${menuOpen ? styles.navLinksOpen : ''}`}>
           <li><Link to="/" className={isActive('/') ? styles.activeLink : ''}>Home</Link></li>
           <li><Link to="/recipes" className={isActive('/recipes') ? styles.activeLink : ''}>Recipes</Link></li>
+          <CategoryDropdown
+            categories={categoryList}
+            variant="desktop"
+            isOpen={desktopCategoriesOpen}
+            onOpen={openDesktopCategories}
+            onClose={scheduleCloseDesktopCategories}
+          />
           <li><Link to="/about" className={isActive('/about') ? styles.activeLink : ''}>About</Link></li>
         </ul>
 
@@ -198,6 +241,13 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
           <ul className={styles.mobileMenuLinks}>
             <li><Link to="/" className={isActive('/') ? styles.mobileActiveLink : ''}>Home</Link></li>
             <li><Link to="/recipes" className={isActive('/recipes') ? styles.mobileActiveLink : ''}>Recipes</Link></li>
+            <CategoryDropdown
+              categories={categoryList}
+              variant="mobile"
+              isOpen={mobileCategoriesOpen}
+              onToggle={() => setMobileCategoriesOpen((prev) => !prev)}
+              onSelect={() => setMenuOpen(false)}
+            />
             <li><Link to="/about" className={isActive('/about') ? styles.mobileActiveLink : ''}>About</Link></li>
           </ul>
         </div>

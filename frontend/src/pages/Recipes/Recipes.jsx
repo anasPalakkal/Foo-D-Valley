@@ -46,7 +46,16 @@ const Recipes = ({ searchTerm }) => {
         ])
 
         setCategoryList(categories.map((c) => c.strCategory))
-        const uniqueCuisines = Array.from(new Set(cuisinesRaw.map((c) => c.strArea)))
+
+        // Normalize internal recipes first so their cuisine values can
+        // feed into the dropdown alongside TheMealDB's areas.
+        const internalMeals = internalRaw.map(normalizeInternal)
+
+        const allCuisineValues = [
+          ...cuisinesRaw.map((c) => c.strArea),
+          ...internalMeals.map((r) => r.area).filter(Boolean),
+        ]
+        const uniqueCuisines = Array.from(new Set(allCuisineValues)).sort()
         setCuisineList(uniqueCuisines)
 
         const mealArrays = await Promise.all(
@@ -63,8 +72,6 @@ const Recipes = ({ searchTerm }) => {
           seen.add(meal.externalId)
           return true
         })
-
-        const internalMeals = internalRaw.map(normalizeInternal)
 
         let merged = [...internalMeals, ...uniqueExternal].sort((a, b) =>
           a.name.localeCompare(b.name)
@@ -142,7 +149,7 @@ const Recipes = ({ searchTerm }) => {
 
     if (filters.cuisine !== 'all') {
       result = result.filter(
-        (r) => !r.isExternal && r.area?.toLowerCase() === filters.cuisine.toLowerCase()
+        (r) => r.area?.toLowerCase() === filters.cuisine.toLowerCase()
       )
     }
 
