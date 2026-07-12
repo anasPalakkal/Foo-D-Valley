@@ -1,0 +1,158 @@
+.page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #b0413e;
+  margin-bottom: 24px;
+}
+
+.section {
+  background: #fff8f5;
+  border: 1px solid #f0e0da;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #b0413e;
+  margin-bottom: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7a3a38;
+  margin-top: 12px;
+}
+
+.input {
+  padding: 10px 12px;
+  border: 1px solid #f0e0da;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #fff;
+  color: #333;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #ff7043;
+}
+
+.primaryBtn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #ff7043;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.88rem;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dangerSection {
+  border-color: rgba(217, 54, 46, 0.25);
+}
+
+.dangerText {
+  font-size: 0.88rem;
+  color: #7a3a38;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.dangerBtn {
+  padding: 10px 20px;
+  background: #d9362e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.88rem;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.dangerBtn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.dangerBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid #f0e0da;
+  border-radius: 8px;
+  color: #7a3a38;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: #fff8f5;
+}
+
+.deleteActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.error {
+  color: #d9362e;
+  font-size: 0.85rem;
+}
+
+.success {
+  color: #2e7d32;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 24px 16px;
+  }
+
+  .section {
+    padding: 18px;
+  }
+
+  .deleteActions {
+    flex-direction: column;
+  }
+
+  .deleteActions button {
+    width: 100%;
+  }
+}

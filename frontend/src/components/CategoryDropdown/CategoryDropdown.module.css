@@ -1,0 +1,161 @@
+/* ── Desktop: full-width grid panel ── */
+
+.desktopWrapper {
+  position: relative;
+}
+
+.desktopTrigger {
+  cursor: pointer;
+  display: inline-block;
+}
+
+.desktopPanel {
+  position: fixed;
+  top: 60px; /* matches the existing .mobileMenu top offset — same navbar height */
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: #fff8f5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 150; /* above .navbar (100), below .dropdown (200) and search overlay (300) */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+}
+
+.desktopPanel.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.desktopPanelInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 32px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 4px 24px;
+}
+
+/* Chained selector (.desktopPanel .desktopPanelInner a) — these links are still
+   DOM descendants of Navbar's ul.navLinks even though position:fixed renders
+   them elsewhere on screen. .navLinks a { color: white } in Navbar.module.css
+   ties on specificity with a single-class selector here, and source order is
+   not something to rely on. Chaining two classes guarantees this always wins. */
+.desktopPanel .desktopPanelInner a {
+  display: block;
+  padding: 8px 6px;
+  color: #7a3a38;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border-bottom: none;   /* .navLinks a sets a transparent border-bottom — reset explicitly */
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.desktopPanel .desktopPanelInner a:hover {
+  background-color: #ffe4d6;
+  color: #ff7043;
+  border-bottom: none;
+}
+
+.viewAllBar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 32px 16px;
+  border-top: 1px solid #f0e0da;
+}
+
+.desktopPanel .viewAllBar .viewAll {
+  display: inline-block;
+  color: #b0413e;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-bottom: none;
+}
+
+.desktopPanel .viewAllBar .viewAll:hover {
+  color: #ff7043;
+  text-decoration: underline;
+}
+
+/* Hover-based desktop version is irrelevant on touch — mobile uses the accordion below */
+@media (max-width: 768px) {
+  .desktopWrapper {
+    display: none;
+  }
+}
+
+/* ── Mobile: click accordion inside the existing orange mobile drawer ── */
+
+.mobileWrapper {
+  width: 100%;
+}
+
+.mobileTrigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mobileTrigger:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffd6cc;
+}
+
+.chevron {
+  transition: transform 0.2s ease;
+  font-size: 0.75rem;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.mobileList {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 6px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.mobileList li a {
+  display: block;
+  padding: 10px 20px 10px 36px;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mobileList li a:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffd6cc;
+}
+
+.mobileList .viewAll {
+  font-weight: 700;
+  color: #ffd6cc;
+}
+
+@media (max-width: 480px) {
+  .desktopPanelInner {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}

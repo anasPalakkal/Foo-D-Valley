@@ -1,45 +1,71 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import RecipeList from '../../components/RecipeList/RecipeList'
-import { useNavigate, Link } from 'react-router-dom'
-import { getCategories, getMealsByCategory, getRecipes, normalizeMeal } from '../../api/api.js'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { getCategories, getMealsByCategory, getRecipes, getCuisines, normalizeInternal, getBatchLikeCounts } from '../../api/api.js'
+import RecipeCard from '../../components/RecipeCard/RecipeCard'
+import RecipeFilters from '../../components/RecipeFilters/RecipeFilters'
+import Footer from '../../components/Footer/Footer'
 import styles from './Recipes.module.css'
 
 const PAGE_SIZE = 12
-
-// Normalize internal DB recipe to the same shape RecipeList expects
-const normalizeInternal = (recipe) => ({
-  id: recipe.id,
-  externalId: null,
-  name: recipe.title,
-  image: recipe.imageUrl || null,
-  category: recipe.category || null,
-  area: recipe.cuisine || null,
-  description: recipe.description || null,
-  ingredients: recipe.ingredients || [],
-  instructions: recipe.instructions || [],
-  isExternal: false,
-  author: recipe.author || null,
-})
+const DEFAULT_FILTERS = { category: 'all', cuisine: 'all', source: 'all', sort: 'az' }
 
 const Recipes = ({ searchTerm }) => {
   const [allRecipes, setAllRecipes] = useState([])
+  const [categoryList, setCategoryList] = useState([])
+  const [cuisineList, setCuisineList] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const filters = {
+    category: searchParams.get('category') || DEFAULT_FILTERS.category,
+    cuisine: searchParams.get('cuisine') || DEFAULT_FILTERS.cuisine,
+    source: searchParams.get('source') || DEFAULT_FILTERS.source,
+    sort: searchParams.get('sort') || DEFAULT_FILTERS.sort,
+  }
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true)
       setError('')
       try {
-        // Fetch all categories then all meals per category in parallel
-        const categories = await getCategories()
+        const [categories, cuisinesRaw, internalRaw] = await Promise.all([
+          getCategories(),
+          getCuisines(),
+          getRecipes(),
+        ])
+
+        setCategoryList(categories.map((c) => c.strCategory))
+
+        // Normalize internal recipes first so their cuisine values can
+        // feed into the dropdown alongside TheMealDB's areas.
+        const internalMeals = internalRaw.map(normalizeInternal)
+
+        const allCuisineValues = [
+          ...cuisinesRaw.map((c) => c.strArea),
+          ...internalMeals.map((r) => r.area).filter(Boolean),
+        ]
+        const uniqueCuisines = Array.from(new Set(allCuisineValues)).sort()
+        setCuisineList(uniqueCuisines)
+
         const mealArrays = await Promise.all(
-          categories.map((cat) => getMealsByCategory(cat.strCategory).catch(() => []))
+          categories.map((cat) =>
+            getMealsByCategory(cat.strCategory)
+              .then((meals) => meals.map((m) => ({ ...m, category: cat.strCategory })))
+              .catch(() => [])
+          )
         )
 
-        // Deduplicate — meals can appear in multiple category results
         const seen = new Set()
         const uniqueExternal = mealArrays.flat().filter((meal) => {
           if (seen.has(meal.externalId)) return false
@@ -47,12 +73,28 @@ const Recipes = ({ searchTerm }) => {
           return true
         })
 
-        // Fetch internal user-uploaded recipes
-        const internalRaw = await getRecipes()
-        const internalMeals = internalRaw.map(normalizeInternal)
+        let merged = [...internalMeals, ...uniqueExternal].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        )
 
-        // Internal recipes first, then TheMealDB
-        setAllRecipes([...internalMeals, ...uniqueExternal])
+        // Attach like counts in one batched request instead of per-card N+1 calls
+        try {
+          const recipeIds = internalMeals.map((r) => r.id)
+          const externalIds = uniqueExternal.map((r) => r.externalId)
+          const { recipeCounts, externalCounts } = await getBatchLikeCounts(recipeIds, externalIds)
+
+          merged = merged.map((r) => ({
+            ...r,
+            likesCount: r.isExternal
+              ? externalCounts[r.externalId] || 0
+              : recipeCounts[r.id] || 0,
+          }))
+        } catch {
+          // Non-critical — cards just show 0 likes if this fails
+          merged = merged.map((r) => ({ ...r, likesCount: 0 }))
+        }
+
+        setAllRecipes(merged)
       } catch (err) {
         console.error('Error fetching recipes:', err)
         setError('Failed to load recipes. Please try again.')
@@ -64,31 +106,78 @@ const Recipes = ({ searchTerm }) => {
     fetchAll()
   }, [])
 
-  // Reset to page 1 on search change
-  useEffect(() => {
-    setPage(1)
-  }, [searchTerm])
+  useEffect(() => { setPage(1) }, [searchTerm, searchParams.toString()])
 
-  // Filter client-side — no API calls on search
+  const handleFilterChange = (key, value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (value === DEFAULT_FILTERS[key]) {
+        next.delete(key)
+      } else {
+        next.set(key, value)
+      }
+      return next
+    })
+  }
+
+  const handleReset = () => {
+    const search = searchParams.get('search')
+    setSearchParams(search ? { search } : {})
+  }
+
   const filtered = useMemo(() => {
-    if (!searchTerm?.trim()) return allRecipes
-    const q = searchTerm.toLowerCase()
-    return allRecipes.filter(
-      (r) =>
-        r.name?.toLowerCase().includes(q) ||
-        r.category?.toLowerCase().includes(q) ||
-        r.area?.toLowerCase().includes(q)
-    )
-  }, [allRecipes, searchTerm])
+    let result = [...allRecipes]
+
+    if (searchTerm?.trim()) {
+      const q = searchTerm.toLowerCase()
+      result = result.filter(
+        (r) =>
+          r.name?.toLowerCase().includes(q) ||
+          r.category?.toLowerCase().includes(q) ||
+          r.area?.toLowerCase().includes(q)
+      )
+    }
+
+    if (filters.source === 'community') result = result.filter((r) => !r.isExternal)
+    if (filters.source === 'external') result = result.filter((r) => r.isExternal)
+
+    if (filters.category !== 'all') {
+      result = result.filter(
+        (r) => r.category?.toLowerCase() === filters.category.toLowerCase()
+      )
+    }
+
+    if (filters.cuisine !== 'all') {
+      result = result.filter(
+        (r) => r.area?.toLowerCase() === filters.cuisine.toLowerCase()
+      )
+    }
+
+    if (filters.sort === 'az') {
+      result.sort((a, b) => a.name.localeCompare(b.name))
+    } else if (filters.sort === 'za') {
+      result.sort((a, b) => b.name.localeCompare(a.name))
+    } else if (filters.sort === 'popular') {
+      result.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0))
+    } else if (filters.sort === 'newest') {
+      const community = result
+        .filter((r) => !r.isExternal && r.createdAt)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      const communityNoDate = result.filter((r) => !r.isExternal && !r.createdAt)
+      const external = result
+        .filter((r) => r.isExternal)
+        .sort((a, b) => a.name.localeCompare(b.name))
+      result = [...community, ...communityNoDate, ...external]
+    }
+
+    return result
+  }, [allRecipes, searchTerm, filters])
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const handleSelectRecipe = (recipe) => {
-    const path = recipe.isExternal
-      ? `/recipes/ext_${recipe.externalId}`
-      : `/recipes/${recipe.id}`
-    navigate(path)
+    navigate(recipe.isExternal ? `/recipes/ext_${recipe.externalId}` : `/recipes/${recipe.id}`)
   }
 
   const handlePageChange = (p) => {
@@ -96,14 +185,14 @@ const Recipes = ({ searchTerm }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Show max 7 page buttons with ellipsis for large page counts
   const getPageNumbers = () => {
-    if (totalPages <= 7) {
+    const delta = isMobile ? 1 : 2
+    if (totalPages <= (isMobile ? 5 : 7)) {
       return Array.from({ length: totalPages }, (_, i) => i + 1)
     }
     const pages = []
-    const start = Math.max(2, page - 2)
-    const end = Math.min(totalPages - 1, page + 2)
+    const start = Math.max(2, page - delta)
+    const end = Math.min(totalPages - 1, page + delta)
     pages.push(1)
     if (start > 2) pages.push('...')
     for (let i = start; i <= end; i++) pages.push(i)
@@ -116,6 +205,16 @@ const Recipes = ({ searchTerm }) => {
     <>
       <div className={styles['recipes-container']}>
         <h2>All Recipes</h2>
+
+        {!loading && !error && (
+          <RecipeFilters
+            categories={categoryList}
+            cuisines={cuisineList}
+            filters={filters}
+            onChange={handleFilterChange}
+            onReset={handleReset}
+          />
+        )}
 
         {loading && (
           <div className={styles['loading-wrap']}>
@@ -134,7 +233,15 @@ const Recipes = ({ searchTerm }) => {
 
         {!loading && !error && filtered.length > 0 && (
           <>
-            <RecipeList recipes={paginated} onSelect={handleSelectRecipe} />
+            <div className={styles['recipe-grid']}>
+              {paginated.map((recipe) => (
+                <RecipeCard
+                  key={recipe.isExternal ? `ext_${recipe.externalId}` : recipe.id}
+                  recipe={recipe}
+                  onSelect={handleSelectRecipe}
+                />
+              ))}
+            </div>
 
             {totalPages > 1 && (
               <div className={styles.pagination}>
@@ -148,9 +255,7 @@ const Recipes = ({ searchTerm }) => {
 
                 {getPageNumbers().map((p, i) =>
                   p === '...' ? (
-                    <span key={`ellipsis-${i}`} className={styles['page-ellipsis']}>
-                      ...
-                    </span>
+                    <span key={`ellipsis-${i}`} className={styles['page-ellipsis']}>...</span>
                   ) : (
                     <button
                       key={p}
@@ -174,23 +279,7 @@ const Recipes = ({ searchTerm }) => {
           </>
         )}
       </div>
-
-      <footer className={styles['site-footer']}>
-        <div className={styles['footer-content']}>
-          <div className={styles['footer-logo']}>
-            <Link to="/" className={styles['footer-logo-link']}>
-              Foo <span className={styles['logo-d']}>D</span> Valley
-            </Link>
-          </div>
-          <p>© 2025 Foo D Valley. All rights reserved.</p>
-          <button
-            className={styles['back-to-top']}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          >
-            Back to Top
-          </button>
-        </div>
-      </footer>
+      <Footer />
     </>
   )
 }

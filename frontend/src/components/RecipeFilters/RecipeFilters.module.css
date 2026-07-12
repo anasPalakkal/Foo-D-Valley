@@ -1,0 +1,235 @@
+/* ── Desktop bar ── */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Community only toggle ── */
+.communityBtn {
+  padding: 8px 16px;
+  border: 1.5px solid #ffd0bd;
+  border-radius: 8px;
+  background: #fff;
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Segoe UI', sans-serif;
+  white-space: nowrap;
+}
+
+.communityBtn:hover {
+  border-color: #ff7043;
+  color: #ff7043;
+}
+
+.communityBtnActive {
+  background-color: #ff7043;
+  border-color: #ff7043;
+  color: #fff !important;
+}
+
+.communityBtnActive:hover {
+  background-color: #e64a19;
+  border-color: #e64a19;
+  color: #fff !important;
+}
+
+/* ── Reset button ── */
+.resetBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1.5px solid #ffd0bd;
+  border-radius: 8px;
+  color: #b0413e;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Segoe UI', sans-serif;
+  white-space: nowrap;
+}
+
+.resetBtn:hover {
+  background-color: #fff0eb;
+  border-color: #b0413e;
+}
+
+/* ── Mobile bar ── */
+.mobileBar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filterToggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: #fff;
+  border: 1.5px solid #ffd0bd;
+  border-radius: 8px;
+  color: #b0413e;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Segoe UI', sans-serif;
+  flex-shrink: 0;
+}
+
+.filterToggle:hover {
+  border-color: #ff7043;
+}
+
+.filterToggleActive {
+  border-color: #ff7043;
+  background-color: #fff0eb;
+}
+
+.activeDot {
+  width: 7px;
+  height: 7px;
+  background: #ff7043;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ── Active filter chips ── */
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffe8e0;
+  color: #b0413e;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.chip button {
+  background: none;
+  border: none;
+  color: #b0413e;
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Mobile drawer ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.drawer {
+  background: #fff;
+  width: 100%;
+  border-radius: 16px 16px 0 0;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawerHeader h3 {
+  font-size: 1.1rem;
+  color: #b0413e;
+  font-weight: 700;
+}
+
+.drawerClose {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #888;
+  cursor: pointer;
+}
+
+.drawerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drawerLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #b0413e;
+}
+
+.drawerSection .communityBtn {
+  width: 100%;
+  text-align: left;
+}
+
+.drawerFooter {
+  display: flex;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.applyBtn {
+  flex: 1;
+  padding: 12px;
+  background: #ff7043;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.applyBtn:hover {
+  background: #e64a19;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .bar { display: none; }
+  .mobileBar { display: flex; }
+}

@@ -1,5 +1,9 @@
 const prisma = require('../lib/prismaClient')
 const { cloudinary } = require('../lib/cloudinary')
+const { userSelect } = require('./authController')
+
+const bcrypt = require('bcryptjs')
+const DELETION_DAYS = 14
 
 const getProfile = async (req, res) => {
   const { userId } = req.params
@@ -15,6 +19,7 @@ const getProfile = async (req, res) => {
         bannerUrl: true,
         bio: true,
         createdAt: true,
+        isDeleted: true,
         _count: {
           select: {
             followers: true,
@@ -51,7 +56,8 @@ const getProfile = async (req, res) => {
       },
     })
 
-    if (!user) {
+    // Treat pending-deletion accounts as not found — hides profile from other users
+    if (!user || user.isDeleted) {
       return res.status(404).json({ message: 'User not found' })
     }
 
@@ -68,7 +74,9 @@ const getProfile = async (req, res) => {
       isFollowing = !!follow
     }
 
-    res.json({ ...user, isFollowing })
+    const { isDeleted, ...safeUser } = user
+
+    res.json({ ...safeUser, isFollowing })
   } catch (error) {
     console.error('getProfile error:', error)
     res.status(500).json({ message: 'Internal server error' })
@@ -85,19 +93,12 @@ const updateProfile = async (req, res) => {
         ...(name && { name }),
         ...(bio !== undefined && { bio }),
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        bannerUrl: true,
-        bio: true,
-      },
+      select: userSelect,
     })
 
     res.json(updated)
   } catch (error) {
-    console.error('updateProfile error:', error)
+    console.error('Update profile error:', error)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -108,7 +109,6 @@ const uploadAvatar = async (req, res) => {
   }
 
   try {
-    // Delete old avatar from Cloudinary if exists
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { avatarUrl: true },
@@ -131,14 +131,7 @@ const uploadAvatar = async (req, res) => {
     const updated = await prisma.user.update({
       where: { id: req.user.id },
       data: { avatarUrl: result.secure_url },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        bannerUrl: true,
-        bio: true,
-      },
+      select: userSelect,
     })
 
     res.json(updated)
@@ -154,7 +147,6 @@ const uploadBanner = async (req, res) => {
   }
 
   try {
-    // Delete old banner from Cloudinary if exists
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { bannerUrl: true },
@@ -177,14 +169,7 @@ const uploadBanner = async (req, res) => {
     const updated = await prisma.user.update({
       where: { id: req.user.id },
       data: { bannerUrl: result.secure_url },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        bannerUrl: true,
-        bio: true,
-      },
+      select: userSelect,
     })
 
     res.json(updated)
@@ -194,4 +179,83 @@ const uploadBanner = async (req, res) => {
   }
 }
 
-module.exports = { getProfile, updateProfile, uploadAvatar, uploadBanner }
+
+// PUT /api/profile/me/password
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'Current and new password are required' })
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ message: 'New password must be at least 8 characters' })
+  }
+  if (currentPassword === newPassword) {
+    return res.status(400).json({ message: 'New password must be different from current password' })
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { password: true },
+    })
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password)
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Current password is incorrect' })
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10)
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: hashed },
+    })
+
+    res.json({ message: 'Password updated successfully' })
+  } catch (error) {
+    console.error('changePassword error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// DELETE /api/profile/me
+const deleteAccount = async (req, res) => {
+  const { password } = req.body
+
+  if (!password) {
+    return res.status(400).json({ message: 'Password is required to delete your account' })
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { password: true, isDeleted: true },
+    })
+
+    if (user.isDeleted) {
+      return res.status(400).json({ message: 'Account is already scheduled for deletion' })
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Incorrect password' })
+    }
+
+    const scheduledDeletionAt = new Date(Date.now() + DELETION_DAYS * 24 * 60 * 60 * 1000)
+
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { isDeleted: true, scheduledDeletionAt },
+    })
+
+    res.json({
+      message: `Account scheduled for deletion in ${DELETION_DAYS} days. Log in anytime before then to cancel.`,
+      scheduledDeletionAt,
+    })
+  } catch (error) {
+    console.error('deleteAccount error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+module.exports = { getProfile, updateProfile, uploadAvatar, uploadBanner, changePassword, deleteAccount }

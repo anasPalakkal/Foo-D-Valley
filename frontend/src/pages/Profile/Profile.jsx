@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import Footer from '../../components/Footer/Footer';
 import {
   getProfile,
   getRecipeById,
@@ -16,7 +17,6 @@ import {
   IoEllipsisVertical,
   IoCreateOutline,
   IoTrashOutline,
-  IoBookmarkOutline,
   IoGridOutline,
 } from 'react-icons/io5'
 
@@ -166,6 +166,7 @@ const Profile = () => {
   const followingCount = profile._count?.following ?? 0
 
   return (
+    <>
     <div className={styles.page}>
       {/* Banner */}
       <div className={styles.banner}>
@@ -233,12 +234,6 @@ const Profile = () => {
             onClick={() => setActiveTab('posts')}
           >
             <IoGridOutline size={16} /> Posts
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'favorites' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('favorites')}
-          >
-            <IoBookmarkOutline size={16} /> Saved
           </button>
         </div>
 
@@ -314,43 +309,6 @@ const Profile = () => {
             )}
           </div>
         )}
-
-        {/* Favorites tab */}
-        {activeTab === 'favorites' && (
-          <div className={styles.tabContent}>
-            {!authUser && !isOwner ? (
-              <div className={styles.guestGate}>
-                <p>Log in to see saved recipes.</p>
-                <Link to="/login" className={styles.loginLink}>Log in</Link>
-              </div>
-            ) : profile.favorites.length === 0 ? (
-              <div className={styles.emptyState}>
-                <p>No saved recipes yet.</p>
-              </div>
-            ) : (
-              <div className={styles.grid}>
-                {profile.favorites.map((fav) => {
-                  const title = fav.isExternal ? fav.externalName : fav.recipe?.title
-                  const image = fav.isExternal ? fav.externalImage : fav.recipe?.imageUrl
-                  const link = fav.isExternal
-                    ? `/recipes/ext_${fav.externalId}`
-                    : `/recipes/${fav.recipe?.id}`
-
-                  return (
-                    <Link key={fav.id} to={link} className={styles.card}>
-                      {image ? (
-                        <img src={image} alt={title} className={styles.cardImg} />
-                      ) : (
-                        <div className={styles.cardImgFallback} />
-                      )}
-                      <div className={styles.cardTitle}>{title}</div>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* FAB — owner only */}
@@ -404,6 +362,8 @@ const Profile = () => {
         />
       )}
     </div>
+    <Footer/>
+    </>
   )
 }
 

@@ -1,281 +1,319 @@
-/* Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+.homeContainer {
+  min-height: 100vh;
 }
 
-/* ========== Hero Section ========== */
-.hero-section {
+/* ========== Hero ========== */
+.hero {
   position: relative;
-  height: 500px;
+  overflow: hidden;
+  height: 280px;        /* compact — not full viewport */
+}
+
+/* sliding track */
+.slidesTrack {
+  display: flex;
+  height: 100%;
+  transition: transform 0.45s ease;
+}
+
+.slide {
+  flex: 0 0 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 60px;
   overflow: hidden;
 }
 
-/* Slideshow backgrounds */
-.hero-slideshow {
+/* slide color themes */
+.slide1 { background: linear-gradient(135deg, #fff8f5 0%, #ffe4d6 100%); }
+.slide2 { background: linear-gradient(135deg, #ff7043 0%, #e64a19 100%); }
+.slide3 { background: linear-gradient(135deg, #b0413e 0%, #7d2d2a 100%); }
+
+/* large decorative icon — positioned behind content */
+.slideIconBg {
   position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
+  right: 48px;
+  bottom: -10px;
+  font-size: 140px;
+  opacity: 0.07;
+  color: #b0413e;
+  pointer-events: none;
 }
 
-.hero-slide {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  opacity: 0;
-  animation: fade 15s infinite;
+.slide2 .slideIconBg,
+.slide3 .slideIconBg {
+  color: #fff;
 }
 
-.hero-slide:nth-child(1) {
-  background-image: url('https://t3.ftcdn.net/jpg/04/47/32/76/360_F_447327642_8GPzgX01OZsMAxbP1AsyjhreGmAMCHMD.jpg');
-  animation-delay: 0s;
-}
-.hero-slide:nth-child(2) {
-  background-image: url('https://t4.ftcdn.net/jpg/02/47/84/83/360_F_247848348_c9xNhBpQ2aAS4UuSkz52n3BaeY6bXhmz.jpg');
-  animation-delay: 5s;
-}
-.hero-slide:nth-child(3) {
-  background-image: url('https://static.vecteezy.com/system/resources/previews/020/115/455/large_2x/food-background-breakfast-with-yogurt-granola-or-muesli-strawberries-banner-image-for-website-photo.jpg');
-  animation-delay: 10s;
-}
-.hero-slide:nth-child(4){
-  background-image: url('https://thumbs.dreamstime.com/b/mexican-food-mix-colorful-background-mexico-66442136.jpg');
-  animation-delay: 15s ;
-}
-
-@keyframes fade {
-  0%, 100% { opacity: 0; }
-  10%, 30% { opacity: 1; }
-  40%, 90% { opacity: 0; }
-}
-
-/* Hero content overlay */
-.hero-overlay {
+.slideContent {
   position: relative;
   z-index: 1;
-  max-width: 800px;
-  margin: 0 auto;
-  background-color: rgba(255, 255, 255, 0.5);
-  padding: 40px 30px;
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-  top: 20%;
-  text-align: center;
+  max-width: 480px;
 }
 
-.hero-overlay h1 {
-  font-size: 3rem;
-  color: #b0413e;
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-
-.hero-overlay p {
-  font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 30px;
-}
-
-.explore-button {
-  background-color: #ff7043;
-  color: white;
-  padding: 12px 24px;
-  font-size: 1rem;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-}
-
-.explore-button:hover {
-  background-color: #e64a19;
-}
-
-/* ========== Features Section ========== */
-.features-section {
-  padding: 60px 20px;
-  background-color: #fff;
-  text-align: center;
-}
-
-.features-section h2 {
-  font-size: 2rem;
-  color: #b0413e;
-  margin-bottom: 30px;
-}
-
-.features {
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-  flex-wrap: wrap;
-}
-
-.feature-card {
-  background-color: #fff5f0;
-  padding: 20px;
-  border-radius: 12px;
-  width: 280px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-}
-
-.feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.feature-card h3 {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
+.slideTag {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
   color: #b0413e;
 }
 
-.feature-card p {
-  font-size: 0.95rem;
-  color: #555;
+.slide2 .slideTag,
+.slide3 .slideTag {
+  color: rgba(255, 255, 255, 0.8);
 }
 
-/* ========== Recipes Preview Section ========== */
-.home-recipes-preview {
-  margin-top: 60px;
-  text-align: center;
-}
-
-.home-recipes-preview h2 {
-  font-size: 1.8rem;
+.slideHeading {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 10px;
   color: #b0413e;
-  margin-bottom: 20px;
 }
 
-.recipe-preview-row {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
+.slide2 .slideHeading,
+.slide3 .slideHeading {
+  color: #fff;
 }
 
-.preview-card {
-  width: 200px;
-  background-color: #fff5f0;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
+.slideSub {
+  font-size: 0.88rem;
+  color: #7a3a38;
+  margin: 0 0 18px;
+  line-height: 1.5;
 }
 
-.preview-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+.slide2 .slideSub,
+.slide3 .slideSub {
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.preview-card img {
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.preview-card:hover img {
-  transform: scale(1.1);
-}
-
-.preview-card h4 {
-  padding: 10px;
-  font-size: 1rem;
-  color: #b0413e;
-  text-align: center;
-}
-
-.more-button {
-  margin-top: 20px;
+/* CTA button */
+.slideBtn {
   display: inline-block;
-  padding: 10px 20px;
-  background-color: #ff7043;
-  color: white;
+  padding: 9px 20px;
   border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
   text-decoration: none;
-  font-weight: bold;
-}
-
-.more-button:hover {
-  background-color: #e64a19;
-}
-
-/* ========== Footer ========== */
-/* ========== Redesigned Footer ========== */
-/* ========== Compact Redesigned Footer ========== */
-.site-footer {
-  background-color: #fff0eb;
-  padding: 50px 0;
-  margin-top: 60px;
-  border-top: 2px solid #ffd5c2;
-  font-family: 'Segoe UI', sans-serif;
-  color: #b0413e;
-  text-align: center;
-}
-
-.footer-content {
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.footer-logo-text {
-  margin-bottom: 15px;
-}
-
-.footer-logo-link {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #b0413e;
-  text-decoration: none;
-  font-family: 'Pacifico', cursive;
-  display: inline-block;
-}
-
-.footer-logo-link .logo-d {
-  font-size: 2.2rem;
-  margin: 0 4px;
-  color: #ff7043;
-}
-
-.footer-links {
-  margin-top: 10px;
-}
-
-.footer-links a {
-  margin: 0 12px;
-  text-decoration: none;
-  color: #b0413e;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.footer-links a:hover {
-  color: #ff7043;
-}
-
-.back-to-top {
-  margin-top: 20px;
-  padding: 10px 18px;
-  background-color: #ff7043;
-  color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.15s ease;
 }
 
-.back-to-top:hover {
-  background-color: #e64a19;
-  transform: translateY(-2px);
-}   
+.slideBtn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
 
+.slide1 .slideBtn {
+  background: #ff7043;
+  color: #fff;
+}
+
+.slide2 .slideBtn {
+  background: #fff;
+  color: #e64a19;
+}
+
+.slide3 .slideBtn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+}
+
+/* Cuisine chips inside slide 3 */
+.cuisineChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.cuisineChip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.cuisineChip:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* Dots */
+.dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(176, 65, 62, 0.25);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease;
+}
+
+.slide2 ~ .dots .dot,
+.slide3 ~ .dots .dot {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.dotActive {
+  background: #ff7043;
+}
+
+/* ========== Latest Section ========== */
+.latestSection {
+  padding: 28px 40px 52px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.latestHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.latestHeader h2 {
+  font-size: 1.3rem;
+  color: #b0413e;
+  font-weight: 700;
+  margin: 0;
+}
+
+.seeAll {
+  color: #ff7043;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.seeAll:hover { text-decoration: underline; }
+
+.latestGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+/* ========== States ========== */
+.loadingWrap {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #f0e0da;
+  border-top-color: #ff7043;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.stateText {
+  text-align: center;
+  color: #888;
+  padding: 20px 0;
+  font-size: 0.92rem;
+}
+
+.inlineLink {
+  background: none;
+  border: none;
+  color: #ff7043;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 900px) {
+  .latestSection {
+    padding: 22px 24px 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    height: 220px;
+  }
+
+  .slide {
+    padding: 0 24px;
+  }
+
+  .slideIconBg {
+    font-size: 90px;
+    right: 16px;
+  }
+
+  .slideHeading {
+    font-size: 1.2rem;
+  }
+
+  .slideSub {
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+  }
+
+  .slideBtn {
+    padding: 7px 16px;
+    font-size: 0.82rem;
+  }
+
+  .cuisineChips {
+    gap: 4px;
+  }
+
+  .cuisineChip {
+    font-size: 0.72rem;
+    padding: 3px 9px;
+  }
+
+  .latestSection {
+    padding: 18px 16px 36px;
+  }
+
+  .latestHeader h2 {
+    font-size: 1.1rem;
+  }
+
+  /* 2-col on mobile, not single column */
+  .latestGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero { height: 200px; }
+  .slideHeading { font-size: 1rem; }
+  .latestGrid { grid-template-columns: 1fr; }
+}

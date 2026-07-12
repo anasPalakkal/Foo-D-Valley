@@ -7,6 +7,7 @@ const recipeRoutes = require('./routes/recipeRoutes')
 const favoriteRoutes = require('./routes/favoriteRoutes')
 const profileRoutes = require('./routes/profileRoutes')
 const followRoutes = require('./routes/followRoutes')
+const { startDeletionJob } = require('./jobs/deletion.job')
 
 const app = express()
 
@@ -26,4 +27,5 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
+  startDeletionJob()
 })

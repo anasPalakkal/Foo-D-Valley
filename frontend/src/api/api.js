@@ -29,6 +29,21 @@ export const getMe = async () => {
 
 // ─── Recipes ──────────────────────────────────────────────────────────────────
 
+export const normalizeInternal = (recipe) => ({
+  id: recipe.id,
+  externalId: null,
+  name: recipe.title,
+  image: recipe.imageUrl || null,
+  category: recipe.category || null,
+  area: recipe.cuisine || null,
+  description: recipe.description || null,
+  ingredients: recipe.ingredients || [],
+  instructions: recipe.instructions || [],
+  isExternal: false,
+  author: recipe.author || null,
+  createdAt: recipe.createdAt || null,
+})
+
 export const getRecipes = async (params = {}) => {
   const { data } = await api.get('/recipes', { params })
   return data
@@ -55,6 +70,44 @@ export const updateRecipe = async (id, formData) => {
 
 export const deleteRecipe = async (id) => {
   const { data } = await api.delete(`/recipes/${id}`)
+  return data
+}
+
+// ─── Likes ────────────────────────────────────────────────────────────────────
+
+export const getLikeStatus = async (id, isExternal) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.get(`/recipes/${id}/likes`, { params })
+  return data
+}
+
+export const likeRecipe = async (id, isExternal) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.post(`/recipes/${id}/like`, null, { params })
+  return data
+}
+
+export const unlikeRecipe = async (id, isExternal) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.delete(`/recipes/${id}/like`, { params })
+  return data
+}
+
+// ─── Comments ─────────────────────────────────────────────────────────────────
+
+export const getComments = async (id, isExternal) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.get(`/recipes/${id}/comments`, { params })
+  return data
+}
+
+export const postComment = async (id, isExternal, content) => {
+  const params = isExternal ? { type: 'external' } : {}
+  const { data } = await api.post(`/recipes/${id}/comments`, { content }, { params })
+  return data
+}
+export const getBatchLikeCounts = async (recipeIds, externalIds) => {
+  const { data } = await api.post('/recipes/likes/batch', { recipeIds, externalIds })
   return data
 }
 
@@ -149,11 +202,21 @@ export const normalizeMeal = (meal) => {
       ? meal.strInstructions.split('\n').filter((s) => s.trim())
       : [],
     ingredients,
-    description: meal.strInstructions
-      ? meal.strInstructions.slice(0, 120).trim() + '...'
-      : 'No description available.',
+    description: null,
     isExternal: true,
   }
+}
+
+// ─── Account ──────────────────────────────────────────────────────────────────
+
+export const changePassword = async (currentPassword, newPassword) => {
+  const { data } = await api.put('/profile/me/password', { currentPassword, newPassword })
+  return data
+}
+
+export const deleteAccount = async (password) => {
+  const { data } = await api.delete('/profile/me', { data: { password } })
+  return data
 }
 
 export const searchMeals = async (query = '') => {
@@ -183,7 +246,7 @@ export const getCategories = async () => {
 export const getCuisines = async () => {
   const res = await fetch(`${MEAL_DB_BASE}/list.php?a=list`)
   const data = await res.json()
-  return data.meals || [] // each item has strArea
+  return data.meals || []
 }
 
 export default api

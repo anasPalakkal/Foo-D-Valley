@@ -1,0 +1,162 @@
+.card {
+  background-color: #fff5f0;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 24px rgba(176, 65, 62, 0.15);
+}
+
+/* ── Image ── */
+.imageWrap {
+  position: relative;
+  overflow: hidden;
+  height: 180px;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+  display: block;
+}
+
+.card:hover .image {
+  transform: scale(1.06);
+}
+
+/* ── Community badge only ── */
+.communityBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background-color: #ff7043;
+  color: #fff;
+}
+
+/* ── Body ── */
+.body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #b0413e;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Category / cuisine badges ── */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge {
+  font-size: 0.72rem;
+  background-color: #ffe8e0;
+  color: #b0413e;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* ── Author row ── */
+.author {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid #ffd5c2;
+}
+
+.authorAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.authorFallback {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #ff7043;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.authorName {
+  font-size: 0.78rem;
+  color: #888;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s ease;
+}
+
+.authorName:hover {
+  color: #ff7043;
+}
+
+.likesBadge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+
+.likesBadge svg {
+  font-size: 0.68rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .imageWrap { height: 140px; }
+  .title { font-size: 0.9rem; }
+  .body { padding: 10px 12px 12px; gap: 6px; }
+  .communityBadge { font-size: 0.62rem; padding: 2px 6px; }
+}
+
+@media (max-width: 480px) {
+  .imageWrap { height: 120px; }
+}

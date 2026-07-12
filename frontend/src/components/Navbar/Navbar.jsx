@@ -1,10 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaSearch, FaBars, FaTimes, FaClock } from 'react-icons/fa';
+import {
+  IoPersonOutline,
+  IoBookmarkOutline,
+  IoSettingsOutline,
+  IoLogOutOutline,
+} from 'react-icons/io5';
 import { useAuth } from '../../context/AuthContext';
+import { getCategories } from '../../api/api.js';
+import CategoryDropdown from '../CategoryDropdown/CategoryDropdown';
 import styles from './Navbar.module.css';
 
 const MAX_HISTORY = 5;
+const CATEGORY_CLOSE_DELAY = 200; // ms — small buffer so the panel doesn't flicker shut mid-mouse-travel
 
 const getSearchHistory = () => {
   try {
@@ -30,9 +39,34 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [searchHistory, setSearchHistory] = useState(getSearchHistory());
+  const [categoryList, setCategoryList] = useState([]);
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
+  const [desktopCategoriesOpen, setDesktopCategoriesOpen] = useState(false);
 
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
+  const closeTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    getCategories()
+      .then((cats) => setCategoryList(cats.map((c) => c.strCategory)))
+      .catch(() => setCategoryList([])); // non-critical — nav still works without it
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlSearch = params.get('search');
+
+    if (urlSearch !== null) {
+      if (urlSearch !== searchTerm) {
+        setSearchTerm(urlSearch);
+      }
+    } else if (location.pathname === '/recipes') {
+      if (!location.search && searchTerm !== '') {
+        setSearchTerm('');
+      }
+    }
+  }, [location.search, location.pathname, searchTerm, setSearchTerm]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -48,6 +82,8 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     setMenuOpen(false);
     setDropdownOpen(false);
     setSearchOpen(false);
+    setMobileCategoriesOpen(false);
+    setDesktopCategoriesOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -56,12 +92,33 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     }
   }, [searchOpen]);
 
+  // Clear any pending close timer on unmount so it doesn't fire against an unmounted component
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
+
+  const openDesktopCategories = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setDesktopCategoriesOpen(true);
+  };
+
+  const scheduleCloseDesktopCategories = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setDesktopCategoriesOpen(false);
+    }, CATEGORY_CLOSE_DELAY);
+  };
+
   const handleDesktopSearch = (e) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
     saveSearchHistory(searchTerm.trim());
     setSearchHistory(getSearchHistory());
-    if (location.pathname !== '/recipes') navigate('/recipes');
+    navigate(`/recipes?search=${encodeURIComponent(searchTerm.trim())}`);
   };
 
   const handleOverlaySearch = (e) => {
@@ -71,7 +128,7 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     setSearchHistory(getSearchHistory());
     setSearchTerm(searchInput.trim());
     setSearchOpen(false);
-    navigate('/recipes');
+    navigate(`/recipes?search=${encodeURIComponent(searchInput.trim())}`);
   };
 
   const handleHistoryClick = (term) => {
@@ -80,7 +137,7 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     saveSearchHistory(term);
     setSearchHistory(getSearchHistory());
     setSearchOpen(false);
-    navigate('/recipes');
+    navigate(`/recipes?search=${encodeURIComponent(term)}`);
   };
 
   const handleDeleteHistory = (e, term) => {
@@ -101,7 +158,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
   return (
     <>
       <nav className={styles.navbar}>
-        {/* Hamburger — mobile only */}
         <button
           className={styles.hamburger}
           onClick={() => setMenuOpen((prev) => !prev)}
@@ -109,24 +165,26 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
           {menuOpen ? <FaTimes /> : <FaBars />}
         </button>
 
-        {/* Logo */}
         <div className={styles.logo}>
           <Link to="/">
             Foo <span className={styles.logoD}>D</span> Valley
           </Link>
         </div>
 
-        {/* Desktop Nav Links */}
         <ul className={`${styles.navLinks} ${menuOpen ? styles.navLinksOpen : ''}`}>
           <li><Link to="/" className={isActive('/') ? styles.activeLink : ''}>Home</Link></li>
           <li><Link to="/recipes" className={isActive('/recipes') ? styles.activeLink : ''}>Recipes</Link></li>
-          <li><Link to="/saved" className={isActive('/saved') ? styles.activeLink : ''}>Favorites</Link></li>
+          <CategoryDropdown
+            categories={categoryList}
+            variant="desktop"
+            isOpen={desktopCategoriesOpen}
+            onOpen={openDesktopCategories}
+            onClose={scheduleCloseDesktopCategories}
+          />
           <li><Link to="/about" className={isActive('/about') ? styles.activeLink : ''}>About</Link></li>
         </ul>
 
-        {/* Right Section */}
         <div className={styles.rightSection}>
-          {/* Desktop Search */}
           <form className={styles.desktopSearch} onSubmit={handleDesktopSearch}>
             <div className={styles.searchWrapper}>
               <FaSearch className={styles.searchIcon} />
@@ -139,7 +197,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
             </div>
           </form>
 
-          {/* Mobile Search Icon */}
           <button
             className={styles.mobileSearchBtn}
             onClick={() => setSearchOpen(true)}
@@ -147,7 +204,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
             <FaSearch />
           </button>
 
-          {/* Auth */}
           {user ? (
             <div className={styles.avatarWrapper} ref={dropdownRef}>
               <button
@@ -166,17 +222,43 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
               {dropdownOpen && (
                 <div className={styles.dropdown}>
                   <div className={styles.dropdownHeader}>
-                    <p className={styles.dropdownName}>{user.name}</p>
-                    <div className={styles.dropdownCounts}>
-                      <span><strong>{user.followersCount ?? 0}</strong> Followers</span>
-                      <span><strong>{user.followingCount ?? 0}</strong> Following</span>
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.name} className={styles.dropdownAvatar} />
+                    ) : (
+                      <div className={styles.dropdownAvatarFallback}>
+                        {user.name?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className={styles.dropdownHeaderText}>
+                      <p className={styles.dropdownName}>{user.name}</p>
+                      <div className={styles.dropdownCounts}>
+                        <span><strong>{user.followersCount ?? 0}</strong> Followers</span>
+                        <span><strong>{user.followingCount ?? 0}</strong> Following</span>
+                      </div>
                     </div>
                   </div>
+
                   <div className={styles.dropdownDivider} />
-                  <Link to={`/profile/${user.id}`} className={styles.dropdownItem}>Profile</Link>
-                  <Link to="/settings" className={styles.dropdownItem}>Settings</Link>
+
+                  <div className={styles.dropdownBody}>
+                    <Link to={`/profile/${user.id}`} className={styles.dropdownItem}>
+                      <IoPersonOutline /> Profile
+                    </Link>
+                    <Link to="/saved" className={styles.dropdownItem}>
+                      <IoBookmarkOutline /> Saved Recipes
+                    </Link>
+                    <Link to="/settings" className={styles.dropdownItem}>
+                      <IoSettingsOutline /> Settings
+                    </Link>
+                  </div>
+
                   <div className={styles.dropdownDivider} />
-                  <button className={styles.dropdownLogout} onClick={handleLogout}>Logout</button>
+
+                  <div className={styles.dropdownBody}>
+                    <button className={styles.dropdownLogout} onClick={handleLogout}>
+                      <IoLogOutOutline /> Logout
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -186,19 +268,23 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
         </div>
       </nav>
 
-      {/* Mobile Menu Drawer */}
       {menuOpen && (
         <div className={styles.mobileMenu}>
           <ul className={styles.mobileMenuLinks}>
             <li><Link to="/" className={isActive('/') ? styles.mobileActiveLink : ''}>Home</Link></li>
             <li><Link to="/recipes" className={isActive('/recipes') ? styles.mobileActiveLink : ''}>Recipes</Link></li>
-            <li><Link to="/saved" className={isActive('/saved') ? styles.mobileActiveLink : ''}>Favorites</Link></li>
+            <CategoryDropdown
+              categories={categoryList}
+              variant="mobile"
+              isOpen={mobileCategoriesOpen}
+              onToggle={() => setMobileCategoriesOpen((prev) => !prev)}
+              onSelect={() => setMenuOpen(false)}
+            />
             <li><Link to="/about" className={isActive('/about') ? styles.mobileActiveLink : ''}>About</Link></li>
           </ul>
         </div>
       )}
 
-      {/* Search Overlay */}
       {searchOpen && (
         <div className={styles.searchOverlay} onClick={() => setSearchOpen(false)}>
           <div className={styles.searchOverlayInner} onClick={(e) => e.stopPropagation()}>

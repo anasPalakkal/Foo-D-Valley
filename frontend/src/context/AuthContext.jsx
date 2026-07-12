@@ -3,6 +3,13 @@ import { getMe, login as apiLogin, register as apiRegister } from '../api/api'
 
 const AuthContext = createContext(null)
 
+export const normalizeUser = (user) => ({
+  ...user,
+  followersCount: user._count?.followers ?? 0,
+  followingCount: user._count?.following ?? 0,
+  recipesCount: user._count?.recipes ?? 0,
+})
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -15,7 +22,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     getMe()
-      .then((data) => setUser(data))
+      .then((data) => setUser(normalizeUser(data)))
       .catch(() => localStorage.removeItem('token'))
       .finally(() => setLoading(false))
   }, [])
@@ -23,13 +30,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const data = await apiLogin(email, password)
     localStorage.setItem('token', data.token)
-    setUser(data.user)
+    setUser(normalizeUser(data.user))  // normalize here
   }
 
   const register = async (name, email, password) => {
     const data = await apiRegister(name, email, password)
     localStorage.setItem('token', data.token)
-    setUser(data.user)
+    setUser(normalizeUser(data.user))  // and here
   }
 
   const logout = () => {

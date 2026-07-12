@@ -6,7 +6,7 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
 }
 
-// Fields returned in every auth response — keep in sync with getMe
+// Fields returned in every auth/profile response — keep in sync across authController and profileController
 const userSelect = {
   id: true,
   name: true,
@@ -62,7 +62,7 @@ const login = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { ...userSelect, password: true },
+      select: { ...userSelect, password: true, isDeleted: true, scheduledDeletionAt: true },
     })
 
     if (!user) {
@@ -74,10 +74,20 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
+    // Reactivate if account was pending deletion — row still exists means
+    // the purge job hasn't run yet, so recovery is still valid
+    if (user.isDeleted) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { isDeleted: false, scheduledDeletionAt: null },
+      })
+      user.isDeleted = false
+      user.scheduledDeletionAt = null
+    }
+
     const token = generateToken(user.id)
 
-    // Strip password before sending
-    const { password: _pw, ...safeUser } = user
+    const { password: _pw, isDeleted, scheduledDeletionAt, ...safeUser } = user
 
     res.json({ token, user: safeUser })
   } catch (error) {
@@ -104,4 +114,4 @@ const getMe = async (req, res) => {
   }
 }
 
-module.exports = { register, login, getMe }
+module.exports = { register, login, getMe, userSelect }
