@@ -509,3 +509,150 @@
     margin-left: auto;
   }
 }
+/* ── Dropdown ── */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(176, 65, 62, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #ffe4d6;
+  min-width: 260px;
+  overflow: hidden;
+  z-index: 200;
+  animation: dropdownFade 0.18s ease;
+}
+
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: #fff8f5;
+}
+
+.dropdownAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.dropdownAvatarFallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ff7043;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dropdownHeaderText {
+  flex: 1;
+  min-width: 0;
+}
+
+.dropdownName {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #3a1f1e;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdownCounts {
+  display: flex;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: #8a6a63;
+}
+
+.dropdownCounts strong {
+  color: #b0413e;
+  font-weight: 700;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background-color: #ffe4d6;
+  margin: 0;
+}
+
+.dropdownBody {
+  padding: 6px;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #7a3a38;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dropdownItem svg {
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  color: #ff7043;
+}
+
+.dropdownItem:hover {
+  background-color: #ffe4d6;
+  color: #b0413e;
+}
+
+.dropdownLogout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #e74c3c;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.dropdownLogout svg {
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  color: #e74c3c;
+}
+
+.dropdownLogout:hover {
+  background-color: #fff0f0;
+}
+
+@media (max-width: 480px) {
+  .dropdown {
+    min-width: 240px;
+    right: -8px; /* keep panel inside viewport edge on narrow screens */
+  }
+}

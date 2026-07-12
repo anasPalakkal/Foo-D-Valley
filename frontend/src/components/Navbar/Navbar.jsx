@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaSearch, FaBars, FaTimes, FaClock } from 'react-icons/fa';
+import {
+  IoPersonOutline,
+  IoBookmarkOutline,
+  IoSettingsOutline,
+  IoLogOutOutline,
+} from 'react-icons/io5';
 import { useAuth } from '../../context/AuthContext';
 import { getCategories } from '../../api/api.js';
 import CategoryDropdown from '../CategoryDropdown/CategoryDropdown';
@@ -216,17 +222,43 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
               {dropdownOpen && (
                 <div className={styles.dropdown}>
                   <div className={styles.dropdownHeader}>
-                    <p className={styles.dropdownName}>{user.name}</p>
-                    <div className={styles.dropdownCounts}>
-                      <span><strong>{user.followersCount ?? 0}</strong> Followers</span>
-                      <span><strong>{user.followingCount ?? 0}</strong> Following</span>
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.name} className={styles.dropdownAvatar} />
+                    ) : (
+                      <div className={styles.dropdownAvatarFallback}>
+                        {user.name?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className={styles.dropdownHeaderText}>
+                      <p className={styles.dropdownName}>{user.name}</p>
+                      <div className={styles.dropdownCounts}>
+                        <span><strong>{user.followersCount ?? 0}</strong> Followers</span>
+                        <span><strong>{user.followingCount ?? 0}</strong> Following</span>
+                      </div>
                     </div>
                   </div>
+
                   <div className={styles.dropdownDivider} />
-                  <Link to={`/profile/${user.id}`} className={styles.dropdownItem}>Profile</Link>
-                  <Link to="/settings" className={styles.dropdownItem}>Settings</Link>
+
+                  <div className={styles.dropdownBody}>
+                    <Link to={`/profile/${user.id}`} className={styles.dropdownItem}>
+                      <IoPersonOutline /> Profile
+                    </Link>
+                    <Link to="/saved" className={styles.dropdownItem}>
+                      <IoBookmarkOutline /> Saved Recipes
+                    </Link>
+                    <Link to="/settings" className={styles.dropdownItem}>
+                      <IoSettingsOutline /> Settings
+                    </Link>
+                  </div>
+
                   <div className={styles.dropdownDivider} />
-                  <button className={styles.dropdownLogout} onClick={handleLogout}>Logout</button>
+
+                  <div className={styles.dropdownBody}>
+                    <button className={styles.dropdownLogout} onClick={handleLogout}>
+                      <IoLogOutOutline /> Logout
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
