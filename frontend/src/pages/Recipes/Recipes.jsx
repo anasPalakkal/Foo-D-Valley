@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { getCategories, getMealsByCategory, getRecipes, getCuisines, normalizeInternal, getBatchLikeCounts } from '../../api/api.js'
+import { getCategories, getMealsByCategory, getRecipes, getCuisines, getFollowing, normalizeInternal, getBatchLikeCounts } from '../../api/api.js'
+import { useAuth } from '../../context/AuthContext'
 import RecipeCard from '../../components/RecipeCard/RecipeCard'
 import RecipeFilters from '../../components/RecipeFilters/RecipeFilters'
 import Footer from '../../components/Footer/Footer'
@@ -13,6 +14,7 @@ const Recipes = ({ searchTerm }) => {
   const [allRecipes, setAllRecipes] = useState([])
   const [categoryList, setCategoryList] = useState([])
   const [cuisineList, setCuisineList] = useState([])
+  const [followingIds, setFollowingIds] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
@@ -20,6 +22,7 @@ const Recipes = ({ searchTerm }) => {
 
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { user } = useAuth()
 
   const filters = {
     category: searchParams.get('category') || DEFAULT_FILTERS.category,
@@ -34,6 +37,17 @@ const Recipes = ({ searchTerm }) => {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  // followingIds is user-specific and can change independently of the recipe fetch
+  useEffect(() => {
+    if (!user) {
+      setFollowingIds([])
+      return
+    }
+    getFollowing(user.id)
+      .then((list) => setFollowingIds(list.map((u) => u.id)))
+      .catch(() => setFollowingIds([]))
+  }, [user])
+
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true)
@@ -47,8 +61,6 @@ const Recipes = ({ searchTerm }) => {
 
         setCategoryList(categories.map((c) => c.strCategory))
 
-        // Normalize internal recipes first so their cuisine values can
-        // feed into the dropdown alongside TheMealDB's areas.
         const internalMeals = internalRaw.map(normalizeInternal)
 
         const allCuisineValues = [
@@ -77,7 +89,6 @@ const Recipes = ({ searchTerm }) => {
           a.name.localeCompare(b.name)
         )
 
-        // Attach like counts in one batched request instead of per-card N+1 calls
         try {
           const recipeIds = internalMeals.map((r) => r.id)
           const externalIds = uniqueExternal.map((r) => r.externalId)
@@ -90,7 +101,6 @@ const Recipes = ({ searchTerm }) => {
               : recipeCounts[r.id] || 0,
           }))
         } catch {
-          // Non-critical — cards just show 0 likes if this fails
           merged = merged.map((r) => ({ ...r, likesCount: 0 }))
         }
 
@@ -140,6 +150,9 @@ const Recipes = ({ searchTerm }) => {
 
     if (filters.source === 'community') result = result.filter((r) => !r.isExternal)
     if (filters.source === 'external') result = result.filter((r) => r.isExternal)
+    if (filters.source === 'following') {
+      result = result.filter((r) => !r.isExternal && followingIds.includes(r.author?.id))
+    }
 
     if (filters.category !== 'all') {
       result = result.filter(
@@ -171,7 +184,7 @@ const Recipes = ({ searchTerm }) => {
     }
 
     return result
-  }, [allRecipes, searchTerm, filters])
+  }, [allRecipes, searchTerm, filters, followingIds])
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -227,7 +240,9 @@ const Recipes = ({ searchTerm }) => {
 
         {!loading && !error && filtered.length === 0 && (
           <p className={styles['no-results']}>
-            No recipes found{searchTerm?.trim() ? ` for "${searchTerm}"` : ''}.
+            {filters.source === 'following'
+              ? "No recipes from people you follow yet."
+              : `No recipes found${searchTerm?.trim() ? ` for "${searchTerm}"` : ''}.`}
           </p>
         )}
 

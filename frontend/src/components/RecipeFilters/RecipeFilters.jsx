@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { FaSlidersH, FaTimes } from 'react-icons/fa'
 import CustomSelect from '../CustomSelect/CustomSelect'
+import { useAuth } from '../../context/AuthContext'
 import styles from './RecipeFilters.module.css'
 
 const SORT_OPTIONS = [
@@ -18,14 +19,23 @@ const RecipeFilters = ({
   onReset,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const { user } = useAuth()
 
   const hasActiveFilters =
     filters.category !== 'all' ||
     filters.cuisine !== 'all' ||
+    filters.source !== 'all' ||
     filters.sort !== 'az'
 
   const categoryOptions = [{ value: 'all', label: 'All Categories' }, ...categories.map((c) => ({ value: c, label: c }))]
   const cuisineOptions = [{ value: 'all', label: 'All Cuisines' }, ...cuisines.map((c) => ({ value: c, label: c }))]
+
+  // source is a single value - selecting one option clears the other
+  const toggleSource = (value) => {
+    onChange('source', filters.source === value ? 'all' : value)
+  }
+
+  const sourceLabel = filters.source === 'community' ? 'Community' : filters.source === 'following' ? 'Following' : null
 
   return (
     <>
@@ -50,10 +60,19 @@ const RecipeFilters = ({
 
           <button
             className={`${styles.communityBtn} ${filters.source === 'community' ? styles.communityBtnActive : ''}`}
-            onClick={() => onChange('source', filters.source === 'community' ? 'all' : 'community')}
+            onClick={() => toggleSource('community')}
           >
             Community Only
           </button>
+
+          {user && (
+            <button
+              className={`${styles.communityBtn} ${filters.source === 'following' ? styles.communityBtnActive : ''}`}
+              onClick={() => toggleSource('following')}
+            >
+              Following
+            </button>
+          )}
         </div>
 
         {hasActiveFilters && (
@@ -76,7 +95,7 @@ const RecipeFilters = ({
         <div className={styles.chips}>
           {filters.sort !== 'az' && (
             <span className={styles.chip}>
-              {filters.sort === 'za' ? 'Z–A' : 'Newest'}
+              {filters.sort === 'za' ? 'Z–A' : filters.sort === 'popular' ? 'Most Liked' : 'Newest'}
               <button onClick={() => onChange('sort', 'az')}><FaTimes /></button>
             </span>
           )}
@@ -92,9 +111,9 @@ const RecipeFilters = ({
               <button onClick={() => onChange('cuisine', 'all')}><FaTimes /></button>
             </span>
           )}
-          {filters.source === 'community' && (
+          {sourceLabel && (
             <span className={styles.chip}>
-              Community
+              {sourceLabel}
               <button onClick={() => onChange('source', 'all')}><FaTimes /></button>
             </span>
           )}
@@ -129,12 +148,22 @@ const RecipeFilters = ({
 
             <div className={styles.drawerSection}>
               <label className={styles.drawerLabel}>Source</label>
-              <button
-                className={`${styles.communityBtn} ${filters.source === 'community' ? styles.communityBtnActive : ''}`}
-                onClick={() => onChange('source', filters.source === 'community' ? 'all' : 'community')}
-              >
-                Community Only
-              </button>
+              <div className={styles.controls}>
+                <button
+                  className={`${styles.communityBtn} ${filters.source === 'community' ? styles.communityBtnActive : ''}`}
+                  onClick={() => toggleSource('community')}
+                >
+                  Community Only
+                </button>
+                {user && (
+                  <button
+                    className={`${styles.communityBtn} ${filters.source === 'following' ? styles.communityBtnActive : ''}`}
+                    onClick={() => toggleSource('following')}
+                  >
+                    Following
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className={styles.drawerFooter}>

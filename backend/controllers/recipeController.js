@@ -99,9 +99,9 @@ const updateRecipe = async (req, res) => {
   }
 }
 
-// GET /api/recipes?sort=popular
+// GET /api/recipes?sort=popular&limit=5
 const getRecipes = async (req, res) => {
-  const { sort } = req.query
+  const { sort, limit } = req.query
 
   try {
     const recipes = await prisma.recipe.findMany({
@@ -114,6 +114,7 @@ const getRecipes = async (req, res) => {
         sort === 'popular'
           ? { likes: { _count: 'desc' } }
           : { createdAt: 'desc' },
+      ...(limit && { take: parseInt(limit) }),
     })
 
     const result = req.user
@@ -188,4 +189,101 @@ const deleteRecipe = async (req, res) => {
   }
 }
 
-module.exports = { createRecipe, updateRecipe, getRecipes, getRecipeById, deleteRecipe }
+// GET /api/recipes/popular?limit=5
+const getPopularRecipes = async (req, res) => {
+  const limit = parseInt(req.query.limit) || 5
+
+  try {
+    const [topInternal, externalGroups] = await Promise.all([
+      prisma.recipe.findMany({
+        where: { isExternal: false, author: { isDeleted: false } },
+        include: {
+          author: { select: { id: true, name: true } },
+          _count: { select: { likes: true, comments: true } },
+        },
+        orderBy: { likes: { _count: 'desc' } },
+        take: limit,
+      }),
+      prisma.recipeLike.groupBy({
+        by: ['externalId'],
+        where: { isExternal: true, user: { isDeleted: false } },
+        _count: true,
+      }),
+    ])
+
+    const internalItems = topInternal.map((r) => ({
+      isExternal: false,
+      likesCount: r._count.likes,
+      recipe: r,
+    }))
+
+    const externalItems = externalGroups
+      .map((g) => ({ isExternal: true, likesCount: g._count, externalId: g.externalId }))
+      .sort((a, b) => b.likesCount - a.likesCount)
+      .slice(0, limit)
+
+    const merged = [...internalItems, ...externalItems]
+      .sort((a, b) => b.likesCount - a.likesCount)
+      .slice(0, limit)
+
+    res.json(merged)
+  } catch (error) {
+    console.error('Get popular recipes error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// GET /api/recipes/feed?limit=4
+const getFeed = async (req, res) => {
+  const limit = parseInt(req.query.limit) || 4
+
+  try {
+    let isFollowingFeed = false
+    let recipes = []
+
+    if (req.user) {
+      const following = await prisma.follow.findMany({
+        where: { followerId: req.user.id },
+        select: { followingId: true },
+      })
+      const followingIds = following.map((f) => f.followingId)
+
+      if (followingIds.length > 0) {
+        recipes = await prisma.recipe.findMany({
+          where: {
+            authorId: { in: followingIds },
+            isExternal: false,
+            author: { isDeleted: false },
+          },
+          include: {
+            author: { select: { id: true, name: true } },
+            _count: { select: { likes: true, comments: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+        })
+        isFollowingFeed = recipes.length > 0
+      }
+    }
+
+    // Fallback: guest, no follows, or followed users have no recipes
+    if (!isFollowingFeed) {
+      recipes = await prisma.recipe.findMany({
+        where: { isExternal: false, author: { isDeleted: false } },
+        include: {
+          author: { select: { id: true, name: true } },
+          _count: { select: { likes: true, comments: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      })
+    }
+
+    res.json({ isFollowingFeed, recipes })
+  } catch (error) {
+    console.error('Get feed error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+module.exports = { createRecipe, updateRecipe, getRecipes, getRecipeById, deleteRecipe, getPopularRecipes, getFeed }

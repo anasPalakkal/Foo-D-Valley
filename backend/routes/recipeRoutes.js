@@ -6,13 +6,18 @@ const {
   getRecipes,
   getRecipeById,
   deleteRecipe,
+  getPopularRecipes,
+  getFeed
 } = require('../controllers/recipeController')
+
 const { getLikeStatus, likeRecipe, unlikeRecipe, getBatchLikeCounts } = require('../controllers/likeController')
 const { getComments, createComment } = require('../controllers/commentController')
 const { protect, optionalProtect } = require('../middleware/authMiddleware')
 const { upload, handleUploadError } = require('../lib/cloudinary')
 
 router.get('/', optionalProtect, getRecipes)
+router.get('/popular', getPopularRecipes)
+router.get('/feed', optionalProtect, getFeed)
 router.get('/:id', optionalProtect, getRecipeById)
 router.post('/', protect, upload.single('image'), handleUploadError, createRecipe)
 router.put('/:id', protect, upload.single('image'), handleUploadError, updateRecipe)

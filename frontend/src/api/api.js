@@ -42,6 +42,9 @@ export const normalizeInternal = (recipe) => ({
   isExternal: false,
   author: recipe.author || null,
   createdAt: recipe.createdAt || null,
+  likesCount: recipe._count?.likes ?? 0,
+  commentsCount: recipe._count?.comments ?? 0,
+  isLiked: recipe.isLiked ?? false,
 })
 
 export const getRecipes = async (params = {}) => {
@@ -70,6 +73,16 @@ export const updateRecipe = async (id, formData) => {
 
 export const deleteRecipe = async (id) => {
   const { data } = await api.delete(`/recipes/${id}`)
+  return data
+}
+
+export const getPopularRecipes = async (limit = 5) => {
+  const { data } = await api.get('/recipes/popular', { params: { limit } })
+  return data
+}
+
+export const getFeed = async (limit = 4) => {
+  const { data } = await api.get('/recipes/feed', { params: { limit } })
   return data
 }
 
@@ -174,6 +187,11 @@ export const followUser = async (userId) => {
 
 export const unfollowUser = async (userId) => {
   const { data } = await api.delete(`/users/${userId}/follow`)
+  return data
+}
+
+export const getFollowing = async (userId) => {
+  const { data } = await api.get(`/users/${userId}/following`)
   return data
 }
 

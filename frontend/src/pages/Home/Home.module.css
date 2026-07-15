@@ -6,10 +6,9 @@
 .hero {
   position: relative;
   overflow: hidden;
-  height: 280px;        /* compact — not full viewport */
+  height: 280px;
 }
 
-/* sliding track */
 .slidesTrack {
   display: flex;
   height: 100%;
@@ -26,12 +25,10 @@
   overflow: hidden;
 }
 
-/* slide color themes */
 .slide1 { background: linear-gradient(135deg, #fff8f5 0%, #ffe4d6 100%); }
 .slide2 { background: linear-gradient(135deg, #ff7043 0%, #e64a19 100%); }
 .slide3 { background: linear-gradient(135deg, #b0413e 0%, #7d2d2a 100%); }
 
-/* large decorative icon — positioned behind content */
 .slideIconBg {
   position: absolute;
   right: 48px;
@@ -93,7 +90,6 @@
   color: rgba(255, 255, 255, 0.85);
 }
 
-/* CTA button */
 .slideBtn {
   display: inline-block;
   padding: 9px 20px;
@@ -127,7 +123,6 @@
   border: 1.5px solid rgba(255, 255, 255, 0.45);
 }
 
-/* Cuisine chips inside slide 3 */
 .cuisineChips {
   display: flex;
   flex-wrap: wrap;
@@ -150,7 +145,6 @@
   background: rgba(255, 255, 255, 0.28);
 }
 
-/* Dots */
 .dots {
   position: absolute;
   bottom: 10px;
@@ -181,21 +175,21 @@
   background: #ff7043;
 }
 
-/* ========== Latest Section ========== */
-.latestSection {
+/* ========== Recipe Sections (Latest + Popular share this) ========== */
+.section {
   padding: 28px 40px 52px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.latestHeader {
+.sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
 }
 
-.latestHeader h2 {
+.sectionHeader h2 {
   font-size: 1.3rem;
   color: #b0413e;
   font-weight: 700;
@@ -211,9 +205,9 @@
 
 .seeAll:hover { text-decoration: underline; }
 
-.latestGrid {
+.cardsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 20px;
 }
 
@@ -252,10 +246,19 @@
   font-size: inherit;
   text-decoration: underline;
 }
+.feedHint {
+  font-size: 0.85rem;
+  color: #7a3a38;
+  background: #fff8f5;
+  border: 1px solid #ffe4d6;
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin: -6px 0 16px;
+}
 
 /* ========== Responsive ========== */
 @media (max-width: 900px) {
-  .latestSection {
+  .section {
     padding: 22px 24px 40px;
   }
 }
@@ -297,23 +300,41 @@
     padding: 3px 9px;
   }
 
-  .latestSection {
+  .section {
     padding: 18px 16px 36px;
   }
 
-  .latestHeader h2 {
+  .sectionHeader h2 {
     font-size: 1.1rem;
   }
 
-  /* 2-col on mobile, not single column */
-  .latestGrid {
-    grid-template-columns: repeat(2, 1fr);
+  /* Horizontal scroll-snap row instead of a wrapping grid */
+  .cardsGrid {
+    display: flex;
+    grid-template-columns: unset;
+    overflow-x: auto;
     gap: 12px;
+    padding-bottom: 6px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .cardsGrid::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* each RecipeCard's root element becomes a fixed-width scroll item */
+  .cardsGrid > * {
+    flex: 0 0 68%;
+    max-width: 68%;
+    scroll-snap-align: start;
   }
 }
 
-@media (max-width: 360px) {
-  .hero { height: 200px; }
-  .slideHeading { font-size: 1rem; }
-  .latestGrid { grid-template-columns: 1fr; }
+@media (max-width: 480px) {
+  .cardsGrid > * {
+    flex: 0 0 78%;
+    max-width: 78%;
+  }
 }
