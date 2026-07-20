@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { uploadRecipe, updateRecipe, getCategories, getCuisines } from '../../api/api'
+import CustomSelect from '../CustomSelect/CustomSelect'
 import styles from './PostRecipeModal.module.css'
 import { IoClose, IoAdd, IoTrash, IoImageOutline } from 'react-icons/io5'
 
@@ -23,6 +24,9 @@ const PostRecipeModal = ({ onClose, onSuccess, editRecipe = null }) => {
   const fileRef = useRef()
 
   const isEdit = !!editRecipe
+
+  const categoryOptions = categories.map((c) => ({ value: c.strCategory, label: c.strCategory }))
+  const cuisineOptions = cuisines.map((c) => ({ value: c.strArea, label: c.strArea }))
 
   useEffect(() => {
     // Prefill form if editing
@@ -172,33 +176,23 @@ const PostRecipeModal = ({ onClose, onSuccess, editRecipe = null }) => {
           <div className={styles.row}>
             <div className={styles.col}>
               <label className={styles.label}>Category</label>
-              <select
-                className={styles.select}
+              <CustomSelect
+                fullWidth
                 value={form.category}
-                onChange={(e) => handleField('category', e.target.value)}
-              >
-                <option value="">Select category</option>
-                {categories.map((c) => (
-                  <option key={c.strCategory} value={c.strCategory}>
-                    {c.strCategory}
-                  </option>
-                ))}
-              </select>
+                options={categoryOptions}
+                onChange={(v) => handleField('category', v)}
+                placeholder="Select category"
+              />
             </div>
             <div className={styles.col}>
               <label className={styles.label}>Cuisine</label>
-              <select
-                className={styles.select}
+              <CustomSelect
+                fullWidth
                 value={form.cuisine}
-                onChange={(e) => handleField('cuisine', e.target.value)}
-              >
-                <option value="">Select cuisine</option>
-                {cuisines.map((c) => (
-                  <option key={c.strArea} value={c.strArea}>
-                    {c.strArea}
-                  </option>
-                ))}
-              </select>
+                options={cuisineOptions}
+                onChange={(v) => handleField('cuisine', v)}
+                placeholder="Select cuisine"
+              />
             </div>
           </div>
 

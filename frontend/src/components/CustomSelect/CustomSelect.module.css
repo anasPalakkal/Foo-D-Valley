@@ -45,6 +45,17 @@
   transform: rotate(180deg);
 }
 
+/* ── fullWidth modifier — used where CustomSelect replaces a form
+   field (e.g. PostRecipeModal) rather than sitting in a filter bar ── */
+.fullWidth {
+  display: block;
+  width: 100%;
+}
+
+.fullWidth .trigger {
+  width: 100%;
+}
+
 /* ── Dropdown menu ── */
 .menu {
   position: absolute;

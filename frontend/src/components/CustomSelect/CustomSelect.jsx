@@ -8,7 +8,7 @@ import styles from './CustomSelect.module.css'
  *
  * options: [{ value: string, label: string }] or string[]
  */
-const CustomSelect = ({ value, options, onChange, placeholder = 'Select' }) => {
+const CustomSelect = ({ value, options, onChange, placeholder = 'Select', fullWidth = false }) => {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -33,7 +33,7 @@ const CustomSelect = ({ value, options, onChange, placeholder = 'Select' }) => {
   }
 
   return (
-    <div className={styles.wrap} ref={ref}>
+    <div className={`${styles.wrap} ${fullWidth ? styles.fullWidth : ''}`} ref={ref}>
       <button
         type="button"
         className={`${styles.trigger} ${open ? styles.triggerOpen : ''}`}
