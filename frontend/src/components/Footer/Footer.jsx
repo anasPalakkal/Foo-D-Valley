@@ -24,19 +24,19 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Nav column */}
-        <div className={styles.navCol}>
-          <h4 className={styles.colHeading}>Explore</h4>
+        {/* Nav column - accordion on mobile, static/expanded on desktop (forced open via CSS) */}
+        <details className={styles.navCol} open>
+          <summary className={styles.colHeading}>Explore</summary>
           <ul className={styles.navList}>
             <li><Link to="/">Home</Link></li>
             <li><Link to="/recipes">Recipes</Link></li>
             <li><Link to="/about">About</Link></li>
           </ul>
-        </div>
+        </details>
 
         {/* Contact / info column */}
-        <div className={styles.navCol}>
-          <h4 className={styles.colHeading}>Get in Touch</h4>
+        <details className={styles.navCol} open>
+          <summary className={styles.colHeading}>Get in Touch</summary>
           <ul className={styles.navList}>
             <li>
               <a href="mailto:hello@foodvalley.com">hello@foodvalley.com</a>
@@ -51,18 +51,27 @@ const Footer = () => {
             <FaUtensils className={styles.utensilIcon} />
             <span>Community recipes uploaded by our users</span>
           </div>
-        </div>
+        </details>
 
       </div>
 
       {/* Bottom bar */}
       <div className={styles.bottomBar}>
-        <p className={styles.copyright}>
-          © {new Date().getFullYear()} Foo D Valley. All rights reserved.
-        </p>
+        <div className={styles.legalRow}>
+          <p className={styles.copyright}>
+            © {new Date().getFullYear()} Foo D Valley. All rights reserved.
+          </p>
+          {/* TODO: point these at real routes once the pages exist. Do not remove -
+              a public app collecting accounts and user uploads needs these before launch. */}
+          <div className={styles.legalLinks}>
+            <Link to="/privacy">Privacy Policy</Link>
+            <span className={styles.legalDivider} aria-hidden="true">•</span>
+            <Link to="/terms">Terms of Service</Link>
+          </div>
+        </div>
         <button className={styles.backToTop} onClick={scrollToTop} aria-label="Back to top">
           <FaArrowUp />
-          <span>Back to top</span>
+          <span className={styles.backToTopLabel}>Back to top</span>
         </button>
       </div>
     </footer>
