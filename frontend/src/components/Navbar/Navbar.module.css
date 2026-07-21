@@ -20,7 +20,13 @@
   gap: 16px;
 }
 
-/* ── Logo ── */
+/* ── Logo — shrinks and truncates before it breaks layout ── */
+.logo {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .logo a {
   font-size: 1.8rem;
   font-weight: bold;
@@ -30,6 +36,8 @@
   display: flex;
   align-items: center;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logoD {
@@ -45,6 +53,7 @@
   gap: 24px;
   margin: 0;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .navLinks a {
@@ -71,64 +80,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-/* ── Desktop Search ── */
-.desktopSearch {
-  display: flex;
-  align-items: center;
-}
-
-.searchWrapper {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 24px;
-  padding: 6px 14px;
-  gap: 8px;
-  transition: background 0.2s ease;
-}
-
-.searchWrapper:focus-within {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.6);
-}
-
-.searchIcon {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.85rem;
   flex-shrink: 0;
-}
-
-.searchWrapper input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: white;
-  font-size: 0.9rem;
-  width: 160px;
-  transition: width 0.3s ease;
-}
-
-.searchWrapper input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.searchWrapper:focus-within input {
-  width: 200px;
-}
-
-/* ── Mobile Search Button ── */
-.mobileSearchBtn {
-  display: none;
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 4px;
 }
 
 /* ── Login Button ── */
@@ -184,332 +136,7 @@
   border: 2px solid rgba(255, 255, 255, 0.6);
 }
 
-/* ── Dropdown ── */
-.dropdown {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  min-width: 210px;
-  overflow: hidden;
-  z-index: 200;
-  animation: dropdownFade 0.15s ease;
-}
-
-@keyframes dropdownFade {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.dropdownHeader {
-  padding: 14px 16px 10px;
-}
-
-.dropdownName {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: #333;
-  margin-bottom: 6px;
-}
-
-.dropdownCounts {
-  display: flex;
-  gap: 12px;
-  font-size: 0.8rem;
-  color: #666;
-}
-
-.dropdownCounts strong {
-  color: #ff5722;
-}
-
-.dropdownDivider {
-  height: 1px;
-  background-color: #f0f0f0;
-  margin: 4px 0;
-}
-
-.dropdownItem {
-  display: block;
-  padding: 10px 16px;
-  font-size: 0.9rem;
-  color: #333;
-  text-decoration: none;
-  font-weight: 500;
-  transition: background-color 0.15s ease;
-}
-
-.dropdownItem:hover {
-  background-color: #fff5f0;
-  color: #ff5722;
-}
-
-.dropdownLogout {
-  display: block;
-  width: 100%;
-  padding: 10px 16px;
-  font-size: 0.9rem;
-  color: #e53e3e;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.15s ease;
-}
-
-.dropdownLogout:hover {
-  background-color: #fff5f5;
-}
-
-/* ── Hamburger ── */
-.hamburger {
-  display: none;
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 1.4rem;
-  cursor: pointer;
-  padding: 4px;
-  flex-shrink: 0;
-}
-
-/* ── Mobile Menu Drawer ── */
-.mobileMenu {
-  position: absolute;
-  top: 60px;
-  left: 0;
-  background: linear-gradient(180deg, #ff7a3d, #ff5722); /* match navbar */
-  border-radius: 0 0 16px 0;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  z-index: 99;
-  width: 220px;
-  overflow: hidden;
-  animation: menuSlide 0.2s ease;
-}
-
-@keyframes menuSlide {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.mobileMenuLinks {
-  list-style: none;
-  padding: 8px 0;
-  margin: 0;
-}
-
-.mobileMenuLinks li a {
-  display: block;
-  padding: 12px 20px;
-  color: white; /* was #333 */
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.mobileMenuLinks li a:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #ffd6cc;
-}
-
-.mobileActiveLink {
-  color: #ffd6cc !important;
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* ── Search Overlay ── */
-.searchOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 300;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 80px;
-  animation: overlayFade 0.2s ease;
-}
-
-@keyframes overlayFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.searchOverlayInner {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 480px;
-  overflow: hidden;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
-  animation: overlaySlide 0.2s ease;
-}
-
-@keyframes overlaySlide {
-  from { opacity: 0; transform: translateY(-16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.overlayForm {
-  display: flex;
-  align-items: center;
-  padding: 14px 16px;
-  gap: 10px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.overlaySearchIcon {
-  color: #ff5722;
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.overlayInput {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 1rem;
-  color: #333;
-  background: transparent;
-}
-
-.overlayInput::placeholder {
-  color: #aaa;
-}
-
-.overlayClose {
-  background: transparent;
-  border: none;
-  color: #999;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 4px;
-  flex-shrink: 0;
-  transition: color 0.15s ease;
-}
-
-.overlayClose:hover {
-  color: #333;
-}
-
-/* ── Search History ── */
-.historyList {
-  padding: 8px 0;
-}
-
-.historyLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 6px 16px;
-}
-
-.historyItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.historyItem:hover {
-  background-color: #fff5f0;
-}
-
-.historyIcon {
-  color: #ccc;
-  font-size: 0.85rem;
-  flex-shrink: 0;
-}
-
-.historyItem span {
-  flex: 1;
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.historyDelete {
-  background: transparent;
-  border: none;
-  color: #ccc;
-  font-size: 0.8rem;
-  cursor: pointer;
-  padding: 2px 4px;
-  transition: color 0.15s ease;
-}
-
-.historyDelete:hover {
-  color: #e53e3e;
-}
-
-/* ── Responsive ── */
-@media (max-width: 768px) {
-  .hamburger {
-    display: flex;
-    align-items: center;
-  }
-
-  .logo a {
-    font-size: 1.5rem;
-    justify-content: flex-start;
-  }
-
-  .logoD {
-    font-size: 1.9rem;
-  }
-
-  /* Hide desktop nav links — mobile uses drawer */
-  .navLinks {
-    display: none;
-  }
-
-  .desktopSearch {
-    display: none;
-  }
-
-  .mobileSearchBtn {
-    display: flex;
-    align-items: center;
-  }
-
-  .btnLogin {
-    padding: 5px 12px;
-    font-size: 0.85rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .navbar {
-    padding: 10px 16px;
-  }
-
-  .logo a {
-    font-size: 1.3rem;
-  }
-
-  .logoD {
-    font-size: 1.7rem;
-  }
-}
-@media (max-width: 768px) {
-  .navbar {
-    justify-content: flex-start;
-    gap: 12px;
-  }
-
-  .rightSection {
-    margin-left: auto;
-  }
-}
-/* ── Dropdown ── */
+/* ── Account dropdown ── */
 .dropdown {
   position: absolute;
   top: calc(100% + 14px);
@@ -654,5 +281,117 @@
   .dropdown {
     min-width: 240px;
     right: -8px; /* keep panel inside viewport edge on narrow screens */
+  }
+}
+
+/* ── Hamburger ── */
+.hamburger {
+  display: none;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Mobile drawer ──
+   position: fixed (not absolute) — anchors to the viewport, not the
+   document. With absolute + a scrolled page, this rendered off-screen
+   at the original top of the page. Fixed keeps it pinned right below
+   the sticky navbar regardless of scroll position. */
+.mobileMenu {
+  position: fixed;
+  top: 60px; /* navbar height */
+  left: 0;
+  background: linear-gradient(90deg, #ff7a3d, #ff5722); /* same as navbar, no extra shading */
+  border-radius: 0 0 16px 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 99;
+  width: 220px;
+  overflow: hidden;
+  animation: menuSlide 0.2s ease;
+}
+
+@keyframes menuSlide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mobileMenuLinks {
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+}
+
+.mobileMenuLinks li a {
+  display: block;
+  padding: 12px 20px;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mobileMenuLinks li a:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffd6cc;
+}
+
+.mobileActiveLink {
+  color: #ffd6cc !important;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .hamburger {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo a {
+    font-size: 1.5rem;
+  }
+
+  .logoD {
+    font-size: 1.9rem;
+  }
+
+  /* mobile uses drawer instead */
+  .navLinks {
+    display: none;
+  }
+
+  .btnLogin {
+    padding: 5px 12px;
+    font-size: 0.85rem;
+  }
+
+  .navbar {
+    justify-content: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+
+  .logo a {
+    font-size: 1.15rem;
+  }
+
+  .logoD {
+    font-size: 1.4rem;
+    margin: 0 2px;
+  }
+
+  .mobileMenu {
+    top: 54px; /* navbar shrinks slightly at this padding */
   }
 }

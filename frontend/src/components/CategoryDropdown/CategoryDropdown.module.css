@@ -6,7 +6,19 @@
 
 .desktopTrigger {
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.desktopTrigger::after {
+  content: '▾';
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+}
+
+.desktopWrapper:hover .desktopTrigger::after {
+  transform: rotate(180deg);
 }
 
 .desktopPanel {
@@ -15,8 +27,10 @@
   left: 0;
   right: 0;
   width: 100%;
-  background: #fff8f5;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(176, 65, 62, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid #ffe4d6;
+  border-radius: 0 0 20px 20px;
   z-index: 150; /* above .navbar (100), below .dropdown (200) and search overlay (300) */
   opacity: 0;
   visibility: hidden;
@@ -132,6 +146,8 @@
   margin: 0;
   padding: 0 0 6px;
   background: rgba(0, 0, 0, 0.08);
+  max-height: 220px; /* contained scroll, not endless drawer growth */
+  overflow-y: auto;
 }
 
 .mobileList li a {

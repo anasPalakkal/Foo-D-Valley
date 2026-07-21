@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaSearch, FaBars, FaTimes, FaClock } from 'react-icons/fa';
+import { FaBars, FaTimes } from 'react-icons/fa';
 import {
   IoPersonOutline,
   IoBookmarkOutline,
@@ -10,24 +10,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { getCategories } from '../../api/api.js';
 import CategoryDropdown from '../CategoryDropdown/CategoryDropdown';
+import SearchBar from '../SearchBar/SearchBar';
 import styles from './Navbar.module.css';
 
-const MAX_HISTORY = 5;
-const CATEGORY_CLOSE_DELAY = 200; // ms — small buffer so the panel doesn't flicker shut mid-mouse-travel
-
-const getSearchHistory = () => {
-  try {
-    return JSON.parse(localStorage.getItem('searchHistory')) || [];
-  } catch {
-    return [];
-  }
-};
-
-const saveSearchHistory = (term) => {
-  const history = getSearchHistory().filter((t) => t !== term);
-  history.unshift(term);
-  localStorage.setItem('searchHistory', JSON.stringify(history.slice(0, MAX_HISTORY)));
-};
+const CATEGORY_CLOSE_DELAY = 200; // hover exit buffer
 
 const Navbar = ({ searchTerm, setSearchTerm }) => {
   const location = useLocation();
@@ -36,38 +22,36 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
-  const [searchHistory, setSearchHistory] = useState(getSearchHistory());
   const [categoryList, setCategoryList] = useState([]);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [desktopCategoriesOpen, setDesktopCategoriesOpen] = useState(false);
 
   const dropdownRef = useRef(null);
-  const searchInputRef = useRef(null);
   const closeTimeoutRef = useRef(null);
 
+  // category list — non-critical
   useEffect(() => {
     getCategories()
       .then((cats) => setCategoryList(cats.map((c) => c.strCategory)))
-      .catch(() => setCategoryList([])); // non-critical — nav still works without it
+      .catch(() => setCategoryList([]));
   }, []);
 
+  // sync searchTerm FROM the url only — never the reverse.
+  // (searchTerm was previously a dependency here, which caused every
+  // keystroke to re-trigger this effect and snap the input back to
+  // whatever was already in the url — see commit fixing search bug)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const urlSearch = params.get('search');
 
     if (urlSearch !== null) {
-      if (urlSearch !== searchTerm) {
-        setSearchTerm(urlSearch);
-      }
+      setSearchTerm(urlSearch);
     } else if (location.pathname === '/recipes') {
-      if (!location.search && searchTerm !== '') {
-        setSearchTerm('');
-      }
+      setSearchTerm('');
     }
-  }, [location.search, location.pathname, searchTerm, setSearchTerm]);
+  }, [location.search, location.pathname, setSearchTerm]);
 
+  // account dropdown outside-click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -78,21 +62,15 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // close everything on route change
   useEffect(() => {
     setMenuOpen(false);
     setDropdownOpen(false);
-    setSearchOpen(false);
     setMobileCategoriesOpen(false);
     setDesktopCategoriesOpen(false);
   }, [location.pathname]);
 
-  useEffect(() => {
-    if (searchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [searchOpen]);
-
-  // Clear any pending close timer on unmount so it doesn't fire against an unmounted component
+  // clear pending hover-close timer on unmount
   useEffect(() => {
     return () => {
       if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
@@ -113,40 +91,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
     }, CATEGORY_CLOSE_DELAY);
   };
 
-  const handleDesktopSearch = (e) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
-    saveSearchHistory(searchTerm.trim());
-    setSearchHistory(getSearchHistory());
-    navigate(`/recipes?search=${encodeURIComponent(searchTerm.trim())}`);
-  };
-
-  const handleOverlaySearch = (e) => {
-    e.preventDefault();
-    if (!searchInput.trim()) return;
-    saveSearchHistory(searchInput.trim());
-    setSearchHistory(getSearchHistory());
-    setSearchTerm(searchInput.trim());
-    setSearchOpen(false);
-    navigate(`/recipes?search=${encodeURIComponent(searchInput.trim())}`);
-  };
-
-  const handleHistoryClick = (term) => {
-    setSearchInput(term);
-    setSearchTerm(term);
-    saveSearchHistory(term);
-    setSearchHistory(getSearchHistory());
-    setSearchOpen(false);
-    navigate(`/recipes?search=${encodeURIComponent(term)}`);
-  };
-
-  const handleDeleteHistory = (e, term) => {
-    e.stopPropagation();
-    const updated = getSearchHistory().filter((t) => t !== term);
-    localStorage.setItem('searchHistory', JSON.stringify(updated));
-    setSearchHistory(updated);
-  };
-
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -158,6 +102,7 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
   return (
     <>
       <nav className={styles.navbar}>
+        {/* mobile menu toggle */}
         <button
           className={styles.hamburger}
           onClick={() => setMenuOpen((prev) => !prev)}
@@ -165,12 +110,14 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
           {menuOpen ? <FaTimes /> : <FaBars />}
         </button>
 
+        {/* brand logo */}
         <div className={styles.logo}>
           <Link to="/">
             Foo <span className={styles.logoD}>D</span> Valley
           </Link>
         </div>
 
+        {/* desktop nav links */}
         <ul className={`${styles.navLinks} ${menuOpen ? styles.navLinksOpen : ''}`}>
           <li><Link to="/" className={isActive('/') ? styles.activeLink : ''}>Home</Link></li>
           <li><Link to="/recipes" className={isActive('/recipes') ? styles.activeLink : ''}>Recipes</Link></li>
@@ -185,25 +132,9 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
         </ul>
 
         <div className={styles.rightSection}>
-          <form className={styles.desktopSearch} onSubmit={handleDesktopSearch}>
-            <div className={styles.searchWrapper}>
-              <FaSearch className={styles.searchIcon} />
-              <input
-                type="text"
-                placeholder="Search recipes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </form>
+          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
-          <button
-            className={styles.mobileSearchBtn}
-            onClick={() => setSearchOpen(true)}
-          >
-            <FaSearch />
-          </button>
-
+          {/* account menu */}
           {user ? (
             <div className={styles.avatarWrapper} ref={dropdownRef}>
               <button
@@ -268,6 +199,7 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
         </div>
       </nav>
 
+      {/* mobile drawer */}
       {menuOpen && (
         <div className={styles.mobileMenu}>
           <ul className={styles.mobileMenuLinks}>
@@ -282,53 +214,6 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
             />
             <li><Link to="/about" className={isActive('/about') ? styles.mobileActiveLink : ''}>About</Link></li>
           </ul>
-        </div>
-      )}
-
-      {searchOpen && (
-        <div className={styles.searchOverlay} onClick={() => setSearchOpen(false)}>
-          <div className={styles.searchOverlayInner} onClick={(e) => e.stopPropagation()}>
-            <form className={styles.overlayForm} onSubmit={handleOverlaySearch}>
-              <FaSearch className={styles.overlaySearchIcon} />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search recipes..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className={styles.overlayInput}
-              />
-              <button
-                type="button"
-                className={styles.overlayClose}
-                onClick={() => setSearchOpen(false)}
-              >
-                <FaTimes />
-              </button>
-            </form>
-
-            {searchHistory.length > 0 && (
-              <div className={styles.historyList}>
-                <p className={styles.historyLabel}>Recent Searches</p>
-                {searchHistory.map((term) => (
-                  <div
-                    key={term}
-                    className={styles.historyItem}
-                    onClick={() => handleHistoryClick(term)}
-                  >
-                    <FaClock className={styles.historyIcon} />
-                    <span>{term}</span>
-                    <button
-                      className={styles.historyDelete}
-                      onClick={(e) => handleDeleteHistory(e, term)}
-                    >
-                      <FaTimes />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       )}
     </>
