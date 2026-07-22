@@ -15,8 +15,11 @@ model User {
   bio                 String?
   bannerUrl           String?
   createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
   isDeleted           Boolean   @default(false)
   scheduledDeletionAt DateTime?
+
+  isVerified Boolean @default(false)
 
   favorites  Favorite[]
   recipes    Recipe[]
@@ -27,6 +30,52 @@ model User {
 
   recipeLikes    RecipeLike[]
   recipeComments RecipeComment[]
+
+  refreshTokens       RefreshToken[]
+  verificationTokens  VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String?
+  createdByIp String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Follow {

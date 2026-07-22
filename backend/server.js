@@ -8,11 +8,16 @@ const favoriteRoutes = require('./routes/favoriteRoutes')
 const profileRoutes = require('./routes/profileRoutes')
 const followRoutes = require('./routes/followRoutes')
 const { startDeletionJob } = require('./jobs/deletion.job')
+const cookieParser = require('cookie-parser')
 
 const app = express()
 
-app.use(cors())
+app.use(cors({
+  origin: process.env.CLIENT_URL, // must be an exact origin, not "*", when credentials:true
+  credentials: true,              // required so the browser sends/receives the refresh cookie
+}))
 app.use(express.json())
+app.use(cookieParser())
 
 app.use('/api/auth', authRoutes)
 app.use('/api/recipes', recipeRoutes)
