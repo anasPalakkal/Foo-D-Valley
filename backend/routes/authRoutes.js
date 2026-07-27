@@ -13,22 +13,33 @@ const {
   resetPassword,
 } = require("../controllers/authController");
 const { protect } = require("../middleware/authMiddleware");
+const { validate } = require("../middleware/validate");
+const { strictRateLimit, moderateRateLimit } = require("../middleware/rateLimiters");
+const {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} = require("../validators/auth.validators");
 
-// NOTE: rate limiters are not wired in yet — this is the next piece.
-// authLimiter should apply to: register, login, forgot-password, resend-verification.
-// refreshLimiter (looser) should apply to: refresh.
-
-router.post("/register", register);
-router.post("/login", login);
-router.post("/refresh", refresh);
+router.post("/register", strictRateLimit, validate(registerSchema), register);
+router.post("/login", strictRateLimit, validate(loginSchema), login);
+router.post("/refresh", moderateRateLimit, refresh);
 router.post("/logout", logout);
 router.post("/logout-all", protect, logoutAll);
 
 router.get("/verify-email", verifyEmail);
-router.post("/resend-verification", protect, resendVerification);
+// protect is already applied here (existing behavior) - resendVerification
+// runs for the logged-in unverified user, so it doesn't take an email in
+// the body. Not wiring resendVerificationSchema since there's nothing to
+// validate; only rate-limited to stop spam-clicking resend.
+router.post("/resend-verification", strictRateLimit, protect, resendVerification);
 
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+router.post("/forgot-password", strictRateLimit, validate(forgotPasswordSchema), forgotPassword);
+// No rate limiter here on purpose: the reset token is single-use and
+// expires in 30 min, so IP-based limiting adds friction without adding
+// security. Say the word if you want it added anyway.
+router.post("/reset-password", validate(resetPasswordSchema), resetPassword);
 
 router.get("/me", protect, getMe);
 

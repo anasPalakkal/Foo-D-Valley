@@ -9,6 +9,7 @@ const profileRoutes = require('./routes/profileRoutes')
 const followRoutes = require('./routes/followRoutes')
 const { startDeletionJob } = require('./jobs/deletion.job')
 const cookieParser = require('cookie-parser')
+const { lightRateLimit } = require('./middleware/rateLimiters')
 
 const app = express()
 
@@ -18,6 +19,11 @@ app.use(cors({
 }))
 app.use(express.json())
 app.use(cookieParser())
+
+// Global backstop rate limiter — generous ceiling, just to stop abuse/DoS
+// on routes that don't have their own stricter limiter. authRoutes applies
+// its own tighter limits per-endpoint on top of this.
+app.use('/api', lightRateLimit)
 
 app.use('/api/auth', authRoutes)
 app.use('/api/recipes', recipeRoutes)
