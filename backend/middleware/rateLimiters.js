@@ -19,6 +19,18 @@ const moderateLimiter = new Ratelimit({
   analytics: true,
 });
 
+// Write — expensive writes that carry a Cloudinary image upload
+// (recipe create/update). Lower ceiling than moderate: no legitimate
+// user posts more than a handful of recipes in 15 minutes, but a
+// scraper/bot would if left unthrottled, and each request costs more
+// than a plain JSON POST.
+const writeLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '15 m'),
+  prefix: 'ratelimit:write',
+  analytics: true,
+});
+
 // Light — generous global backstop for everything else
 const lightLimiter = new Ratelimit({
   redis,
@@ -61,6 +73,7 @@ function buildMiddleware(limiter) {
 
 const strictRateLimit = buildMiddleware(strictLimiter);
 const moderateRateLimit = buildMiddleware(moderateLimiter);
+const writeRateLimit = buildMiddleware(writeLimiter);
 const lightRateLimit = buildMiddleware(lightLimiter);
 
-module.exports = { strictRateLimit, moderateRateLimit, lightRateLimit };
+module.exports = { strictRateLimit, moderateRateLimit, writeRateLimit, lightRateLimit };

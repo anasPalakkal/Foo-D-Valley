@@ -46,4 +46,5 @@ module.exports = {
   forgotPasswordSchema,
   resetPasswordSchema,
   resendVerificationSchema,
+  password, // exported for reuse in profile.validators.js (changePassword)
 };

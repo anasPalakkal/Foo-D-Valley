@@ -1,13 +1,17 @@
 /**
- * Generic Zod-schema-runner middleware. Validates req.body against the
- * given schema and rejects with field-level errors before controller
- * logic (and the DB/bcrypt) ever sees the request.
+ * Generic Zod-schema-runner middleware. Validates a request source
+ * (body/params/query) against the given schema and rejects with
+ * field-level errors before controller logic ever sees the request.
+ *
+ * source defaults to 'body' to match existing usage on auth routes.
+ * Pass 'params' or 'query' explicitly for route-param / query validation.
  *
  * Usage: router.post('/register', validate(registerSchema), register)
+ *        router.get('/:id', validate(idParamSchema, 'params'), getRecipeById)
  */
-function validate(schema) {
+function validate(schema, source = 'body') {
   return (req, res, next) => {
-    const result = schema.safeParse(req.body);
+    const result = schema.safeParse(req[source]);
 
     if (!result.success) {
       const details = result.error.issues.map((issue) => ({
@@ -22,8 +26,8 @@ function validate(schema) {
     }
 
     // Replace with parsed data so downstream code gets normalized values
-    // (trimmed strings, lowercased email, etc.) instead of raw input.
-    req.body = result.data;
+    // (trimmed strings, coerced numbers, etc.) instead of raw input.
+    req[source] = result.data;
     next();
   };
 }

@@ -123,14 +123,13 @@ const uploadAvatar = async (req, res) => {
       await cloudinary.uploader.destroy(publicId)
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'foodvalley/avatars',
-      transformation: [{ width: 300, height: 300, crop: 'fill', gravity: 'face' }],
-    })
-
+    // avatarUpload's CloudinaryStorage instance already uploaded directly
+    // to foodvalley/avatars with the face-crop transform applied — no
+    // second manual cloudinary.uploader.upload() needed. req.file.path is
+    // the final secure_url.
     const updated = await prisma.user.update({
       where: { id: req.user.id },
-      data: { avatarUrl: result.secure_url },
+      data: { avatarUrl: req.file.path },
       select: userSelect,
     })
 
@@ -161,14 +160,11 @@ const uploadBanner = async (req, res) => {
       await cloudinary.uploader.destroy(publicId)
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'foodvalley/banners',
-      transformation: [{ width: 1200, height: 400, crop: 'fill' }],
-    })
-
+    // Same as avatar — bannerUpload already uploaded directly to
+    // foodvalley/banners with the correct transform, no re-upload needed.
     const updated = await prisma.user.update({
       where: { id: req.user.id },
-      data: { bannerUrl: result.secure_url },
+      data: { bannerUrl: req.file.path },
       select: userSelect,
     })
 
@@ -183,16 +179,6 @@ const uploadBanner = async (req, res) => {
 // PUT /api/profile/me/password
 const changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body
-
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ message: 'Current and new password are required' })
-  }
-  if (newPassword.length < 8) {
-    return res.status(400).json({ message: 'New password must be at least 8 characters' })
-  }
-  if (currentPassword === newPassword) {
-    return res.status(400).json({ message: 'New password must be different from current password' })
-  }
 
   try {
     const user = await prisma.user.findUnique({
@@ -221,10 +207,6 @@ const changePassword = async (req, res) => {
 // DELETE /api/profile/me
 const deleteAccount = async (req, res) => {
   const { password } = req.body
-
-  if (!password) {
-    return res.status(400).json({ message: 'Password is required to delete your account' })
-  }
 
   try {
     const user = await prisma.user.findUnique({

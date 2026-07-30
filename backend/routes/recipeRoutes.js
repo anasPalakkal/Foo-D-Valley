@@ -13,21 +13,60 @@ const {
 const { getLikeStatus, likeRecipe, unlikeRecipe, getBatchLikeCounts } = require('../controllers/likeController')
 const { getComments, createComment } = require('../controllers/commentController')
 const { protect, optionalProtect } = require('../middleware/authMiddleware')
-const { upload, handleUploadError } = require('../lib/cloudinary')
+const { recipeUpload, handleUploadError } = require('../lib/cloudinary')
+const { validate } = require('../middleware/validate')
+const { moderateRateLimit, writeRateLimit } = require('../middleware/rateLimiters')
+const {
+  createRecipeSchema,
+  updateRecipeSchema,
+  createCommentSchema,
+  batchLikesSchema,
+  numericIdParamSchema,
+  validateRecipeIdParam,
+  validateRecipeBody,
+} = require('../validators/recipe.validators')
 
 router.get('/', optionalProtect, getRecipes)
 router.get('/popular', getPopularRecipes)
 router.get('/feed', optionalProtect, getFeed)
-router.get('/:id', optionalProtect, getRecipeById)
-router.post('/', protect, upload.single('image'), handleUploadError, createRecipe)
-router.put('/:id', protect, upload.single('image'), handleUploadError, updateRecipe)
-router.delete('/:id', protect, deleteRecipe)
 
-router.get('/:id/likes', optionalProtect, getLikeStatus)
-router.post('/:id/like', protect, likeRecipe)
-router.delete('/:id/like', protect, unlikeRecipe)
-router.get('/:id/comments', getComments)
-router.post('/:id/comments', protect, createComment)
-router.post('/likes/batch', getBatchLikeCounts)
+// Static routes above must stay before '/:id' — Express matches in
+// declaration order, and '/:id' would otherwise swallow these.
+router.get('/:id', validate(numericIdParamSchema, 'params'), optionalProtect, getRecipeById)
+
+router.post(
+  '/',
+  protect,
+  writeRateLimit,
+  recipeUpload.single('image'),
+  handleUploadError,
+  validateRecipeBody(createRecipeSchema),
+  createRecipe
+)
+router.put(
+  '/:id',
+  protect,
+  writeRateLimit,
+  validate(numericIdParamSchema, 'params'),
+  recipeUpload.single('image'),
+  handleUploadError,
+  validateRecipeBody(updateRecipeSchema),
+  updateRecipe
+)
+router.delete('/:id', protect, validate(numericIdParamSchema, 'params'), deleteRecipe)
+
+router.get('/:id/likes', validateRecipeIdParam, optionalProtect, getLikeStatus)
+router.post('/:id/like', protect, moderateRateLimit, validateRecipeIdParam, likeRecipe)
+router.delete('/:id/like', protect, validateRecipeIdParam, unlikeRecipe)
+router.get('/:id/comments', validateRecipeIdParam, getComments)
+router.post(
+  '/:id/comments',
+  protect,
+  moderateRateLimit,
+  validateRecipeIdParam,
+  validate(createCommentSchema),
+  createComment
+)
+router.post('/likes/batch', validate(batchLikesSchema), getBatchLikeCounts)
 
 module.exports = router
