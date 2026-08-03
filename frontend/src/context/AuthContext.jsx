@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { getMe, login as apiLogin, register as apiRegister } from '../api/api'
+import { getMe, login as apiLogin, register as apiRegister, logoutRequest } from '../api/api'
 
 const AuthContext = createContext(null)
 
@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('accessToken')
     if (!token) {
       setLoading(false)
       return
@@ -23,25 +23,30 @@ export const AuthProvider = ({ children }) => {
 
     getMe()
       .then((data) => setUser(normalizeUser(data)))
-      .catch(() => localStorage.removeItem('token'))
+      .catch(() => localStorage.removeItem('accessToken'))
       .finally(() => setLoading(false))
   }, [])
 
   const login = async (email, password) => {
     const data = await apiLogin(email, password)
-    localStorage.setItem('token', data.token)
-    setUser(normalizeUser(data.user))  // normalize here
+    localStorage.setItem('accessToken', data.accessToken)
+    setUser(normalizeUser(data.user))
   }
 
   const register = async (name, email, password) => {
     const data = await apiRegister(name, email, password)
-    localStorage.setItem('token', data.token)
-    setUser(normalizeUser(data.user))  // and here
+    localStorage.setItem('accessToken', data.accessToken)
+    setUser(normalizeUser(data.user))
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
+    localStorage.removeItem('accessToken')
     setUser(null)
+    // Revoke the refresh token server-side too — clearing localStorage alone
+    // leaves the DB row (and the httpOnly cookie, if not cleared) still valid.
+    logoutRequest().catch(() => {
+      // Non-critical: client-side state is already cleared either way.
+    })
   }
 
   // Patch user in context after profile edits — avoids full re-login

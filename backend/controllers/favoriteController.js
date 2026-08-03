@@ -52,6 +52,11 @@ const addFavorite = async (req, res) => {
     if (error.code === 'P2002') {
       return res.status(409).json({ message: 'Already favorited' })
     }
+    // recipe.connect fails when the target recipeId doesn't exist -
+    // client-side bad reference, not a server failure, so 404 not 500
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: 'Recipe not found' })
+    }
     console.error('addFavorite error:', error)
     res.status(500).json({ message: 'Internal server error' })
   }

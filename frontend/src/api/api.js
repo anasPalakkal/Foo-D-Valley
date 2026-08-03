@@ -2,13 +2,51 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  withCredentials: true, // required so the browser sends/receives the httpOnly refresh cookie
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
+
+// Silent refresh on 401 — retries the original request once with a fresh access token.
+// Without this the access token dies after JWT_ACCESS_EXPIRES (15m) and every user
+// gets force-logged-out mid-session instead of transparently refreshing.
+let refreshPromise = null
+
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const original = error.config
+
+    // Don't try to refresh on the refresh endpoint itself, or if we already retried once
+    if (
+      error.response?.status !== 401 ||
+      original._retry ||
+      original.url === '/auth/refresh'
+    ) {
+      return Promise.reject(error)
+    }
+    original._retry = true
+
+    try {
+      // Dedupe concurrent 401s — if five requests fail at once, only refresh once
+      refreshPromise = refreshPromise || api.post('/auth/refresh')
+      const { data } = await refreshPromise
+      refreshPromise = null
+
+      localStorage.setItem('accessToken', data.accessToken)
+      original.headers.Authorization = `Bearer ${data.accessToken}`
+      return api(original)
+    } catch (refreshErr) {
+      refreshPromise = null
+      localStorage.removeItem('accessToken')
+      return Promise.reject(refreshErr)
+    }
+  }
+)
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -24,6 +62,11 @@ export const login = async (email, password) => {
 
 export const getMe = async () => {
   const { data } = await api.get('/auth/me')
+  return data
+}
+
+export const logoutRequest = async () => {
+  const { data } = await api.post('/auth/logout')
   return data
 }
 
