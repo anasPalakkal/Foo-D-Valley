@@ -1,10 +1,33 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FaUtensils, FaHeart, FaArrowUp } from 'react-icons/fa';
 import styles from './Footer.module.css';
 
 const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Native <details> hides its content on close in a way that isn't always
+  // reliably overridable by the desktop `display: flex !important` CSS rule
+  // across browsers. So on desktop we force `open` via JS instead, while
+  // leaving mobile alone (closed by default, toggled by the user's tap).
+  const exploreRef = useRef(null);
+  const contactRef = useRef(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 769px)');
+
+    const syncOpenState = (e) => {
+      const isDesktop = e.matches;
+      if (isDesktop) {
+        if (exploreRef.current) exploreRef.current.open = true;
+        if (contactRef.current) contactRef.current.open = true;
+      }
+    };
+
+    syncOpenState(mediaQuery);
+    mediaQuery.addEventListener('change', syncOpenState);
+    return () => mediaQuery.removeEventListener('change', syncOpenState);
+  }, []);
 
   return (
     <footer className={styles.footer}>
@@ -25,7 +48,7 @@ const Footer = () => {
         </div>
 
         {/* Nav column - accordion on mobile, static/expanded on desktop (forced open via CSS) */}
-        <details className={styles.navCol} open>
+        <details className={styles.navCol} ref={exploreRef}>
           <summary className={styles.colHeading}>Explore</summary>
           <ul className={styles.navList}>
             <li><Link to="/">Home</Link></li>
@@ -35,7 +58,7 @@ const Footer = () => {
         </details>
 
         {/* Contact / info column */}
-        <details className={styles.navCol} open>
+        <details className={styles.navCol} ref={contactRef}>
           <summary className={styles.colHeading}>Get in Touch</summary>
           <ul className={styles.navList}>
             <li>
