@@ -25,7 +25,6 @@ const CategoryDropdown = ({
           aria-expanded={isOpen}
         >
           Categories
-          <span className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}>▾</span>
         </button>
 
         {isOpen && (

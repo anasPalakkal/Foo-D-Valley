@@ -62,17 +62,11 @@
   font-weight: 600;
   font-size: 0.95rem;
   padding-bottom: 2px;
-  border-bottom: 2px solid transparent;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .navLinks a:hover {
   color: #ffd6b3;
-  border-bottom-color: #ffd6b3;
-}
-
-.activeLink {
-  border-bottom: 2px solid white !important;
 }
 
 /* ── Right Section ── */
