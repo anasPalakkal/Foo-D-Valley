@@ -221,6 +221,16 @@ export const uploadBanner = async (formData) => {
   return data
 }
 
+export const removeAvatar = async () => {
+  const { data } = await api.delete('/profile/me/avatar')
+  return data
+}
+
+export const removeBanner = async () => {
+  const { data } = await api.delete('/profile/me/banner')
+  return data
+}
+
 // ─── Follow ───────────────────────────────────────────────────────────────────
 
 export const followUser = async (userId) => {
@@ -235,6 +245,11 @@ export const unfollowUser = async (userId) => {
 
 export const getFollowing = async (userId) => {
   const { data } = await api.get(`/users/${userId}/following`)
+  return data
+}
+
+export const getFollowers = async (userId) => {
+  const { data } = await api.get(`/users/${userId}/followers`)
   return data
 }
 

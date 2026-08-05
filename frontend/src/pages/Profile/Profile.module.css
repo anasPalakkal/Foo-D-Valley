@@ -245,7 +245,7 @@
 
 .card {
   position: relative;
-  background: #fff;
+  background: #fff5f0; /* matches RecipeCard.module.css — was #fff */
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
@@ -256,7 +256,7 @@
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 20px rgba(176, 65, 62, 0.15); /* tinted shadow, matches site pattern */
 }
 
 .cardLink {
@@ -281,7 +281,7 @@
   padding: 10px 12px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #333;
+  color: #b0413e; /* site title accent — was #333 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -476,6 +476,154 @@
   background: #c0392b;
 }
 
+/* ─── Followers / Following list ──────────────────────────────── */
+.userList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.userRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 8px;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+
+.userRow:hover {
+  background: #fff5f0;
+}
+
+.userRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  min-width: 0;
+  flex: 1;
+}
+
+.userRowAvatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.userRowAvatarFallback {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #ff7043;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.userRowName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userRowBtn {
+  padding: 7px 16px;
+  border-radius: 18px;
+  border: none;
+  background: #ff7043;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.userRowBtn:hover {
+  background: #e64a19;
+}
+
+.userRowBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Already-following state — outlined instead of filled, matches .followBtn.following */
+.userRowBtnFollowing {
+  background: #fff;
+  color: #ff7043;
+  border: 1.5px solid #ff7043;
+}
+
+.userRowBtnFollowing:hover {
+  background: #fff5f0;
+}
+
+.emptyListState {
+  text-align: center;
+  color: #aaa;
+  font-size: 0.92rem;
+  padding: 60px 0;
+}
+
+/* Small inline spinner for lazy-loaded lists — reuses the same spin keyframe as the page spinner */
+.listSpinnerWrap {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.listSpinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #ffd0bd;
+  border-top-color: #ff7043;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Stat counts double as tab shortcuts — visual hint on hover */
+.statClickable {
+  cursor: pointer;
+}
+
+.statClickable:hover .statNum {
+  color: #e64a19;
+}
+
+/* Each tab's content scrolls internally instead of growing the whole page —
+   posts grid, followers list, and following list all share this behavior */
+.tabContent {
+  max-height: 640px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Thin colored scrollbar, matches CustomSelect.module.css convention */
+.tabContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tabContent::-webkit-scrollbar-thumb {
+  background-color: #ffd0bd;
+  border-radius: 10px;
+}
+
+.tabContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* ─── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .banner {
@@ -518,5 +666,34 @@
     right: 20px;
     width: 50px;
     height: 50px;
+  }
+
+  /* Followers/following rows stay horizontal on mobile, just smaller */
+  .userRowAvatar,
+  .userRowAvatarFallback {
+    width: 38px;
+    height: 38px;
+    font-size: 0.9rem;
+  }
+
+  .userRowName {
+    font-size: 0.85rem;
+  }
+
+  .userRowBtn {
+    padding: 6px 12px;
+    font-size: 0.76rem;
+  }
+
+  .tabs {
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 10px 14px;
+    white-space: nowrap;
+  }
+  .tabContent {
+    max-height: 70vh; /* slightly taller ratio on small screens */
   }
 }

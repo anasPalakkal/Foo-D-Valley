@@ -240,4 +240,64 @@ const deleteAccount = async (req, res) => {
   }
 }
 
-module.exports = { getProfile, updateProfile, uploadAvatar, uploadBanner, changePassword, deleteAccount }
+// DELETE /api/profile/me/avatar — clears avatar, reverts to first-letter default
+const removeAvatar = async (req, res) => {
+  try {
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { avatarUrl: true },
+    })
+
+    if (currentUser?.avatarUrl) {
+      const publicId = currentUser.avatarUrl
+        .split('/')
+        .slice(-2)
+        .join('/')
+        .split('.')[0]
+      await cloudinary.uploader.destroy(publicId)
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { avatarUrl: null },
+      select: userSelect,
+    })
+
+    res.json(updated)
+  } catch (error) {
+    console.error('removeAvatar error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// DELETE /api/profile/me/banner — clears banner, reverts to default gradient
+const removeBanner = async (req, res) => {
+  try {
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { bannerUrl: true },
+    })
+
+    if (currentUser?.bannerUrl) {
+      const publicId = currentUser.bannerUrl
+        .split('/')
+        .slice(-2)
+        .join('/')
+        .split('.')[0]
+      await cloudinary.uploader.destroy(publicId)
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { bannerUrl: null },
+      select: userSelect,
+    })
+
+    res.json(updated)
+  } catch (error) {
+    console.error('removeBanner error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+module.exports = { getProfile, updateProfile, uploadAvatar, uploadBanner, removeAvatar, removeBanner, changePassword, deleteAccount }

@@ -55,6 +55,21 @@ const unfollowUser = async (req, res) => {
   }
 }
 
+// Tags each user in the list with whether the viewer (req.user) already follows them —
+// needed so the frontend can render "Follow Back" vs "Following" per row
+const attachIsFollowing = async (users, viewerId) => {
+  if (!viewerId) return users.map((u) => ({ ...u, isFollowing: false }))
+
+  const targetIds = users.map((u) => u.id)
+  const relations = await prisma.follow.findMany({
+    where: { followerId: viewerId, followingId: { in: targetIds } },
+    select: { followingId: true },
+  })
+
+  const followingSet = new Set(relations.map((r) => r.followingId))
+  return users.map((u) => ({ ...u, isFollowing: followingSet.has(u.id) }))
+}
+
 const getFollowers = async (req, res) => {
   const { userId } = req.params
 
@@ -62,14 +77,15 @@ const getFollowers = async (req, res) => {
     const followers = await prisma.follow.findMany({
       where: { followingId: Number(userId) },
       include: {
-        follower: {
-          select: { id: true, name: true, avatarUrl: true },
-        },
+        follower: { select: { id: true, name: true, avatarUrl: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    res.json(followers.map((f) => f.follower))
+    const users = followers.map((f) => f.follower)
+    const result = await attachIsFollowing(users, req.user?.id)
+
+    res.json(result)
   } catch (error) {
     console.error('getFollowers error:', error)
     res.status(500).json({ message: 'Internal server error' })
@@ -83,14 +99,15 @@ const getFollowing = async (req, res) => {
     const following = await prisma.follow.findMany({
       where: { followerId: Number(userId) },
       include: {
-        followingUser: {
-          select: { id: true, name: true, avatarUrl: true },
-        },
+        followingUser: { select: { id: true, name: true, avatarUrl: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    res.json(following.map((f) => f.followingUser))
+    const users = following.map((f) => f.followingUser)
+    const result = await attachIsFollowing(users, req.user?.id)
+
+    res.json(result)
   } catch (error) {
     console.error('getFollowing error:', error)
     res.status(500).json({ message: 'Internal server error' })

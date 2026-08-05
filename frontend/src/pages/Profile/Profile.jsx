@@ -7,6 +7,8 @@ import {
   getRecipeById,
   followUser,
   unfollowUser,
+  getFollowers,
+  getFollowing,
   deleteRecipe,
 } from '../../api/api'
 import EditProfileModal from '../../components/EditProfileModal/EditProfileModal'
@@ -18,7 +20,14 @@ import {
   IoCreateOutline,
   IoTrashOutline,
   IoGridOutline,
+  IoPeopleOutline,
+  IoPersonAddOutline,
 } from 'react-icons/io5'
+
+// Session-only cache for followers/following lists — avoids refetching when
+// switching between profiles you've already visited. Cleared on page reload.
+// Not a persistence layer: no TTL/eviction, since expected list sizes are small.
+const followListCache = new Map()
 
 const Profile = () => {
   const { userId } = useParams()
@@ -32,6 +41,13 @@ const Profile = () => {
   const [isFollowing, setIsFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
 
+  const [followers, setFollowers] = useState([])
+  const [following, setFollowing] = useState([])
+  const [followersLoaded, setFollowersLoaded] = useState(false)
+  const [followingLoaded, setFollowingLoaded] = useState(false)
+  const [followersLoading, setFollowersLoading] = useState(false)
+  const [followingListLoading, setFollowingListLoading] = useState(false)
+
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [showPostModal, setShowPostModal] = useState(false)
   const [editingRecipe, setEditingRecipe] = useState(null)
@@ -44,6 +60,11 @@ const Profile = () => {
   const isOwner = authUser && Number(userId) === authUser.id
 
   useEffect(() => {
+    setActiveTab('posts')
+    setFollowers([])
+    setFollowing([])
+    setFollowersLoaded(false)
+    setFollowingLoaded(false)
     fetchProfile()
   }, [userId])
 
@@ -71,6 +92,55 @@ const Profile = () => {
     }
   }
 
+  const fetchFollowers = async () => {
+    const cacheKey = `followers:${userId}`
+    // Serve from cache if already fetched this session — skips the network round trip
+    if (followListCache.has(cacheKey)) {
+      setFollowers(followListCache.get(cacheKey))
+      setFollowersLoaded(true)
+      return
+    }
+    setFollowersLoading(true)
+    try {
+      const data = await getFollowers(userId)
+      setFollowers(data)
+      setFollowersLoaded(true)
+      followListCache.set(cacheKey, data)
+    } catch {
+      // leave list empty on failure — tab shows empty state, not an error banner
+    } finally {
+      setFollowersLoading(false)
+    }
+  }
+
+  const fetchFollowing = async () => {
+    const cacheKey = `following:${userId}`
+    if (followListCache.has(cacheKey)) {
+      setFollowing(followListCache.get(cacheKey))
+      setFollowingLoaded(true)
+      return
+    }
+    setFollowingListLoading(true)
+    try {
+      const data = await getFollowing(userId)
+      setFollowing(data)
+      setFollowingLoaded(true)
+      followListCache.set(cacheKey, data)
+    } catch {
+      // same as above
+    } finally {
+      setFollowingListLoading(false)
+    }
+  }
+
+  // Switches tab and lazy-loads its data. No scroll-jump — tab content
+  // renders in place, right below the stats row.
+  const goToTab = (tab) => {
+    setActiveTab(tab)
+    if (tab === 'followers' && !followersLoaded) fetchFollowers()
+    if (tab === 'following' && !followingLoaded) fetchFollowing()
+  }
+
   const handleFollowToggle = async () => {
     if (!authUser) return navigate('/login')
     setFollowLoading(true)
@@ -94,6 +164,37 @@ const Profile = () => {
       // counts re-sync on next fetch
     } finally {
       setFollowLoading(false)
+    }
+  }
+
+  // Follow/unfollow a person from inside a followers or following list.
+  // cacheKey identifies which cached list to keep in sync after the mutation.
+  const toggleFollowInList = async (targetUser, setList, cacheKey) => {
+    if (!authUser) return navigate('/login')
+
+    const wasFollowing = targetUser.isFollowing
+
+    const applyUpdate = (updater) => {
+      setList((prev) => {
+        const updated = prev.map(updater)
+        followListCache.set(cacheKey, updated)
+        return updated
+      })
+    }
+
+    // optimistic update
+    applyUpdate((u) => (u.id === targetUser.id ? { ...u, isFollowing: !wasFollowing, busy: true } : u))
+
+    try {
+      if (wasFollowing) {
+        await unfollowUser(targetUser.id)
+      } else {
+        await followUser(targetUser.id)
+      }
+      applyUpdate((u) => (u.id === targetUser.id ? { ...u, busy: false } : u))
+    } catch {
+      // revert on failure
+      applyUpdate((u) => (u.id === targetUser.id ? { ...u, isFollowing: wasFollowing, busy: false } : u))
     }
   }
 
@@ -131,8 +232,6 @@ const Profile = () => {
     }
   }
 
-  // Profile query only returns { id, title, imageUrl, createdAt }
-  // Fetch full recipe before opening edit modal so all fields are populated
   const handleEditClick = async (recipe) => {
     setOpenMenuId(null)
     setEditLoading(true)
@@ -141,7 +240,6 @@ const Profile = () => {
       setEditingRecipe(full)
       setShowPostModal(true)
     } catch {
-      // fallback to partial data — modal will show what it has
       setEditingRecipe(recipe)
       setShowPostModal(true)
     } finally {
@@ -165,10 +263,37 @@ const Profile = () => {
   const followerCount = profile._count?.followers ?? 0
   const followingCount = profile._count?.following ?? 0
 
+  // Shared row renderer for both followers and following lists
+  const renderUserRow = (u, setList, cacheKey) => {
+    const isSelf = authUser && u.id === authUser.id
+    return (
+      <div key={u.id} className={styles.userRow}>
+        <div className={styles.userRowLeft} onClick={() => navigate(`/profile/${u.id}`)}>
+          {u.avatarUrl ? (
+            <img src={u.avatarUrl} alt={u.name} className={styles.userRowAvatar} />
+          ) : (
+            <div className={styles.userRowAvatarFallback}>{u.name.charAt(0).toUpperCase()}</div>
+          )}
+          <span className={styles.userRowName}>{u.name}</span>
+        </div>
+
+        {/* Hidden only for your own row — you can't follow yourself */}
+        {!isSelf && (
+          <button
+            className={`${styles.userRowBtn} ${u.isFollowing ? styles.userRowBtnFollowing : ''}`}
+            onClick={() => toggleFollowInList(u, setList, cacheKey)}
+            disabled={u.busy}
+          >
+            {u.isFollowing ? 'Following' : activeTab === 'following' ? 'Follow' : 'Follow Back'}
+          </button>
+        )}
+      </div>
+    )
+  }
+
   return (
     <>
     <div className={styles.page}>
-      {/* Banner */}
       <div className={styles.banner}>
         {profile.bannerUrl ? (
           <img src={profile.bannerUrl} alt="Profile banner" className={styles.bannerImg} />
@@ -178,7 +303,6 @@ const Profile = () => {
       </div>
 
       <div className={styles.container}>
-        {/* Profile header */}
         <div className={styles.profileHeader}>
           <div className={styles.avatarWrap}>
             {profile.avatarUrl ? (
@@ -209,15 +333,15 @@ const Profile = () => {
             </div>
 
             <div className={styles.stats}>
-              <div className={styles.stat}>
+              <div className={`${styles.stat} ${styles.statClickable}`} onClick={() => goToTab('posts')}>
                 <span className={styles.statNum}>{postCount}</span>
                 <span className={styles.statLabel}>Posts</span>
               </div>
-              <div className={styles.stat}>
+              <div className={`${styles.stat} ${styles.statClickable}`} onClick={() => goToTab('followers')}>
                 <span className={styles.statNum}>{followerCount}</span>
                 <span className={styles.statLabel}>Followers</span>
               </div>
-              <div className={styles.stat}>
+              <div className={`${styles.stat} ${styles.statClickable}`} onClick={() => goToTab('following')}>
                 <span className={styles.statNum}>{followingCount}</span>
                 <span className={styles.statLabel}>Following</span>
               </div>
@@ -227,13 +351,24 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className={styles.tabs}>
           <button
             className={`${styles.tab} ${activeTab === 'posts' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('posts')}
+            onClick={() => goToTab('posts')}
           >
             <IoGridOutline size={16} /> Posts
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'followers' ? styles.activeTab : ''}`}
+            onClick={() => goToTab('followers')}
+          >
+            <IoPeopleOutline size={16} /> Followers
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'following' ? styles.activeTab : ''}`}
+            onClick={() => goToTab('following')}
+          >
+            <IoPersonAddOutline size={16} /> Following
           </button>
         </div>
 
@@ -309,9 +444,42 @@ const Profile = () => {
             )}
           </div>
         )}
+
+        {/* Followers tab */}
+        {activeTab === 'followers' && (
+          <div className={styles.tabContent}>
+            {followersLoading ? (
+              <div className={styles.listSpinnerWrap}>
+                <div className={styles.listSpinner} />
+              </div>
+            ) : followers.length === 0 ? (
+              <p className={styles.emptyListState}>No followers yet.</p>
+            ) : (
+              <div className={styles.userList}>
+                {followers.map((u) => renderUserRow(u, setFollowers, `followers:${userId}`))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Following tab */}
+        {activeTab === 'following' && (
+          <div className={styles.tabContent}>
+            {followingListLoading ? (
+              <div className={styles.listSpinnerWrap}>
+                <div className={styles.listSpinner} />
+              </div>
+            ) : following.length === 0 ? (
+              <p className={styles.emptyListState}>Not following anyone yet.</p>
+            ) : (
+              <div className={styles.userList}>
+                {following.map((u) => renderUserRow(u, setFollowing, `following:${userId}`))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* FAB — owner only */}
       {isOwner && (
         <button
           className={styles.fab}
@@ -326,7 +494,6 @@ const Profile = () => {
         </button>
       )}
 
-      {/* Delete confirmation */}
       {deleteConfirmId && (
         <div className={styles.confirmBackdrop}>
           <div className={styles.confirmBox}>
