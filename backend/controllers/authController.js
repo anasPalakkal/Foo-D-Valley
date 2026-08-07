@@ -57,7 +57,7 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+      data: { name, email, password: hashedPassword, lastLoginAt: new Date() },
       select: userSelect,
     });
 
@@ -114,6 +114,11 @@ const login = async (req, res) => {
 
     const accessToken = await issueSession(res, user.id, req);
 
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
     const { password: _pw, isDeleted, scheduledDeletionAt, ...safeUser } = user;
 
     res.json({ accessToken, user: safeUser });
@@ -149,10 +154,7 @@ const getMe = async (req, res) => {
  */
 const refresh = async (req, res) => {
   const rawToken = req.cookies?.[COOKIE_NAME];
-
-  if (!rawToken) {
-    return res.status(401).json({ message: "Not authorized" });
-  }
+  if (!rawToken) return res.status(401).json({ message: "Not authorized" });
 
   try {
     const { userId, raw, expiresAt } = await rotateRefreshToken(rawToken, {
@@ -162,6 +164,16 @@ const refresh = async (req, res) => {
 
     setRefreshCookie(res, raw, expiresAt);
     const accessToken = signAccessToken(userId);
+
+    // Cheap staleness check avoids a write on every 15-min refresh cycle —
+    // only updates once per ~12h of continuous activity.
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+    prisma.user
+      .updateMany({
+        where: { id: userId, OR: [{ lastLoginAt: null }, { lastLoginAt: { lt: twelveHoursAgo } }] },
+        data: { lastLoginAt: new Date() },
+      })
+      .catch((err) => console.error("lastLoginAt update failed:", err.message));
 
     res.json({ accessToken });
   } catch (error) {
@@ -260,8 +272,8 @@ const forgotPassword = async (req, res) => {
 
 /** POST /api/auth/reset-password  body: { token, newPassword } */
 const resetPassword = async (req, res) => {
-  const { token, newPassword } = req.body;
-  if (!token || !newPassword) {
+  const { token, password } = req.body;
+  if (!token || !password) {
     return res.status(400).json({ message: "Token and new password are required" });
   }
 
@@ -272,15 +284,13 @@ const resetPassword = async (req, res) => {
     return res.status(400).json({ message: "Invalid or expired reset link" });
   }
 
-  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  const hashedPassword = await bcrypt.hash(password, 12);
 
   await prisma.$transaction([
     prisma.user.update({ where: { id: record.userId }, data: { password: hashedPassword } }),
     prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
   ]);
 
-  // Password reset means any existing session could belong to someone who
-  // guessed the old password — kill all sessions and force fresh login.
   await revokeAllUserTokens(record.userId);
   clearRefreshCookie(res);
 
