@@ -1,12 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
-import {
-  IoPersonOutline,
-  IoBookmarkOutline,
-  IoSettingsOutline,
-  IoLogOutOutline,
-} from 'react-icons/io5';
+import { IoAlertCircleOutline, IoPersonOutline, IoBookmarkOutline, IoSettingsOutline, IoLogOutOutline } from 'react-icons/io5';
+import { resendVerification } from '../../api/api.js';
 import { useAuth } from '../../context/AuthContext';
 import { getCategories } from '../../api/api.js';
 import CategoryDropdown from '../CategoryDropdown/CategoryDropdown';
@@ -98,6 +94,18 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
   };
 
   const isActive = (path) => location.pathname === path;
+
+  const [resendState, setResendState] = useState('idle'); // idle | sending | sent
+
+  const handleResendVerification = async () => {
+    setResendState('sending');
+    try {
+      await resendVerification();
+      setResendState('sent');
+    } catch {
+      setResendState('idle');
+    }
+  };
 
   return (
     <>
@@ -199,23 +207,41 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
         </div>
       </nav>
 
-      {/* mobile drawer */}
-      {menuOpen && (
-        <div className={styles.mobileMenu}>
-          <ul className={styles.mobileMenuLinks}>
-            <li><Link to="/" className={isActive('/') ? styles.mobileActiveLink : ''}>Home</Link></li>
-            <li><Link to="/recipes" className={isActive('/recipes') ? styles.mobileActiveLink : ''}>Recipes</Link></li>
-            <CategoryDropdown
-              categories={categoryList}
-              variant="mobile"
-              isOpen={mobileCategoriesOpen}
-              onToggle={() => setMobileCategoriesOpen((prev) => !prev)}
-              onSelect={() => setMenuOpen(false)}
-            />
-            <li><Link to="/about" className={isActive('/about') ? styles.mobileActiveLink : ''}>About</Link></li>
-          </ul>
+      {user && !user.isVerified && (
+        <div className={styles.verifyBanner}>
+          <IoAlertCircleOutline className={styles.verifyBannerIcon} />
+          <span className={styles.verifyBannerText}>
+            Verify your email to unlock all features.
+          </span>
+          <button
+            className={styles.verifyBannerBtn}
+            onClick={handleResendVerification}
+            disabled={resendState === 'sending'}
+          >
+            {resendState === 'sending' ? 'Sending...' : resendState === 'sent' ? 'Sent' : 'Resend email'}
+          </button>
         </div>
-      )}
+      )
+      }
+      {/* mobile drawer */}
+      {
+        menuOpen && (
+          <div className={styles.mobileMenu}>
+            <ul className={styles.mobileMenuLinks}>
+              <li><Link to="/" className={isActive('/') ? styles.mobileActiveLink : ''}>Home</Link></li>
+              <li><Link to="/recipes" className={isActive('/recipes') ? styles.mobileActiveLink : ''}>Recipes</Link></li>
+              <CategoryDropdown
+                categories={categoryList}
+                variant="mobile"
+                isOpen={mobileCategoriesOpen}
+                onToggle={() => setMobileCategoriesOpen((prev) => !prev)}
+                onSelect={() => setMenuOpen(false)}
+              />
+              <li><Link to="/about" className={isActive('/about') ? styles.mobileActiveLink : ''}>About</Link></li>
+            </ul>
+          </div>
+        )
+      }
     </>
   );
 };
