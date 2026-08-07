@@ -51,11 +51,9 @@ api.interceptors.response.use(
       original.url === '/auth/refresh'
     ) {
       // Unverified-account block — fired by requireVerified on the backend.
-      // Checked here, not per-caller, so every gated action shows the same
-      // toast regardless of which page/component triggered it.
       if (
         error.response?.status === 403 &&
-        error.response?.data?.message === 'Please verify your email to do this'
+        error.response?.data?.code === 'EMAIL_NOT_VERIFIED'   // <-- replace the old message-string check with this line
       ) {
         window.dispatchEvent(new Event('auth:unverified'))
       }
