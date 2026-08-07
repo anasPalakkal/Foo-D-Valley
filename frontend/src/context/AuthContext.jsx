@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { getMe, login as apiLogin, register as apiRegister, logoutRequest } from '../api/api'
+import { getMe, login as apiLogin, register as apiRegister, logoutRequest, doRefresh, setAccessToken } from '../api/api'
 
 const AuthContext = createContext(null)
 
@@ -14,42 +14,57 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // On mount there is no access token in memory yet (page was just loaded/refreshed).
+  // The only way to know if the user has a valid session is to ask the server —
+  // the httpOnly refresh cookie, if present and valid, gets exchanged for a new
+  // access token. If it fails (no cookie, expired, revoked), the user is logged out.
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      setLoading(false)
-      return
+    const restoreSession = async () => {
+      try {
+        const accessToken = await doRefresh()
+        setAccessToken(accessToken)
+        const me = await getMe()
+        setUser(normalizeUser(me))
+      } catch {
+        setAccessToken(null)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
     }
+    restoreSession()
+  }, [])
 
-    getMe()
-      .then((data) => setUser(normalizeUser(data)))
-      .catch(() => localStorage.removeItem('accessToken'))
-      .finally(() => setLoading(false))
+  // api.js dispatches this when a refresh attempt fails mid-session (e.g. token
+  // expired, revoked, or reuse detected). Treat it as a forced logout.
+  useEffect(() => {
+    const handleForcedLogout = () => setUser(null)
+    window.addEventListener('auth:logout', handleForcedLogout)
+    return () => window.removeEventListener('auth:logout', handleForcedLogout)
   }, [])
 
   const login = async (email, password) => {
     const data = await apiLogin(email, password)
-    localStorage.setItem('accessToken', data.accessToken)
+    setAccessToken(data.accessToken)
     setUser(normalizeUser(data.user))
   }
 
   const register = async (name, email, password) => {
     const data = await apiRegister(name, email, password)
-    localStorage.setItem('accessToken', data.accessToken)
+    setAccessToken(data.accessToken)
     setUser(normalizeUser(data.user))
   }
 
   const logout = () => {
-    localStorage.removeItem('accessToken')
+    setAccessToken(null)
     setUser(null)
-    // Revoke the refresh token server-side too — clearing localStorage alone
-    // leaves the DB row (and the httpOnly cookie, if not cleared) still valid.
+    // Revoke the refresh token server-side too — clearing local state alone
+    // leaves the DB row (and the httpOnly cookie) still valid.
     logoutRequest().catch(() => {
       // Non-critical: client-side state is already cleared either way.
     })
   }
 
-  // Patch user in context after profile edits — avoids full re-login
   const updateUser = (partialUser) => {
     setUser((prev) => ({ ...prev, ...partialUser }))
   }

@@ -2,48 +2,76 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  withCredentials: true, // required so the browser sends/receives the httpOnly refresh cookie
+  withCredentials: true, // required to send/receive the httpOnly refresh cookie
 })
 
+// Access token lives in memory only — never localStorage. It's short-lived (15m)
+// by design; persisting it defeats the point of splitting access/refresh tokens.
+// AuthContext calls setAccessToken() whenever it changes.
+let accessToken = null
+
+export const setAccessToken = (token) => {
+  accessToken = token
+}
+
+export const getAccessToken = () => accessToken
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`
   return config
 })
 
-// Silent refresh on 401 — retries the original request once with a fresh access token.
-// Without this the access token dies after JWT_ACCESS_EXPIRES (15m) and every user
-// gets force-logged-out mid-session instead of transparently refreshing.
+// Single-flight refresh: if multiple requests 401 at once, only fire one
+// /auth/refresh call and let the rest wait on it instead of racing.
 let refreshPromise = null
+
+export const doRefresh = () => {
+  if (!refreshPromise) {
+    refreshPromise = api
+      .post('/auth/refresh')
+      .then(({ data }) => {
+        setAccessToken(data.accessToken)
+        return data.accessToken
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+  return refreshPromise
+}
 
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
 
-    // Don't try to refresh on the refresh endpoint itself, or if we already retried once
     if (
       error.response?.status !== 401 ||
-      original._retry ||
+      original._retried ||
       original.url === '/auth/refresh'
     ) {
+      // Unverified-account block — fired by requireVerified on the backend.
+      // Checked here, not per-caller, so every gated action shows the same
+      // toast regardless of which page/component triggered it.
+      if (
+        error.response?.status === 403 &&
+        error.response?.data?.message === 'Please verify your email to do this'
+      ) {
+        window.dispatchEvent(new Event('auth:unverified'))
+      }
       return Promise.reject(error)
     }
-    original._retry = true
+
+    original._retried = true
 
     try {
-      // Dedupe concurrent 401s — if five requests fail at once, only refresh once
-      refreshPromise = refreshPromise || api.post('/auth/refresh')
-      const { data } = await refreshPromise
-      refreshPromise = null
-
-      localStorage.setItem('accessToken', data.accessToken)
-      original.headers.Authorization = `Bearer ${data.accessToken}`
+      const newToken = await doRefresh()
+      original.headers.Authorization = `Bearer ${newToken}`
       return api(original)
-    } catch (refreshErr) {
-      refreshPromise = null
-      localStorage.removeItem('accessToken')
-      return Promise.reject(refreshErr)
+    } catch (refreshError) {
+      setAccessToken(null)
+      window.dispatchEvent(new Event('auth:logout'))
+      return Promise.reject(refreshError)
     }
   }
 )
@@ -65,8 +93,38 @@ export const getMe = async () => {
   return data
 }
 
+export const refreshSession = async () => {
+  const { data } = await api.post('/auth/refresh')
+  return data
+}
+
 export const logoutRequest = async () => {
   const { data } = await api.post('/auth/logout')
+  return data
+}
+
+export const logoutAllRequest = async () => {
+  const { data } = await api.post('/auth/logout-all')
+  return data
+}
+
+export const verifyEmail = async (token) => {
+  const { data } = await api.get('/auth/verify-email', { params: { token } })
+  return data
+}
+
+export const resendVerification = async () => {
+  const { data } = await api.post('/auth/resend-verification')
+  return data
+}
+
+export const forgotPassword = async (email) => {
+  const { data } = await api.post('/auth/forgot-password', { email })
+  return data
+}
+
+export const resetPassword = async (token, password) => {
+  const { data } = await api.post('/auth/reset-password', { token, password })
   return data
 }
 
@@ -162,6 +220,7 @@ export const postComment = async (id, isExternal, content) => {
   const { data } = await api.post(`/recipes/${id}/comments`, { content }, { params })
   return data
 }
+
 export const getBatchLikeCounts = async (recipeIds, externalIds) => {
   const { data } = await api.post('/recipes/likes/batch', { recipeIds, externalIds })
   return data
