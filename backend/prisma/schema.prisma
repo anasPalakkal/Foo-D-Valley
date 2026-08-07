@@ -20,6 +20,8 @@ model User {
   scheduledDeletionAt DateTime?
 
   isVerified Boolean @default(false)
+  lastLoginAt DateTime?
+
 
   favorites  Favorite[]
   recipes    Recipe[]
