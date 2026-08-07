@@ -1,14 +1,16 @@
 const express = require('express')
 const router = express.Router()
 const { followUser, unfollowUser, getFollowers, getFollowing } = require('../controllers/followController')
-const { protect, optionalProtect } = require('../middleware/authMiddleware')
 const { validate } = require('../middleware/validate')
 const { moderateRateLimit } = require('../middleware/rateLimiters')
 const { userIdParamSchema } = require('../validators/follow.validators')
 
+const { protect, optionalProtect, requireVerified } = require('../middleware/authMiddleware')
+
 router.post(
   '/:userId/follow',
   protect,
+  requireVerified,
   moderateRateLimit,
   validate(userIdParamSchema, 'params'),
   followUser

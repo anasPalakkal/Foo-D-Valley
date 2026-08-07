@@ -12,7 +12,7 @@ const {
 
 const { getLikeStatus, likeRecipe, unlikeRecipe, getBatchLikeCounts } = require('../controllers/likeController')
 const { getComments, createComment } = require('../controllers/commentController')
-const { protect, optionalProtect } = require('../middleware/authMiddleware')
+const { protect, optionalProtect, requireVerified } = require('../middleware/authMiddleware')
 const { recipeUpload, handleUploadError } = require('../lib/cloudinary')
 const { validate } = require('../middleware/validate')
 const { moderateRateLimit, writeRateLimit } = require('../middleware/rateLimiters')
@@ -37,6 +37,7 @@ router.get('/:id', validate(numericIdParamSchema, 'params'), optionalProtect, ge
 router.post(
   '/',
   protect,
+  requireVerified,
   writeRateLimit,
   recipeUpload.single('image'),
   handleUploadError,
@@ -62,6 +63,7 @@ router.get('/:id/comments', validateRecipeIdParam, getComments)
 router.post(
   '/:id/comments',
   protect,
+  requireVerified,
   moderateRateLimit,
   validateRecipeIdParam,
   validate(createCommentSchema),
