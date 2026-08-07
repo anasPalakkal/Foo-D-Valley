@@ -15,10 +15,6 @@ const VerifyEmail = () => {
   const [error, setError] = useState('')
   const [resendState, setResendState] = useState('idle')
 
-  // Guards against StrictMode's dev-mode double effect invocation. Without
-  // this, the same token gets sent to the backend twice: the first call
-  // succeeds and marks the token used, the second gets "invalid/expired"
-  // back and overwrites the success state that already landed.
   const verifiedTokenRef = useRef(null)
 
   useEffect(() => {
@@ -49,12 +45,8 @@ const VerifyEmail = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.imagePanel} />
-
+      <div className={`${styles.card} ${styles.cardSingle}`}>
         <div className={styles.formPanel}>
-          <div className={styles.brandMark}>Foo <span>D</span> Valley</div>
-
           {status === 'verifying' && (
             <div className={styles.messageState}>
               <div className={styles.spinner} />
@@ -76,7 +68,6 @@ const VerifyEmail = () => {
             <div className={styles.messageState}>
               <IoAlertCircleOutline className={styles.errorIcon} />
               <h2 className={styles.title}>Link expired or invalid</h2>
-              <p className={styles.messageText}>{error}</p>
               {user && !user.isVerified && (
                 <button
                   className={styles['submit-btn']}

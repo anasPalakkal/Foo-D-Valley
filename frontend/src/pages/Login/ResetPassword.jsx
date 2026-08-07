@@ -36,10 +36,8 @@ const ResetPassword = () => {
   if (!token) {
     return (
       <div className={styles.container}>
-        <div className={styles.card}>
-          <div className={styles.imagePanel} />
+        <div className={`${styles.card} ${styles.cardSingle}`}>
           <div className={styles.formPanel}>
-            <div className={styles.brandMark}>Foo <span>D</span> Valley</div>
             <div className={styles.messageState}>
               <IoAlertCircleOutline className={styles.errorIcon} />
               <h2 className={styles.title}>Missing reset token</h2>
@@ -53,12 +51,8 @@ const ResetPassword = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.imagePanel} />
-
+      <div className={`${styles.card} ${styles.cardSingle}`}>
         <div className={styles.formPanel}>
-          <div className={styles.brandMark}>Foo <span>D</span> Valley</div>
-
           {done ? (
             <div className={styles.messageState}>
               <IoCheckmarkCircleOutline className={styles.successIcon} />

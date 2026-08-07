@@ -28,7 +28,7 @@ const ForgotPassword = () => {
         <div className={styles.imagePanel} />
 
         <div className={styles.formPanel}>
-          <div className={styles.brandMark}>Foo <span>D</span> Valley</div>
+          {/* <div className={styles.brandMark}>Foo <span>D</span> Valley</div> */}
 
           {sent ? (
             <div className={styles.messageState}>
@@ -37,7 +37,9 @@ const ForgotPassword = () => {
               <p className={styles.messageText}>
                 If an account exists for <strong>{email}</strong>, a reset link is on its way.
               </p>
-              <Link to="/login" className={styles.switch}>Back to Login</Link>
+              <p className={styles.switch}>
+                <Link to="/login">Back to Login</Link>
+              </p>
             </div>
           ) : (
             <>

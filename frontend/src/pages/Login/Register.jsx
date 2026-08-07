@@ -35,7 +35,7 @@ const Register = () => {
         <div className={styles.imagePanel} />
 
         <div className={styles.formPanel}>
-          <div className={styles.brandMark}>Foo <span>D</span> Valley</div>
+          {/* <div className={styles.brandMark}>Foo <span>D</span> Valley</div> */}
 
           <h2 className={styles.title}>Create Account</h2>
           <p className={styles.subtitle}>Join Foo D Valley today</p>

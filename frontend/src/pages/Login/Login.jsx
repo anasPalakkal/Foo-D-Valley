@@ -35,8 +35,6 @@ const Login = () => {
         <div className={styles.imagePanel} />
 
         <div className={styles.formPanel}>
-          <div className={styles.brandMark}>Foo <span>D</span> Valley</div>
-
           <h2 className={styles.title}>Welcome Back</h2>
           <p className={styles.subtitle}>Login to your account</p>
 
