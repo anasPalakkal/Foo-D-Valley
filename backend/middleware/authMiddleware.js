@@ -69,9 +69,10 @@ const requireVerified = async (req, res, next) => {
   }
 
   if (!user.isVerified) {
-    return res
-      .status(403)
-      .json({ message: "Please verify your email to do this" });
+    return res.status(403).json({
+      code: 'EMAIL_NOT_VERIFIED',
+      message: "Please verify your email to do this",
+    });
   }
 
   next();
