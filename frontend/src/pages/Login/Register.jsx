@@ -32,56 +32,62 @@ const Register = () => {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h2 className={styles.title}>Create Account</h2>
-        <p className={styles.subtitle}>Join Foo D Valley today</p>
+        <div className={styles.imagePanel} />
 
-        {error && <p className={styles.error}>{error}</p>}
+        <div className={styles.formPanel}>
+          <div className={styles.brandMark}>Foo <span>D</span> Valley</div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles['form-group']}>
-            <label>Name</label>
-            <input
-              type="text"
-              name="name"
-              placeholder="Enter your name"
-              value={form.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <h2 className={styles.title}>Create Account</h2>
+          <p className={styles.subtitle}>Join Foo D Valley today</p>
 
-          <div className={styles['form-group']}>
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          {error && <p className={styles.error}>{error}</p>}
 
-          <div className={styles['form-group']}>
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Create a password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles['form-group']}>
+              <label>Name</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Enter your name"
+                value={form.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <button type="submit" className={styles['submit-btn']} disabled={loading}>
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-        </form>
+            <div className={styles['form-group']}>
+              <label>Email</label>
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <p className={styles.switch}>
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
+            <div className={styles['form-group']}>
+              <label>Password</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Create a password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <button type="submit" className={styles['submit-btn']} disabled={loading}>
+              {loading ? 'Creating account...' : 'Create Account'}
+            </button>
+          </form>
+
+          <p className={styles.switch}>
+            Already have an account? <Link to="/login">Login</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

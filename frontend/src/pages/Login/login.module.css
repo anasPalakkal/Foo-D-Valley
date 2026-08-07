@@ -3,36 +3,88 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #fff8f6;
+  background: linear-gradient(135deg, #fff8f6 0%, #ffe9df 100%);
   font-family: 'Segoe UI', sans-serif;
+  padding: 24px;
 }
 
 .card {
-  background-color: #ffffff;
-  padding: 40px 36px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(176, 65, 62, 0.14);
   width: 100%;
-  max-width: 420px;
+  max-width: 860px;
+  display: grid;
+  grid-template-columns: 0.9fr 1fr;
+  overflow: hidden;
+}
+
+/* ── Left: decorative image panel — desktop only, no text ── */
+.imagePanel {
+  background: linear-gradient(160deg, #ff7043 0%, #b0413e 100%);
+  position: relative;
+  overflow: hidden;
+  min-height: 100%;
+}
+
+.imagePanel::before {
+  content: '';
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  top: -70px;
+  right: -70px;
+}
+
+.imagePanel::after {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  bottom: -70px;
+  left: -50px;
+}
+
+/* ── Right: form panel ── */
+.formPanel {
+  padding: 44px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brandMark {
+  font-family: 'Pacifico', cursive;
+  font-size: 1.3rem;
+  color: #b0413e;
+  margin-bottom: 22px;
+}
+
+.brandMark span {
+  color: #ff7043;
 }
 
 .title {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: #ff5722;
-  margin-bottom: 6px;
+  color: #b0413e;
+  margin: 0 0 6px;
 }
 
 .subtitle {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #888;
-  margin-bottom: 28px;
+  margin-bottom: 22px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 15px;
 }
 
 .form-group {
@@ -42,51 +94,94 @@
 }
 
 .form-group label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #444;
 }
 
 .form-group input {
-  padding: 10px 14px;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 8px;
+  padding: 11px 14px;
+  border: 1.5px solid #ffd0bd;
+  border-radius: 10px;
   font-size: 0.95rem;
   outline: none;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   color: #333;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-group input:focus {
-  border-color: #ff5722;
+  border-color: #ff7043;
+  box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.12);
+}
+
+.inputWithIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 13px;
+  color: #ffab8a;
+  font-size: 1.05rem;
+  pointer-events: none;
+}
+
+.inputWithIcon input {
+  padding-left: 40px;
 }
 
 .submit-btn {
-  margin-top: 6px;
-  padding: 11px;
-  background-color: #ff5722;
-  color: white;
-  font-size: 1rem;
+  margin-top: 4px;
+  padding: 12px;
+  background: #ff7043;
+  color: #fff;
+  font-size: 0.98rem;
   font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
 }
 
-.submit-btn:hover {
-  background-color: #e64a19;
+.submit-btn:hover:not(:disabled) {
+  background: #e64a19;
+  transform: translateY(-1px);
+}
+
+.submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.forgotLink {
+  align-self: flex-end;
+  font-size: 0.82rem;
+  color: #ff7043;
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: -6px;
+}
+
+.forgotLink:hover {
+  text-decoration: underline;
 }
 
 .switch {
   margin-top: 20px;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 0.87rem;
   color: #666;
 }
 
 .switch a {
-  color: #ff5722;
+  color: #ff7043;
   font-weight: 600;
   text-decoration: none;
 }
@@ -96,8 +191,93 @@
 }
 
 .error {
-  color: #e53e3e;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
+  color: #d9362e;
+  background: #fff0f0;
+  border: 1px solid #f5c6c6;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+
+/* ── Shared status-message layout (verify/reset success/error states) ── */
+.messageState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  gap: 6px;
+}
+
+.messageText {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.successIcon {
+  font-size: 2.8rem;
+  color: #2e7d32;
+  margin-bottom: 6px;
+}
+
+.errorIcon {
+  font-size: 2.8rem;
+  color: #d9362e;
+  margin-bottom: 6px;
+}
+
+.mailIcon {
+  font-size: 2.8rem;
+  color: #ff7043;
+  margin-bottom: 6px;
+}
+
+.spinner {
+  width: 38px;
+  height: 38px;
+  border: 4px solid #ffd0bd;
+  border-top-color: #ff7043;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 6px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive: image panel drops out entirely below 720px, not just shrinks ── */
+@media (max-width: 720px) {
+  .card {
+    grid-template-columns: 1fr;
+    max-width: 440px;
+  }
+
+  .imagePanel {
+    display: none;
+  }
+
+  .formPanel {
+    padding: 34px 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+
+  .card {
+    border-radius: 16px;
+  }
+
+  .formPanel {
+    padding: 28px 20px;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
 }
