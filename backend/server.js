@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const helmet = require('helmet')
 require('dotenv').config()
 
 const authRoutes = require('./routes/authRoutes')
@@ -12,12 +13,14 @@ const cookieParser = require('cookie-parser')
 const { lightRateLimit } = require('./middleware/rateLimiters')
 
 const app = express()
+app.set('trust proxy', 1)
+app.use(helmet())
 
 app.use(cors({
   origin: process.env.CLIENT_URL, // must be an exact origin, not "*", when credentials:true
   credentials: true,              // required so the browser sends/receives the refresh cookie
 }))
-app.use(express.json())
+app.use(express.json({ limit: '200kb' }))
 app.use(cookieParser())
 
 // Global backstop rate limiter — generous ceiling, just to stop abuse/DoS
