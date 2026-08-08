@@ -34,6 +34,7 @@ async function sendEmail({ to, subject, text, html }) {
     console.error("Brevo SMTP send failed:", err.message);
   }
 }
+console.log("SMTP config:", BREVO_SMTP_HOST, BREVO_SMTP_PORT, BREVO_SMTP_USER ? "user set" : "user MISSING");
 
 async function sendVerificationEmail(user, rawToken) {
   const link = `${CLIENT_URL}/verify-email?token=${rawToken}`;
