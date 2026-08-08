@@ -1,40 +1,55 @@
-const nodemailer = require("nodemailer");
+const axios = require("axios");
 
 const {
-  BREVO_SMTP_HOST,
-  BREVO_SMTP_PORT,
-  BREVO_SMTP_USER,
-  BREVO_SMTP_PASS,
-  EMAIL_FROM, // e.g. "Foo D Valley <foodvalley.app@gmail.com>"
+  BREVO_API_KEY, // new env var — get this from Brevo dashboard > SMTP & API > API Keys
+  EMAIL_FROM,
   CLIENT_URL,
 } = process.env;
 
-const transporter = nodemailer.createTransport({
-  host: BREVO_SMTP_HOST,
-  port: Number(BREVO_SMTP_PORT),
-  secure: Number(BREVO_SMTP_PORT) === 465, // 465 = implicit TLS, 587 = STARTTLS
-  auth: { user: BREVO_SMTP_USER, pass: BREVO_SMTP_PASS },
-});
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
-// Fail fast at boot, not on the first user's registration attempt.
-transporter
-  .verify()
-  .then(() => console.log("SMTP server ready"))
-  .catch((err) => console.error("SMTP configuration error:", err.message));
+// Brevo expects sender as { name, email } rather than a combined string,
+// so parse EMAIL_FROM once at load time. Keeping EMAIL_FROM's existing
+// format ("Foo D Valley <foodvalley.app@gmail.com>") to avoid touching
+// every other reference to this env var.
+function parseSender(raw) {
+  const match = raw.match(/^(.*)<(.+)>$/);
+  if (!match) return { name: undefined, email: raw.trim() };
+  return { name: match[1].trim(), email: match[2].trim() };
+}
 
 async function sendEmail({ to, subject, text, html }) {
   if (!EMAIL_FROM) {
     console.error("Email not sent: EMAIL_FROM missing");
     return;
   }
+  if (!BREVO_API_KEY) {
+    console.error("Email not sent: BREVO_API_KEY missing");
+    return;
+  }
 
   try {
-    await transporter.sendMail({ from: EMAIL_FROM, to, subject, text, html });
+    await axios.post(
+      BREVO_API_URL,
+      {
+        sender: parseSender(EMAIL_FROM),
+        to: [{ email: to }],
+        subject,
+        textContent: text,
+        htmlContent: html,
+      },
+      {
+        headers: {
+          "api-key": BREVO_API_KEY,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      }
+    );
   } catch (err) {
-    console.error("Brevo SMTP send failed:", err.message);
+    console.error("Brevo API send failed:", err.response?.data || err.message);
   }
 }
-console.log("SMTP config:", BREVO_SMTP_HOST, BREVO_SMTP_PORT, BREVO_SMTP_USER ? "user set" : "user MISSING");
 
 async function sendVerificationEmail(user, rawToken) {
   const link = `${CLIENT_URL}/verify-email?token=${rawToken}`;
