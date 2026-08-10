@@ -185,6 +185,12 @@ export const getFeed = async (limit = 4) => {
   return data
 }
 
+// basis: { category, cuisine } | null, recipes: normalized-shape internal recipes
+export const getRecommendations = async (limit = 8) => {
+  const { data } = await api.get('/recipes/recommendations', { params: { limit } })
+  return data
+}
+
 // ─── Likes ────────────────────────────────────────────────────────────────────
 
 export const getLikeStatus = async (id, isExternal) => {

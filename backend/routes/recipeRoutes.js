@@ -7,7 +7,8 @@ const {
   getRecipeById,
   deleteRecipe,
   getPopularRecipes,
-  getFeed
+  getFeed,
+  getRecommendations
 } = require('../controllers/recipeController')
 
 const { getLikeStatus, likeRecipe, unlikeRecipe, getBatchLikeCounts } = require('../controllers/likeController')
@@ -29,6 +30,10 @@ const {
 router.get('/', optionalProtect, getRecipes)
 router.get('/popular', getPopularRecipes)
 router.get('/feed', optionalProtect, getFeed)
+
+// Read-only, requires a logged-in user for their like/favorite history but
+// nothing to validate (no body, no :id param) - just protect.
+router.get('/recommendations', protect, getRecommendations)
 
 // Static routes above must stay before '/:id' — Express matches in
 // declaration order, and '/:id' would otherwise swallow these.

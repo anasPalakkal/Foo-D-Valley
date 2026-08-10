@@ -2,11 +2,11 @@
   min-height: 100vh;
 }
 
-/* ========== Hero ========== */
+/* ========== Hero (guests only) ========== */
 .hero {
   position: relative;
   overflow: hidden;
-  height: 280px;
+  height: 460px;
 }
 
 .slidesTrack {
@@ -31,9 +31,9 @@
 
 .slideIconBg {
   position: absolute;
-  right: 48px;
-  bottom: -10px;
-  font-size: 140px;
+  right: 64px;
+  bottom: -20px;
+  font-size: 200px;
   opacity: 0.07;
   color: #b0413e;
   pointer-events: none;
@@ -47,16 +47,16 @@
 .slideContent {
   position: relative;
   z-index: 1;
-  max-width: 480px;
+  max-width: 560px;
 }
 
 .slideTag {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   color: #b0413e;
 }
 
@@ -66,10 +66,10 @@
 }
 
 .slideHeading {
-  font-size: 1.6rem;
+  font-size: 2.15rem;
   font-weight: 700;
   line-height: 1.2;
-  margin: 0 0 10px;
+  margin: 0 0 14px;
   color: #b0413e;
 }
 
@@ -79,10 +79,10 @@
 }
 
 .slideSub {
-  font-size: 0.88rem;
+  font-size: 1.02rem;
   color: #7a3a38;
-  margin: 0 0 18px;
-  line-height: 1.5;
+  margin: 0 0 24px;
+  line-height: 1.55;
 }
 
 .slide2 .slideSub,
@@ -92,9 +92,9 @@
 
 .slideBtn {
   display: inline-block;
-  padding: 9px 20px;
+  padding: 12px 28px;
   border-radius: 8px;
-  font-size: 0.88rem;
+  font-size: 0.96rem;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
@@ -126,14 +126,14 @@
 .cuisineChips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .cuisineChip {
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.35);
@@ -147,7 +147,7 @@
 
 .dots {
   position: absolute;
-  bottom: 10px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -175,7 +175,81 @@
   background: #ff7043;
 }
 
-/* ========== Recipe Sections (Latest + Popular share this) ========== */
+/* ========== Welcome bar (logged-in users only) ========== */
+.welcomeBar {
+  background: linear-gradient(135deg, #fff8f5 0%, #ffe4d6 100%);
+  padding: 44px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.welcomeText {
+  max-width: 480px;
+}
+
+.welcomeHeading {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #b0413e;
+  margin: 0 0 6px;
+}
+
+.welcomeSub {
+  font-size: 0.94rem;
+  color: #7a3a38;
+  margin: 0;
+}
+
+.quickActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.quickActionPrimary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ff7043;
+  color: #fff;
+  border: none;
+  padding: 11px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.quickActionPrimary:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.quickActionSecondary {
+  display: flex;
+  align-items: center;
+  padding: 11px 20px;
+  border-radius: 8px;
+  border: 1.5px solid #ffd0bd;
+  color: #b0413e;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.quickActionSecondary:hover {
+  background: #fff0eb;
+  border-color: #ff7043;
+}
+
+/* ========== Recipe Sections ========== */
 .section {
   padding: 28px 40px 52px;
   max-width: 1200px;
@@ -187,6 +261,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
+  gap: 12px;
 }
 
 .sectionHeader h2 {
@@ -201,14 +276,43 @@
   text-decoration: none;
   font-weight: 600;
   font-size: 0.88rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* .seeAll is also reused on a <button> (Recently Viewed's "Clear" action) -
+     these resets make it render identically to the <a> usages. */
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .seeAll:hover { text-decoration: underline; }
 
+/* Full listing grid - Latest / Popular / Recommended. These fetch 9 items:
+   desktop shows the first 8 (2 rows x 4 cols, 9th hidden), mobile shows all
+   9 (3 full rows x 3 cols, no dangling empty slot in the last row). */
 .cardsGrid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
+}
+
+.cardsGrid > *:nth-child(9) {
+  display: none;
+}
+
+/* Preview grid - Recently Viewed / Saved Recipes. These fetch 6 items:
+   desktop shows the first 4 (1 row x 4 cols, "shortcut" style), mobile
+   shows all 6 (2 full rows x 3 cols). */
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.previewGrid > *:nth-child(n+5) {
+  display: none;
 }
 
 /* ========== States ========== */
@@ -258,6 +362,10 @@
 
 /* ========== Responsive ========== */
 @media (max-width: 900px) {
+  .hero {
+    height: 380px;
+  }
+
   .section {
     padding: 22px 24px 40px;
   }
@@ -265,30 +373,30 @@
 
 @media (max-width: 768px) {
   .hero {
-    height: 220px;
+    height: 300px;
   }
 
   .slide {
-    padding: 0 24px;
+    padding: 0 28px;
   }
 
   .slideIconBg {
-    font-size: 90px;
-    right: 16px;
+    font-size: 140px;
+    right: 20px;
   }
 
   .slideHeading {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
   }
 
   .slideSub {
-    font-size: 0.8rem;
-    margin-bottom: 12px;
+    font-size: 0.88rem;
+    margin-bottom: 14px;
   }
 
   .slideBtn {
-    padding: 7px 16px;
-    font-size: 0.82rem;
+    padding: 9px 18px;
+    font-size: 0.85rem;
   }
 
   .cuisineChips {
@@ -300,41 +408,69 @@
     padding: 3px 9px;
   }
 
+  .welcomeBar {
+    padding: 28px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .welcomeHeading {
+    font-size: 1.4rem;
+  }
+
+  .quickActions {
+    width: 100%;
+  }
+
+  .quickActionPrimary,
+  .quickActionSecondary {
+    flex: 1;
+    justify-content: center;
+  }
+
   .section {
     padding: 18px 16px 36px;
   }
 
+  /* Title stays left, "See all" stays right — kept as a single row on
+     purpose (an earlier stacked version put "See all" awkwardly under the
+     heading on its own line, which read badly). */
   .sectionHeader h2 {
     font-size: 1.1rem;
   }
 
-  /* Horizontal scroll-snap row instead of a wrapping grid */
-  .cardsGrid {
+  /* Static 3-column grid instead of a horizontal slider - 4 columns made
+     cards too small to read on phone widths. Card sizing itself is handled
+     by RecipeCard's .compact styles. */
+  .cardsGrid,
+  .previewGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  /* Undo the desktop hiding - mobile shows the full fetched set so every
+     row is full (9 for cardsGrid, 6 for previewGrid). */
+  .cardsGrid > *:nth-child(9),
+  .previewGrid > *:nth-child(n+5) {
     display: flex;
-    grid-template-columns: unset;
-    overflow-x: auto;
-    gap: 12px;
-    padding-bottom: 6px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .cardsGrid::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* each RecipeCard's root element becomes a fixed-width scroll item */
-  .cardsGrid > * {
-    flex: 0 0 68%;
-    max-width: 68%;
-    scroll-snap-align: start;
   }
 }
 
 @media (max-width: 480px) {
-  .cardsGrid > * {
-    flex: 0 0 78%;
-    max-width: 78%;
+  .hero {
+    height: 260px;
+  }
+
+  .slideHeading {
+    font-size: 1.3rem;
+  }
+
+  .slideSub {
+    font-size: 0.8rem;
+  }
+
+  .cardsGrid,
+  .previewGrid {
+    gap: 8px;
   }
 }

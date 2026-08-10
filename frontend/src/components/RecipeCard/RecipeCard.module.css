@@ -149,14 +149,65 @@
   font-size: 0.68rem;
 }
 
-/* ── Responsive ── */
+/* ── Responsive (default/full card - used on Recipes page, Profile grid) ── */
 @media (max-width: 768px) {
   .imageWrap { height: 140px; }
   .title { font-size: 0.9rem; }
   .body { padding: 10px 12px 12px; gap: 6px; }
   .communityBadge { font-size: 0.62rem; padding: 2px 6px; }
+
+  /* ── Compact variant — Home page mobile grid (3 columns) only.
+     Scoped entirely inside this media query, so it has zero effect on
+     desktop and zero effect on any page that doesn't pass compact. ── */
+  .compact .imageWrap {
+    height: 108px;
+  }
+
+  .compact .body {
+    padding: 7px 8px 9px;
+    gap: 4px;
+  }
+
+  .compact .title {
+    font-size: 0.78rem;
+    -webkit-line-clamp: 1;
+  }
+
+  /* Category/cuisine badges and author row still don't fit cleanly at this
+     width - the image, title, and likes count carry the card. */
+  .compact .badges,
+  .compact .author {
+    display: none;
+  }
+
+  .compact .communityBadge {
+    font-size: 0.58rem;
+    padding: 2px 5px;
+    top: 5px;
+    right: 5px;
+  }
+
+  .compact .likesBadge {
+    font-size: 0.62rem;
+    padding: 2px 6px;
+    gap: 3px;
+    bottom: 5px;
+    left: 5px;
+  }
+
+  .compact .likesBadge svg {
+    font-size: 0.56rem;
+  }
 }
 
 @media (max-width: 480px) {
   .imageWrap { height: 120px; }
+
+  .compact .imageWrap {
+    height: 92px;
+  }
+
+  .compact .title {
+    font-size: 0.72rem;
+  }
 }

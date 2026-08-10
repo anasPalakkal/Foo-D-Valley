@@ -1,15 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FaUtensils, FaPencilAlt, FaGlobe } from 'react-icons/fa'
+import { FaUtensils, FaPencilAlt, FaGlobe, FaThumbsUp } from 'react-icons/fa'
 import styles from './Home.module.css'
 import Footer from '../../components/Footer/Footer'
 import RecipeCard from '../../components/RecipeCard/RecipeCard'
 import PostRecipeModal from '../../components/PostRecipeModal/PostRecipeModal'
-import { getFeed, getPopularRecipes, getMealById, normalizeInternal } from '../../api/api.js'
+import {
+  getFeed,
+  getPopularRecipes,
+  getMealById,
+  normalizeInternal,
+  getFavorites,
+  getRecommendations,
+  getProfile,
+} from '../../api/api.js'
+import { getRecentlyViewed, clearRecentlyViewed } from '../../utils/recentlyViewed'
 import { useAuth } from '../../context/AuthContext'
 
-const LATEST_COUNT = 5
-const POPULAR_COUNT = 5
+// cardsGrid sections (Latest/Popular/Recommended) fetch 9 so mobile's
+// 3-column grid fills completely; desktop's 4-column grid only shows the
+// first 8 (CSS hides the 9th - see .cardsGrid > *:nth-child(9)).
+const LATEST_COUNT = 9
+const POPULAR_COUNT = 9
+const RECOMMENDED_COUNT = 9
+// previewGrid sections (Saved/Recently Viewed) fetch 6 for the same reason,
+// just at "shortcut strip" scale: desktop shows 4 (1 row), mobile shows 6
+// (2 full rows).
+const SAVED_PREVIEW_COUNT = 6
+const RECENTLY_VIEWED_COUNT = 6
+const ACTIVITY_NUDGE_DAYS = 14
 const CUISINES = ['Italian', 'Japanese', 'Mexican', 'Indian', 'French', 'Chinese', 'Thai', 'Greek']
 
 const SLIDES = [
@@ -44,6 +63,26 @@ const SLIDES = [
   },
 ]
 
+// Favorites come back as either { recipe: {...} } (internal) or
+// { isExternal, externalId, externalName, externalImage } (TheMealDB).
+// RecipeCard only needs id/name/image/isExternal/externalId to render and
+// to route on click - no need to run this through normalizeInternal.
+const mapFavoriteToCard = (fav) =>
+  fav.isExternal
+    ? {
+        id: `fav-ext-${fav.externalId}`,
+        externalId: fav.externalId,
+        isExternal: true,
+        name: fav.externalName,
+        image: fav.externalImage,
+      }
+    : {
+        id: fav.recipe?.id,
+        isExternal: false,
+        name: fav.recipe?.title,
+        image: fav.recipe?.imageUrl,
+      }
+
 const Home = () => {
   const [feedRecipes, setFeedRecipes] = useState([])
   const [feedLoading, setFeedLoading] = useState(true)
@@ -53,6 +92,11 @@ const Home = () => {
   const [popularRecipes, setPopularRecipes] = useState([])
   const [popularLoading, setPopularLoading] = useState(true)
   const [popularError, setPopularError] = useState('')
+
+  const [savedRecipes, setSavedRecipes] = useState([])
+  const [recentlyViewed, setRecentlyViewed] = useState([])
+  const [recommended, setRecommended] = useState({ basis: null, recipes: [] })
+  const [activityNudge, setActivityNudge] = useState('')
 
   const [activeSlide, setActiveSlide] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
@@ -105,13 +149,73 @@ const Home = () => {
     fetchPopular()
   }, [])
 
-  // Auto-advance slides
+  // Recently viewed - client-side only, works for guests too. Re-read on
+  // every mount so coming back to Home after viewing a recipe picks it up.
   useEffect(() => {
+    setRecentlyViewed(getRecentlyViewed().slice(0, RECENTLY_VIEWED_COUNT))
+  }, [])
+
+  // Saved-recipes preview - logged-in users only.
+  useEffect(() => {
+    if (!user) {
+      setSavedRecipes([])
+      return
+    }
+    getFavorites()
+      .then((favs) => setSavedRecipes(favs.slice(0, SAVED_PREVIEW_COUNT).map(mapFavoriteToCard)))
+      .catch(() => setSavedRecipes([]))
+  }, [user])
+
+  // "Because you liked X" - built server-side from the user's internal
+  // likes/favorites. Empty basis just means no internal-recipe activity yet
+  // (or only external TheMealDB activity, which carries no category/cuisine).
+  useEffect(() => {
+    if (!user) {
+      setRecommended({ basis: null, recipes: [] })
+      return
+    }
+    getRecommendations(RECOMMENDED_COUNT)
+      .then((data) =>
+        setRecommended({
+          basis: data.basis,
+          recipes: (data.recipes || []).map(normalizeInternal),
+        })
+      )
+      .catch(() => setRecommended({ basis: null, recipes: [] }))
+  }, [user])
+
+  // Activity nudge - reuses the existing profile endpoint (recipes already
+  // come back sorted newest-first) instead of adding a dedicated route.
+  useEffect(() => {
+    if (!user) {
+      setActivityNudge('')
+      return
+    }
+    getProfile(user.id)
+      .then((profile) => {
+        const lastPostedAt = profile.recipes?.[0]?.createdAt
+        if (!lastPostedAt) {
+          setActivityNudge("You haven't posted a recipe yet — share your first one.")
+          return
+        }
+        const daysSince = Math.floor((Date.now() - new Date(lastPostedAt).getTime()) / 86400000)
+        setActivityNudge(
+          daysSince >= ACTIVITY_NUDGE_DAYS
+            ? `You haven't posted in ${daysSince} days — got something new cooking?`
+            : ''
+        )
+      })
+      .catch(() => setActivityNudge(''))
+  }, [user])
+
+  // Auto-advance slides - only relevant when the hero is actually shown (guests).
+  useEffect(() => {
+    if (user) return
     timerRef.current = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % SLIDES.length)
     }, 5000)
     return () => clearInterval(timerRef.current)
-  }, [])
+  }, [user])
 
   const goToSlide = (i) => {
     clearInterval(timerRef.current)
@@ -135,7 +239,13 @@ const Home = () => {
     fetchFeed() // new recipe won't have likes yet, no need to refetch popular
   }
 
-  const renderState = (loading, error, empty, list) => {
+  const handleClearRecentlyViewed = () => {
+    clearRecentlyViewed()
+    setRecentlyViewed([])
+  }
+
+  // metricIcon defaults to the heart in RecipeCard - only Popular overrides it.
+  const renderState = (loading, error, empty, list, metricIcon) => {
     if (loading) {
       return (
         <div className={styles.loadingWrap}>
@@ -148,68 +258,117 @@ const Home = () => {
     return (
       <div className={styles.cardsGrid}>
         {list.map((recipe) => (
-          <RecipeCard key={recipe.id} recipe={recipe} onSelect={handleSelectRecipe} />
+          <RecipeCard
+            key={recipe.id}
+            recipe={recipe}
+            onSelect={handleSelectRecipe}
+            compact
+            metricIcon={metricIcon}
+          />
         ))}
       </div>
     )
   }
 
+  const firstName = user?.name?.split(' ')[0]
+
+  const recommendedHeading = recommended.basis?.category
+    ? `Because you liked ${recommended.basis.category}`
+    : recommended.basis?.cuisine
+    ? `Because you liked ${recommended.basis.cuisine} cuisine`
+    : 'Recommended for you'
+
   return (
     <>
       <div className={styles.homeContainer}>
 
-        {/* ── Hero Slider ── */}
-        <section className={styles.hero}>
-          <div className={styles.slidesTrack} style={{ transform: `translateX(-${activeSlide * 100}%)` }}>
-            {SLIDES.map((slide) => {
-              const Icon = slide.icon
-              return (
-                <div key={slide.id} className={`${styles.slide} ${styles[slide.bg]}`}>
-                  <Icon className={styles.slideIconBg} aria-hidden="true" />
-                  <div className={styles.slideContent}>
-                    <span className={styles.slideTag}>{slide.tag}</span>
-                    <h1 className={styles.slideHeading}>{slide.heading}</h1>
+        {user ? (
+          /* ── Logged-in: greeting + quick actions replaces the marketing hero.
+               Subtitle doubles as the activity nudge when there is one. ── */
+          <section className={styles.welcomeBar}>
+            <div className={styles.welcomeText}>
+              <h1 className={styles.welcomeHeading}>Welcome back, {firstName}</h1>
+              <p className={styles.welcomeSub}>
+                {activityNudge || "Here's what's cooking in your feed today."}
+              </p>
+            </div>
+            <div className={styles.quickActions}>
+              <button className={styles.quickActionPrimary} onClick={handleShareClick}>
+                <FaPencilAlt /> Post a Recipe
+              </button>
+              <Link to="/saved" className={styles.quickActionSecondary}>Saved Recipes</Link>
+              <Link to="/recipes" className={styles.quickActionSecondary}>Browse All</Link>
+            </div>
+          </section>
+        ) : (
+          /* ── Guest: marketing hero slider ── */
+          <section className={styles.hero}>
+            <div className={styles.slidesTrack} style={{ transform: `translateX(-${activeSlide * 100}%)` }}>
+              {SLIDES.map((slide) => {
+                const Icon = slide.icon
+                return (
+                  <div key={slide.id} className={`${styles.slide} ${styles[slide.bg]}`}>
+                    <Icon className={styles.slideIconBg} aria-hidden="true" />
+                    <div className={styles.slideContent}>
+                      <span className={styles.slideTag}>{slide.tag}</span>
+                      <h1 className={styles.slideHeading}>{slide.heading}</h1>
 
-                    {slide.id === 'cuisines' ? (
-                      <div className={styles.cuisineChips}>
-                        {CUISINES.map((c) => (
-                          <Link
-                            key={c}
-                            to={`/recipes?cuisine=${encodeURIComponent(c)}`}
-                            className={styles.cuisineChip}
-                          >
-                            {c}
-                          </Link>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className={styles.slideSub}>{slide.sub}</p>
-                    )}
+                      {slide.id === 'cuisines' ? (
+                        <div className={styles.cuisineChips}>
+                          {CUISINES.map((c) => (
+                            <Link
+                              key={c}
+                              to={`/recipes?cuisine=${encodeURIComponent(c)}`}
+                              className={styles.cuisineChip}
+                            >
+                              {c}
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className={styles.slideSub}>{slide.sub}</p>
+                      )}
 
-                    {slide.id === 'share' ? (
-                      <button className={styles.slideBtn} onClick={handleShareClick}>
-                        {user ? 'Share a recipe' : 'Join the community'}
-                      </button>
-                    ) : (
-                      <Link to={slide.href} className={styles.slideBtn}>{slide.cta}</Link>
-                    )}
+                      {slide.id === 'share' ? (
+                        <button className={styles.slideBtn} onClick={handleShareClick}>
+                          Join the community
+                        </button>
+                      ) : (
+                        <Link to={slide.href} className={styles.slideBtn}>{slide.cta}</Link>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
 
-          <div className={styles.dots}>
-            {SLIDES.map((_, i) => (
-              <button
-                key={i}
-                className={`${styles.dot} ${i === activeSlide ? styles.dotActive : ''}`}
-                onClick={() => goToSlide(i)}
-                aria-label={`Slide ${i + 1}`}
-              />
-            ))}
-          </div>
-        </section>
+            <div className={styles.dots}>
+              {SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  className={`${styles.dot} ${i === activeSlide ? styles.dotActive : ''}`}
+                  onClick={() => goToSlide(i)}
+                  aria-label={`Slide ${i + 1}`}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Recommended: logged-in users only, only when there's a real basis ── */}
+        {user && recommended.recipes.length > 0 && (
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2>{recommendedHeading}</h2>
+              <Link to="/recipes" className={styles.seeAll}>See all →</Link>
+            </div>
+            <div className={styles.cardsGrid}>
+              {recommended.recipes.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} onSelect={handleSelectRecipe} compact />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ── Feed: following-based when possible, falls back to global latest ── */}
         <section className={styles.section}>
@@ -218,7 +377,8 @@ const Home = () => {
             <Link
               to={isFollowingFeed ? "/recipes?source=following&sort=newest" : "/recipes?sort=newest"}
               className={styles.seeAll}>
-              See all → </Link>
+              See all →
+            </Link>
           </div>
 
           {!feedLoading && !feedError && !isFollowingFeed && user && (
@@ -238,7 +398,7 @@ const Home = () => {
           )}
         </section>
 
-        {/* ── Popular Recipes ── */}
+        {/* ── Popular Recipes — thumbs-up instead of heart, reads as a ranking signal ── */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2>Most Popular</h2>
@@ -248,9 +408,45 @@ const Home = () => {
             popularLoading,
             popularError,
             <p className={styles.stateText}>No popular recipes yet.</p>,
-            popularRecipes
+            popularRecipes,
+            FaThumbsUp
           )}
         </section>
+
+        {/* ── Recently Viewed: client-side history, works for guests too.
+             Sits between Popular and Saved — a mid-page discovery beat,
+             not competing with the welcome bar's "Saved Recipes" shortcut. ── */}
+        {recentlyViewed.length > 0 && (
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2>Recently Viewed</h2>
+              <button className={styles.seeAll} onClick={handleClearRecentlyViewed}>Clear</button>
+            </div>
+            <div className={styles.previewGrid}>
+              {recentlyViewed.map((recipe) => (
+                <RecipeCard key={recipe.key} recipe={recipe} onSelect={handleSelectRecipe} compact />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Your Saved Recipes: logged-in users only, only if they have any.
+             Placed last on purpose — the welcome bar above already has a
+             "Saved Recipes" shortcut, so this isn't the entry point, it's a
+             closing reminder/discovery strip. ── */}
+        {user && savedRecipes.length > 0 && (
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2>Your Saved Recipes</h2>
+              <Link to="/saved" className={styles.seeAll}>See all →</Link>
+            </div>
+            <div className={styles.previewGrid}>
+              {savedRecipes.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} onSelect={handleSelectRecipe} compact />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       {modalOpen && (

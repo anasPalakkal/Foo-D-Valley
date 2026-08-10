@@ -3,7 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaHeart } from 'react-icons/fa';
 import styles from './RecipeCard.module.css';
 
-const RecipeCard = ({ recipe, onSelect }) => {
+// compact: shrinks the card on mobile only (see .compact rules inside the
+// mobile media queries in RecipeCard.module.css) — has no effect on desktop,
+// so existing full-size usages (Recipes page, Profile grid) are unaffected.
+//
+// metricIcon: lets a listing swap the likes-badge icon (e.g. Home's "Most
+// Popular" section uses a thumbs-up instead of a heart to read as a ranking
+// signal rather than a like action). Defaults to FaHeart to match every
+// existing call site.
+const RecipeCard = ({ recipe, onSelect, compact = false, metricIcon: MetricIcon = FaHeart }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -18,7 +26,10 @@ const RecipeCard = ({ recipe, onSelect }) => {
   };
 
   return (
-    <div className={styles.card} onClick={handleClick}>
+    <div
+      className={`${styles.card} ${compact ? styles.compact : ''}`}
+      onClick={handleClick}
+    >
       <div className={styles.imageWrap}>
         <img src={recipe.image} alt={recipe.name} className={styles.image} />
         {!recipe.isExternal && (
@@ -26,7 +37,7 @@ const RecipeCard = ({ recipe, onSelect }) => {
         )}
         {recipe.likesCount > 0 && (
           <span className={styles.likesBadge}>
-            <FaHeart /> {recipe.likesCount}
+            <MetricIcon /> {recipe.likesCount}
           </span>
         )}
       </div>

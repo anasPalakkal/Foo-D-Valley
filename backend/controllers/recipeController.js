@@ -286,4 +286,81 @@ const getFeed = async (req, res) => {
   }
 }
 
-module.exports = { createRecipe, updateRecipe, getRecipes, getRecipeById, deleteRecipe, getPopularRecipes, getFeed }
+// GET /api/recipes/recommendations?limit=8
+// "Because you liked X" - built from the categories/cuisines of the user's
+// own likes and favorites. Only INTERNAL likes/favorites carry category or
+// cuisine data - a like or favorite on a TheMealDB (external) recipe has no
+// category/cuisine stored against it (see Favorite/RecipeLike schema), so
+// external activity can't contribute to this signal. A user who only
+// interacts with TheMealDB recipes will get an empty basis and an empty
+// recipes list here - that's expected, not a bug.
+const getRecommendations = async (req, res) => {
+  const limit = parseInt(req.query.limit) || 8
+
+  try {
+    const [likes, favorites] = await Promise.all([
+      prisma.recipeLike.findMany({
+        where: { userId: req.user.id, recipeId: { not: null } },
+        select: { recipeId: true, recipe: { select: { category: true, cuisine: true } } },
+      }),
+      prisma.favorite.findMany({
+        where: { userId: req.user.id, recipeId: { not: null } },
+        select: { recipeId: true, recipe: { select: { category: true, cuisine: true } } },
+      }),
+    ])
+
+    const categoryCounts = {}
+    const cuisineCounts = {}
+    const seenRecipeIds = new Set()
+
+    for (const { recipeId, recipe } of [...likes, ...favorites]) {
+      if (recipeId) seenRecipeIds.add(recipeId)
+      if (recipe?.category) categoryCounts[recipe.category] = (categoryCounts[recipe.category] || 0) + 1
+      if (recipe?.cuisine) cuisineCounts[recipe.cuisine] = (cuisineCounts[recipe.cuisine] || 0) + 1
+    }
+
+    const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
+    const topCuisine = Object.entries(cuisineCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
+
+    if (!topCategory && !topCuisine) {
+      return res.json({ basis: null, recipes: [] })
+    }
+
+    const recipes = await prisma.recipe.findMany({
+      where: {
+        isExternal: false,
+        authorId: { not: req.user.id },
+        id: { notIn: Array.from(seenRecipeIds) },
+        author: { isDeleted: false },
+        OR: [
+          ...(topCategory ? [{ category: topCategory }] : []),
+          ...(topCuisine ? [{ cuisine: topCuisine }] : []),
+        ],
+      },
+      include: {
+        author: { select: { id: true, name: true } },
+        _count: { select: { likes: true, comments: true } },
+      },
+      orderBy: { likes: { _count: 'desc' } },
+      take: limit,
+    })
+
+    const result = await attachIsLiked(recipes, req.user.id)
+
+    res.json({ basis: { category: topCategory, cuisine: topCuisine }, recipes: result })
+  } catch (error) {
+    console.error('Get recommendations error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+module.exports = {
+  createRecipe,
+  updateRecipe,
+  getRecipes,
+  getRecipeById,
+  deleteRecipe,
+  getPopularRecipes,
+  getFeed,
+  getRecommendations,
+}

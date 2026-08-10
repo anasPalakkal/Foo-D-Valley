@@ -14,6 +14,7 @@ import {
   getComments,
   postComment,
 } from '../../api/api'
+import { addRecentlyViewed } from '../../utils/recentlyViewed'
 import styles from './RecipeDetails.module.css'
 import Footer from '../../components/Footer/Footer'
 
@@ -71,6 +72,7 @@ const RecipeDetails = () => {
         }
         if (!data) throw new Error('Not found')
         setRecipe(data)
+        addRecentlyViewed(data)
       } catch {
         setError('Recipe not found.')
       } finally {
