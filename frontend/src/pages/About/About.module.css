@@ -1,84 +1,234 @@
-.about-container {
-  padding: 50px 20px;
-  background-color: #fffaf7;
+.page {
+  background-color: #fef8f5;
   font-family: 'Segoe UI', sans-serif;
   color: #333;
-  max-width: 960px;
+  min-height: 100vh;
+}
+
+/* ── Hero ── */
+.hero {
+  background: linear-gradient(135deg, #ff7043 0%, #b0413e 100%);
+  padding: 64px 24px;
+  text-align: center;
+  color: #fff;
+}
+
+.heroTitle {
+  font-family: 'Pacifico', cursive;
+  font-size: 2.6rem;
+  font-weight: 400;
+  margin: 0 0 12px;
+}
+
+.logoD {
+  color: #ffd6cc;
+}
+
+.heroSub {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ── Shared content width ── */
+.intro,
+.features,
+.dataNote,
+.developer {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.intro p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #555;
+  text-align: center;
+  max-width: 640px;
   margin: 0 auto;
 }
 
-.about-container h1 {
-  text-align: center;
-  color: #b0413e;
-  font-size: 2.5rem;
-  margin-bottom: 20px;
-}
-
-.highlight {
-  font-family: 'Pacifico', cursive;
-}
-
-.logo-d {
-  font-size: 2.2rem;
-  color: #ff7043;
-}
-
-.about-section {
-  margin-top: 30px;
-}
-
-.about-section h2 {
-  font-size: 1.6rem;
-  color: #b0413e;
-  margin-bottom: 10px;
-}
-
-.about-section ul {
-  list-style: none;
-  padding: 0;
-}
-
-.about-section li {
-  margin-bottom: 8px;
-  font-size: 1rem;
-  padding-left: 1.2em;
-  position: relative;
-}
-
-.about-section li::before {
-  content: "✔";
-  position: absolute;
-  left: 0;
-  color: #ff7043;
-}
-
-.social-links {
-  margin-top: 15px;
-  display: flex;
-  gap: 25px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.social-links a {
-  text-decoration: none;
-  color: #b0413e;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  transition: color 0.3s ease;
-}
-
-.social-links a .icon {
+/* ── Features ── */
+.sectionHeading {
   font-size: 1.4rem;
-  margin-right: 8px;
-  transition: transform 0.2s ease;
+  font-weight: 700;
+  color: #b0413e;
+  text-align: center;
+  margin-bottom: 32px;
 }
 
-.social-links a:hover {
+.featureGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 40px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.featureIcon {
+  font-size: 1.3rem;
+  color: #ff7043;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.featureTitle {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #3a1f1e;
+  margin: 0 0 4px;
+}
+
+.featureText {
+  font-size: 0.88rem;
+  color: #777;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Data attribution ── */
+.dataNote {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.dataNote p {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #888;
+  border-top: 1px solid #ffd5c2;
+  padding-top: 28px;
+}
+
+.dataNote a {
+  color: #ff7043;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.dataNote a:hover {
+  text-decoration: underline;
+}
+
+/* ── Developer ── */
+.developer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.devAvatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #ff7043;
+  color: #fff;
+  font-size: 1.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.devInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.devName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #3a1f1e;
+  margin: 0;
+}
+
+.devRole {
+  font-size: 0.85rem;
+  color: #999;
+  margin: 0 0 4px;
+}
+
+.devEmail {
+  font-size: 0.85rem;
+  color: #b0413e;
+  text-decoration: none;
+}
+
+.devEmail:hover {
+  text-decoration: underline;
+}
+
+.socialLinks {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.socialLinks a {
+  color: #b0413e;
+  transition: color 0.2s ease;
+}
+
+.socialLinks a:hover {
   color: #ff7043;
 }
 
-.social-links a:hover .icon {
-  transform: scale(1.1);
+.icon {
+  font-size: 1.3rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .hero {
+    padding: 48px 20px;
+  }
+
+  .heroTitle {
+    font-size: 2.1rem;
+  }
+
+  .featureGrid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .intro,
+  .features,
+  .dataNote,
+  .developer {
+    padding: 32px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 1.8rem;
+  }
+
+  .heroSub {
+    font-size: 0.9rem;
+  }
+
+  .developer {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .devInfo {
+    align-items: center;
+  }
+
+  .socialLinks {
+    justify-content: center;
+  }
 }
