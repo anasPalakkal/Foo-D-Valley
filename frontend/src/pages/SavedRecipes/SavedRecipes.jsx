@@ -48,13 +48,33 @@ const SavedRecipes = () => {
     }
   }
 
-  if (loading) return <p>Loading saved recipes...</p>
+  if (loading) {
+    return (
+      <div className={styles['loading-wrap']}>
+        <div className={styles.spinner} />
+        <p>Loading saved recipes...</p>
+      </div>
+    )
+  }
 
   return (
     <div className={styles['saved-container']}>
       <h2>Saved Recipes</h2>
+
       {favorites.length === 0 ? (
-        <p>No saved recipes yet.</p>
+        <div className={styles['empty-state']}>
+          <div className={styles['empty-icon-wrap']}>
+            <FaHeart className={styles['empty-icon']} />
+          </div>
+          <h3>No saved recipes yet</h3>
+          <p>Recipes you save will show up here. Start exploring and save your first one.</p>
+          <button
+            className={styles['browse-btn']}
+            onClick={() => navigate('/recipes')}
+          >
+            Browse Recipes
+          </button>
+        </div>
       ) : (
         <div className={styles['saved-grid']}>
           {favorites.map((fav) => {
