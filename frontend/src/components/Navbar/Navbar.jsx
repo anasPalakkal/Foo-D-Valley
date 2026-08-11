@@ -14,7 +14,7 @@ const CATEGORY_CLOSE_DELAY = 200; // hover exit buffer
 const Navbar = ({ searchTerm, setSearchTerm }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -143,7 +143,13 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
           {/* account menu */}
-          {user ? (
+          {loading ? (
+            // Session restore in flight — render a neutral placeholder instead of
+            // guessing guest/logged-in. Prevents the login-button-then-avatar flash.
+            <div className={styles.avatarWrapper}>
+              <div className={styles.avatarFallback} style={{ opacity: 0.35 }} />
+            </div>
+          ) : user ? (
             <div className={styles.avatarWrapper} ref={dropdownRef}>
               <button
                 className={styles.avatarBtn}

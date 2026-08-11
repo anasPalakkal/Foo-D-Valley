@@ -474,3 +474,30 @@
     gap: 8px;
   }
 }
+
+/* ========== Auth-restore skeleton (replaces hero while session loads) ========== */
+.heroSkeleton {
+  height: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff0eb;
+}
+
+.skeletonBlock {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #fff0eb 25%, #ffe4d6 37%, #fff0eb 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.4s ease infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@media (max-width: 768px) {
+  .heroSkeleton {
+    height: 220px;
+  }
+}

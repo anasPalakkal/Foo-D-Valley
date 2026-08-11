@@ -17,15 +17,9 @@ import {
 import { getRecentlyViewed, clearRecentlyViewed } from '../../utils/recentlyViewed'
 import { useAuth } from '../../context/AuthContext'
 
-// cardsGrid sections (Latest/Popular/Recommended) fetch 9 so mobile's
-// 3-column grid fills completely; desktop's 4-column grid only shows the
-// first 8 (CSS hides the 9th - see .cardsGrid > *:nth-child(9)).
 const LATEST_COUNT = 9
 const POPULAR_COUNT = 9
 const RECOMMENDED_COUNT = 9
-// previewGrid sections (Saved/Recently Viewed) fetch 6 for the same reason,
-// just at "shortcut strip" scale: desktop shows 4 (1 row), mobile shows 6
-// (2 full rows).
 const SAVED_PREVIEW_COUNT = 6
 const RECENTLY_VIEWED_COUNT = 6
 const ACTIVITY_NUDGE_DAYS = 14
@@ -63,10 +57,6 @@ const SLIDES = [
   },
 ]
 
-// Favorites come back as either { recipe: {...} } (internal) or
-// { isExternal, externalId, externalName, externalImage } (TheMealDB).
-// RecipeCard only needs id/name/image/isExternal/externalId to render and
-// to route on click - no need to run this through normalizeInternal.
 const mapFavoriteToCard = (fav) =>
   fav.isExternal
     ? {
@@ -102,7 +92,7 @@ const Home = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const timerRef = useRef(null)
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
 
   const fetchFeed = async () => {
     try {
@@ -149,13 +139,10 @@ const Home = () => {
     fetchPopular()
   }, [])
 
-  // Recently viewed - client-side only, works for guests too. Re-read on
-  // every mount so coming back to Home after viewing a recipe picks it up.
   useEffect(() => {
     setRecentlyViewed(getRecentlyViewed().slice(0, RECENTLY_VIEWED_COUNT))
   }, [])
 
-  // Saved-recipes preview - logged-in users only.
   useEffect(() => {
     if (!user) {
       setSavedRecipes([])
@@ -166,9 +153,6 @@ const Home = () => {
       .catch(() => setSavedRecipes([]))
   }, [user])
 
-  // "Because you liked X" - built server-side from the user's internal
-  // likes/favorites. Empty basis just means no internal-recipe activity yet
-  // (or only external TheMealDB activity, which carries no category/cuisine).
   useEffect(() => {
     if (!user) {
       setRecommended({ basis: null, recipes: [] })
@@ -184,8 +168,6 @@ const Home = () => {
       .catch(() => setRecommended({ basis: null, recipes: [] }))
   }, [user])
 
-  // Activity nudge - reuses the existing profile endpoint (recipes already
-  // come back sorted newest-first) instead of adding a dedicated route.
   useEffect(() => {
     if (!user) {
       setActivityNudge('')
@@ -208,14 +190,16 @@ const Home = () => {
       .catch(() => setActivityNudge(''))
   }, [user])
 
-  // Auto-advance slides - only relevant when the hero is actually shown (guests).
+  // Guard against running the guest-only slide timer while session restore
+  // is still in flight — user is null during that window too, but nothing
+  // is rendered yet so starting the timer here is just wasted work.
   useEffect(() => {
-    if (user) return
+    if (user || authLoading) return
     timerRef.current = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % SLIDES.length)
     }, 5000)
     return () => clearInterval(timerRef.current)
-  }, [user])
+  }, [user, authLoading])
 
   const goToSlide = (i) => {
     clearInterval(timerRef.current)
@@ -236,7 +220,7 @@ const Home = () => {
 
   const handleRecipePosted = () => {
     setModalOpen(false)
-    fetchFeed() // new recipe won't have likes yet, no need to refetch popular
+    fetchFeed()
   }
 
   const handleClearRecentlyViewed = () => {
@@ -244,7 +228,6 @@ const Home = () => {
     setRecentlyViewed([])
   }
 
-  // metricIcon defaults to the heart in RecipeCard - only Popular overrides it.
   const renderState = (loading, error, empty, list, metricIcon) => {
     if (loading) {
       return (
@@ -282,9 +265,13 @@ const Home = () => {
     <>
       <div className={styles.homeContainer}>
 
-        {user ? (
-          /* ── Logged-in: greeting + quick actions replaces the marketing hero.
-               Subtitle doubles as the activity nudge when there is one. ── */
+        {authLoading ? (
+          /* ── Session restore in flight — neutral skeleton, don't guess
+               guest vs logged-in and risk a flash of the wrong UI. ── */
+          <section className={styles.heroSkeleton}>
+            <div className={styles.skeletonBlock} />
+          </section>
+        ) : user ? (
           <section className={styles.welcomeBar}>
             <div className={styles.welcomeText}>
               <h1 className={styles.welcomeHeading}>Welcome back, {firstName}</h1>
@@ -301,7 +288,6 @@ const Home = () => {
             </div>
           </section>
         ) : (
-          /* ── Guest: marketing hero slider ── */
           <section className={styles.hero}>
             <div className={styles.slidesTrack} style={{ transform: `translateX(-${activeSlide * 100}%)` }}>
               {SLIDES.map((slide) => {
@@ -355,7 +341,6 @@ const Home = () => {
           </section>
         )}
 
-        {/* ── Recommended: logged-in users only, only when there's a real basis ── */}
         {user && recommended.recipes.length > 0 && (
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
@@ -370,7 +355,6 @@ const Home = () => {
           </section>
         )}
 
-        {/* ── Feed: following-based when possible, falls back to global latest ── */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2>{isFollowingFeed ? 'Latest from people you follow' : 'Latest from the community'}</h2>
@@ -398,7 +382,6 @@ const Home = () => {
           )}
         </section>
 
-        {/* ── Popular Recipes — thumbs-up instead of heart, reads as a ranking signal ── */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2>Most Popular</h2>
@@ -413,9 +396,6 @@ const Home = () => {
           )}
         </section>
 
-        {/* ── Recently Viewed: client-side history, works for guests too.
-             Sits between Popular and Saved — a mid-page discovery beat,
-             not competing with the welcome bar's "Saved Recipes" shortcut. ── */}
         {recentlyViewed.length > 0 && (
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
@@ -430,10 +410,6 @@ const Home = () => {
           </section>
         )}
 
-        {/* ── Your Saved Recipes: logged-in users only, only if they have any.
-             Placed last on purpose — the welcome bar above already has a
-             "Saved Recipes" shortcut, so this isn't the entry point, it's a
-             closing reminder/discovery strip. ── */}
         {user && savedRecipes.length > 0 && (
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
