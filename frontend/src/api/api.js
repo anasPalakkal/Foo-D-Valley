@@ -2,12 +2,9 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  withCredentials: true, // required to send/receive the httpOnly refresh cookie
+  withCredentials: true,
 })
 
-// Access token lives in memory only — never localStorage. It's short-lived (15m)
-// by design; persisting it defeats the point of splitting access/refresh tokens.
-// AuthContext calls setAccessToken() whenever it changes.
 let accessToken = null
 
 export const setAccessToken = (token) => {
@@ -21,8 +18,6 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Single-flight refresh: if multiple requests 401 at once, only fire one
-// /auth/refresh call and let the rest wait on it instead of racing.
 let refreshPromise = null
 
 export const doRefresh = () => {
@@ -50,10 +45,9 @@ api.interceptors.response.use(
       original._retried ||
       original.url === '/auth/refresh'
     ) {
-      // Unverified-account block — fired by requireVerified on the backend.
       if (
         error.response?.status === 403 &&
-        error.response?.data?.code === 'EMAIL_NOT_VERIFIED'   // <-- replace the old message-string check with this line
+        error.response?.data?.code === 'EMAIL_NOT_VERIFIED'
       ) {
         window.dispatchEvent(new Event('auth:unverified'))
       }
@@ -146,6 +140,8 @@ export const normalizeInternal = (recipe) => ({
   isLiked: recipe.isLiked ?? false,
 })
 
+// Returns { recipes, total, page, totalPages, hasMore }
+// params: { page, limit, sort, category, cuisine, search, source }
 export const getRecipes = async (params = {}) => {
   const { data } = await api.get('/recipes', { params })
   return data
@@ -185,9 +181,23 @@ export const getFeed = async (limit = 4) => {
   return data
 }
 
-// basis: { category, cuisine } | null, recipes: normalized-shape internal recipes
 export const getRecommendations = async (limit = 8) => {
   const { data } = await api.get('/recipes/recommendations', { params: { limit } })
+  return data
+}
+
+// ─── External meals (cached on backend) ──────────────────────────────────────
+
+// Returns { meals: NormalizedExternalMeal[], cachedAt, fromCache }
+// meals shape: { externalId, name, image, category, area, isExternal: true }
+export const getExternalMeals = async () => {
+  const { data } = await api.get('/external/meals')
+  return data
+}
+
+// Returns { categories: string[], areas: string[], cachedAt, fromCache }
+export const getExternalMeta = async () => {
+  const { data } = await api.get('/external/meta')
   return data
 }
 
@@ -316,7 +326,10 @@ export const getFollowers = async (userId) => {
   return data
 }
 
-// ─── TheMealDB (External) ─────────────────────────────────────────────────────
+// ─── TheMealDB (direct — used only for single recipe lookup) ──────────────────
+// Category listing and bulk meal fetching now go through the cached backend
+// endpoints above. Keep getMealById here because RecipeDetails needs a single
+// full-detail lookup (instructions, ingredients) which the cache doesn't store.
 
 const MEAL_DB_BASE = 'https://www.themealdb.com/api/json/v1/1'
 
@@ -329,7 +342,6 @@ export const normalizeMeal = (meal) => {
       ingredients.push(`${measure ? measure.trim() : ''} ${ingredient.trim()}`.trim())
     }
   }
-
   return {
     id: `ext_${meal.idMeal}`,
     externalId: meal.idMeal,
@@ -346,36 +358,22 @@ export const normalizeMeal = (meal) => {
   }
 }
 
-// ─── Account ──────────────────────────────────────────────────────────────────
-
-export const changePassword = async (currentPassword, newPassword) => {
-  const { data } = await api.put('/profile/me/password', { currentPassword, newPassword })
-  return data
-}
-
-export const deleteAccount = async (password) => {
-  const { data } = await api.delete('/profile/me', { data: { password } })
-  return data
-}
-
-export const searchMeals = async (query = '') => {
-  const res = await fetch(`${MEAL_DB_BASE}/search.php?s=${query}`)
-  const data = await res.json()
-  return data.meals ? data.meals.map(normalizeMeal) : []
-}
-
 export const getMealById = async (externalId) => {
   const res = await fetch(`${MEAL_DB_BASE}/lookup.php?i=${externalId}`)
   const data = await res.json()
   return data.meals ? normalizeMeal(data.meals[0]) : null
 }
 
-export const getMealsByCategory = async (category) => {
-  const res = await fetch(`${MEAL_DB_BASE}/filter.php?c=${category}`)
+// Keep searchMeals for any existing search usage
+export const searchMeals = async (query = '') => {
+  const res = await fetch(`${MEAL_DB_BASE}/search.php?s=${query}`)
   const data = await res.json()
   return data.meals ? data.meals.map(normalizeMeal) : []
 }
 
+// These three are still used by Navbar (category dropdown) and PostRecipeModal
+// (category/cuisine selects). They call TheMealDB directly because they need
+// the full metadata objects, not the cached meal-list format from /api/external.
 export const getCategories = async () => {
   const res = await fetch(`${MEAL_DB_BASE}/categories.php`)
   const data = await res.json()
@@ -386,6 +384,24 @@ export const getCuisines = async () => {
   const res = await fetch(`${MEAL_DB_BASE}/list.php?a=list`)
   const data = await res.json()
   return data.meals || []
+}
+
+export const getMealsByCategory = async (category) => {
+  const res = await fetch(`${MEAL_DB_BASE}/filter.php?c=${encodeURIComponent(category)}`)
+  const data = await res.json()
+  return data.meals ? data.meals.map(normalizeMeal) : []
+}
+
+// ─── Account ──────────────────────────────────────────────────────────────────
+
+export const changePassword = async (currentPassword, newPassword) => {
+  const { data } = await api.put('/profile/me/password', { currentPassword, newPassword })
+  return data
+}
+
+export const deleteAccount = async (password) => {
+  const { data } = await api.delete('/profile/me', { data: { password } })
+  return data
 }
 
 export default api
