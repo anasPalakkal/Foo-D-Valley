@@ -11,6 +11,7 @@ const followRoutes = require('./routes/followRoutes')
 const { startDeletionJob } = require('./jobs/deletion.job')
 const cookieParser = require('cookie-parser')
 const { lightRateLimit } = require('./middleware/rateLimiters')
+const externalRoutes = require('./routes/externalRoutes')
 
 const app = express()
 app.set('trust proxy', 1)
@@ -33,6 +34,8 @@ app.use('/api/recipes', recipeRoutes)
 app.use('/api/favorites', favoriteRoutes)
 app.use('/api/profile', profileRoutes)
 app.use('/api/users', followRoutes)
+app.use('/api/external', externalRoutes)
+
 
 app.get('/', (req, res) => {
   res.json({ message: 'Foo D Valley API is running' })
