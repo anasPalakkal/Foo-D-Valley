@@ -3,14 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaHeart } from 'react-icons/fa';
 import styles from './RecipeCard.module.css';
 
-// compact: shrinks the card on mobile only (see .compact rules inside the
-// mobile media queries in RecipeCard.module.css) — has no effect on desktop,
-// so existing full-size usages (Recipes page, Profile grid) are unaffected.
-//
-// metricIcon: lets a listing swap the likes-badge icon (e.g. Home's "Most
-// Popular" section uses a thumbs-up instead of a heart to read as a ranking
-// signal rather than a like action). Defaults to FaHeart to match every
-// existing call site.
 const RecipeCard = ({ recipe, onSelect, compact = false, metricIcon: MetricIcon = FaHeart }) => {
   const navigate = useNavigate();
 
@@ -71,6 +63,31 @@ const RecipeCard = ({ recipe, onSelect, compact = false, metricIcon: MetricIcon 
       </div>
     </div>
   );
+};
+
+// Skeleton placeholder — matches the visual footprint of a real RecipeCard.
+// Pass count prop to render multiple in a grid without mapping at the call site.
+export const RecipeCardSkeleton = ({ compact = false, count = 1 }) => {
+  return Array.from({ length: count }, (_, i) => (
+    <div
+      key={i}
+      className={`${styles.card} ${styles.skeleton} ${compact ? styles.compact : ''}`}
+      aria-hidden="true"
+    >
+      <div className={`${styles.imageWrap} ${styles.skeletonImage}`} />
+      <div className={styles.body}>
+        <div className={`${styles.skeletonLine} ${styles.skeletonTitle}`} />
+        <div className={styles.badges}>
+          <div className={`${styles.skeletonBadge}`} />
+          <div className={`${styles.skeletonBadge}`} />
+        </div>
+        <div className={styles.author}>
+          <div className={styles.skeletonAvatar} />
+          <div className={`${styles.skeletonLine} ${styles.skeletonAuthorName}`} />
+        </div>
+      </div>
+    </div>
+  ));
 };
 
 export default RecipeCard;

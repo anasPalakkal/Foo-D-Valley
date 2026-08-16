@@ -1,21 +1,79 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { getCategories, getMealsByCategory, getRecipes, getCuisines, getFollowing, normalizeInternal, getBatchLikeCounts } from '../../api/api.js'
+import {
+  getRecipes,
+  getExternalMeals,
+  getExternalMeta,
+  getBatchLikeCounts,
+  normalizeInternal,
+} from '../../api/api.js'
 import { useAuth } from '../../context/AuthContext'
-import RecipeCard from '../../components/RecipeCard/RecipeCard'
+import RecipeCard, { RecipeCardSkeleton } from '../../components/RecipeCard/RecipeCard'
 import RecipeFilters from '../../components/RecipeFilters/RecipeFilters'
 import Footer from '../../components/Footer/Footer'
 import styles from './Recipes.module.css'
 
 const PAGE_SIZE = 12
-const DEFAULT_FILTERS = { category: 'all', cuisine: 'all', source: 'all', sort: 'az' }
+const DEFAULT_FILTERS = { category: 'all', cuisine: 'all', source: 'all', sort: 'newest' }
+
+// External meals are fetched once and cached in module scope for the lifetime
+// of the browser session. The backend caches them in Redis for 1 hour —
+// this client-side cache avoids re-fetching on every Recipes mount within
+// the same session (navigation back, filter changes, etc.).
+let externalMealsCache = null
+let externalMealsPromise = null
+
+const getExternalMealsCached = () => {
+  if (externalMealsCache) return Promise.resolve(externalMealsCache)
+  if (externalMealsPromise) return externalMealsPromise
+  externalMealsPromise = getExternalMeals()
+    .then((res) => {
+      externalMealsCache = res.meals || []
+      externalMealsPromise = null
+      return externalMealsCache
+    })
+    .catch(() => {
+      externalMealsPromise = null
+      return []
+    })
+  return externalMealsPromise
+}
+
+// Same pattern for meta (categories + areas for filter dropdowns)
+let metaCache = null
+let metaPromise = null
+
+const getExternalMetaCached = () => {
+  if (metaCache) return Promise.resolve(metaCache)
+  if (metaPromise) return metaPromise
+  metaPromise = getExternalMeta()
+    .then((res) => {
+      metaCache = res
+      metaPromise = null
+      return metaCache
+    })
+    .catch(() => {
+      metaPromise = null
+      return { categories: [], areas: [] }
+    })
+  return metaPromise
+}
 
 const Recipes = ({ searchTerm }) => {
-  const [allRecipes, setAllRecipes] = useState([])
+  // Internal (community) recipes — server paginated
+  const [internalRecipes, setInternalRecipes] = useState([])
+  const [internalTotal, setInternalTotal] = useState(0)
+  const [internalTotalPages, setInternalTotalPages] = useState(0)
+  const [internalLoading, setInternalLoading] = useState(true)
+
+  // External (TheMealDB) meals — loaded once, filtered client-side
+  const [externalMeals, setExternalMeals] = useState([])
+  const [externalLoading, setExternalLoading] = useState(true)
+
+  // Filter metadata for dropdowns
   const [categoryList, setCategoryList] = useState([])
   const [cuisineList, setCuisineList] = useState([])
-  const [followingIds, setFollowingIds] = useState([])
-  const [loading, setLoading] = useState(true)
+
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
@@ -23,6 +81,10 @@ const Recipes = ({ searchTerm }) => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
+
+  // Track the latest internal fetch to discard stale responses when filters
+  // change faster than requests resolve.
+  const fetchIdRef = useRef(0)
 
   const filters = {
     category: searchParams.get('category') || DEFAULT_FILTERS.category,
@@ -37,86 +99,164 @@ const Recipes = ({ searchTerm }) => {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // followingIds is user-specific and can change independently of the recipe fetch
+  // Load external meals + meta once on mount
   useEffect(() => {
-    if (!user) {
-      setFollowingIds([])
-      return
-    }
-    getFollowing(user.id)
-      .then((list) => setFollowingIds(list.map((u) => u.id)))
-      .catch(() => setFollowingIds([]))
-  }, [user])
+    setExternalLoading(true)
+    Promise.all([getExternalMealsCached(), getExternalMetaCached()])
+      .then(([meals, meta]) => {
+        setExternalMeals(meals)
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true)
-      setError('')
-      try {
-        const [categories, cuisinesRaw, internalRaw] = await Promise.all([
-          getCategories(),
-          getCuisines(),
-          getRecipes(),
-        ])
-
-        setCategoryList(categories.map((c) => c.strCategory))
-
-        const internalMeals = internalRaw.map(normalizeInternal)
-
-        const allCuisineValues = [
-          ...cuisinesRaw.map((c) => c.strArea),
-          ...internalMeals.map((r) => r.area).filter(Boolean),
-        ]
-        const uniqueCuisines = Array.from(new Set(allCuisineValues)).sort()
-        setCuisineList(uniqueCuisines)
-
-        const mealArrays = await Promise.all(
-          categories.map((cat) =>
-            getMealsByCategory(cat.strCategory)
-              .then((meals) => meals.map((m) => ({ ...m, category: cat.strCategory })))
-              .catch(() => [])
-          )
-        )
-
-        const seen = new Set()
-        const uniqueExternal = mealArrays.flat().filter((meal) => {
-          if (seen.has(meal.externalId)) return false
-          seen.add(meal.externalId)
-          return true
-        })
-
-        let merged = [...internalMeals, ...uniqueExternal].sort((a, b) =>
-          a.name.localeCompare(b.name)
-        )
-
-        try {
-          const recipeIds = internalMeals.map((r) => r.id)
-          const externalIds = uniqueExternal.map((r) => r.externalId)
-          const { recipeCounts, externalCounts } = await getBatchLikeCounts(recipeIds, externalIds)
-
-          merged = merged.map((r) => ({
-            ...r,
-            likesCount: r.isExternal
-              ? externalCounts[r.externalId] || 0
-              : recipeCounts[r.id] || 0,
-          }))
-        } catch {
-          merged = merged.map((r) => ({ ...r, likesCount: 0 }))
-        }
-
-        setAllRecipes(merged)
-      } catch (err) {
-        console.error('Error fetching recipes:', err)
-        setError('Failed to load recipes. Please try again.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchAll()
+        // Merge external areas with any internal cuisines already loaded.
+        // Internal cuisines come from the paginated fetch below and are set
+        // separately — the filter list union happens in the render phase.
+        setCategoryList(meta.categories || [])
+        setCuisineList(meta.areas || [])
+      })
+      .finally(() => setExternalLoading(false))
   }, [])
 
-  useEffect(() => { setPage(1) }, [searchTerm, searchParams.toString()])
+  // Fetch internal recipes whenever filters, page, or searchTerm change.
+  // 'following' source is handled server-side — the backend reads the auth
+  // token via optionalProtect and filters by followingIds.
+  const fetchInternal = useCallback(async () => {
+    const fetchId = ++fetchIdRef.current
+    setInternalLoading(true)
+
+    try {
+      const params = {
+        page,
+        limit: PAGE_SIZE,
+        sort: filters.sort,
+      }
+
+      if (filters.category !== 'all') params.category = filters.category
+      if (filters.cuisine !== 'all') params.cuisine = filters.cuisine
+      if (searchTerm?.trim()) params.search = searchTerm.trim()
+      if (filters.source === 'following') params.source = 'following'
+
+      const data = await getRecipes(params)
+
+      // Discard if a newer fetch has already fired
+      if (fetchId !== fetchIdRef.current) return
+
+      const normalized = (data.recipes || []).map(normalizeInternal)
+
+      // Attach like counts in batch
+      if (normalized.length > 0) {
+        try {
+          const recipeIds = normalized.map((r) => r.id)
+          const { recipeCounts } = await getBatchLikeCounts(recipeIds, [])
+          const withLikes = normalized.map((r) => ({
+            ...r,
+            likesCount: recipeCounts[r.id] || r.likesCount || 0,
+          }))
+          setInternalRecipes(withLikes)
+        } catch {
+          setInternalRecipes(normalized)
+        }
+      } else {
+        setInternalRecipes([])
+      }
+
+      setInternalTotal(data.total || 0)
+      setInternalTotalPages(data.totalPages || 0)
+    } catch (err) {
+      if (fetchId !== fetchIdRef.current) return
+      console.error('fetchInternal error:', err)
+      setError('Failed to load recipes. Please try again.')
+    } finally {
+      if (fetchId === fetchIdRef.current) setInternalLoading(false)
+    }
+  }, [page, filters.sort, filters.category, filters.cuisine, filters.source, searchTerm])
+
+  useEffect(() => {
+    // 'community' source: only internal, no external needed. 'following' is also internal-only.
+    // 'all' source: both internal + external shown together.
+    // 'external' source: not a filter option we expose, so not handled here.
+    fetchInternal()
+  }, [fetchInternal])
+
+  // Reset to page 1 when filters or search change
+  useEffect(() => {
+    setPage(1)
+  }, [searchTerm, filters.category, filters.cuisine, filters.source, filters.sort])
+
+  // Apply client-side filtering to external meals based on active filters.
+  // External meals are already loaded — we don't paginate them separately,
+  // they are mixed into the current page view based on sort order.
+  const filteredExternal = React.useMemo(() => {
+    // 'community' and 'following' sources exclude external recipes entirely
+    if (filters.source === 'community' || filters.source === 'following') return []
+
+    let result = [...externalMeals]
+
+    if (searchTerm?.trim()) {
+      const q = searchTerm.toLowerCase()
+      result = result.filter(
+        (r) =>
+          r.name?.toLowerCase().includes(q) ||
+          r.category?.toLowerCase().includes(q) ||
+          r.area?.toLowerCase().includes(q)
+      )
+    }
+
+    if (filters.category !== 'all') {
+      result = result.filter(
+        (r) => r.category?.toLowerCase() === filters.category.toLowerCase()
+      )
+    }
+
+    if (filters.cuisine !== 'all') {
+      result = result.filter(
+        (r) => r.area?.toLowerCase() === filters.cuisine.toLowerCase()
+      )
+    }
+
+    return result
+  }, [externalMeals, searchTerm, filters.category, filters.cuisine, filters.source])
+
+  // Merge internal (current page) + filtered external, then sort and paginate.
+  // Internal recipes are already paginated by the server; external results are
+  // filtered client-side and interleaved. The combined list is sorted, then
+  // we take PAGE_SIZE items for the current page.
+  const { displayRecipes, totalPages } = React.useMemo(() => {
+    const internal = internalRecipes
+    const external = filteredExternal
+
+    // If no external, total pages come from the server
+    if (external.length === 0) {
+      return { displayRecipes: internal, totalPages: internalTotalPages }
+    }
+
+    // Merge: interleave internal (page N) with a proportional slice of external
+    // so both sources appear on every page rather than stacking all internal first.
+    // External slice: same page window applied to sorted external list.
+    const sortedExternal = [...external].sort((a, b) => {
+      if (filters.sort === 'az') return a.name.localeCompare(b.name)
+      if (filters.sort === 'za') return b.name.localeCompare(a.name)
+      if (filters.sort === 'popular') return (b.likesCount || 0) - (a.likesCount || 0)
+      // 'newest': internal recipes win (they have dates), external goes after
+      return 0
+    })
+
+    const externalPage = sortedExternal.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    const merged = [...internal, ...externalPage].sort((a, b) => {
+      if (filters.sort === 'az') return a.name.localeCompare(b.name)
+      if (filters.sort === 'za') return b.name.localeCompare(a.name)
+      if (filters.sort === 'popular') return (b.likesCount || 0) - (a.likesCount || 0)
+      // newest: internal (has createdAt) before external
+      if (!a.isExternal && b.isExternal) return -1
+      if (a.isExternal && !b.isExternal) return 1
+      return 0
+    })
+
+    const combinedTotal = internalTotal + external.length
+    const combinedTotalPages = Math.ceil(combinedTotal / PAGE_SIZE)
+
+    return { displayRecipes: merged, totalPages: combinedTotalPages }
+  }, [internalRecipes, filteredExternal, filters.sort, page, internalTotal, internalTotalPages])
+
+  const isLoading = internalLoading || externalLoading
 
   const handleFilterChange = (key, value) => {
     setSearchParams((prev) => {
@@ -135,60 +275,6 @@ const Recipes = ({ searchTerm }) => {
     setSearchParams(search ? { search } : {})
   }
 
-  const filtered = useMemo(() => {
-    let result = [...allRecipes]
-
-    if (searchTerm?.trim()) {
-      const q = searchTerm.toLowerCase()
-      result = result.filter(
-        (r) =>
-          r.name?.toLowerCase().includes(q) ||
-          r.category?.toLowerCase().includes(q) ||
-          r.area?.toLowerCase().includes(q)
-      )
-    }
-
-    if (filters.source === 'community') result = result.filter((r) => !r.isExternal)
-    if (filters.source === 'external') result = result.filter((r) => r.isExternal)
-    if (filters.source === 'following') {
-      result = result.filter((r) => !r.isExternal && followingIds.includes(r.author?.id))
-    }
-
-    if (filters.category !== 'all') {
-      result = result.filter(
-        (r) => r.category?.toLowerCase() === filters.category.toLowerCase()
-      )
-    }
-
-    if (filters.cuisine !== 'all') {
-      result = result.filter(
-        (r) => r.area?.toLowerCase() === filters.cuisine.toLowerCase()
-      )
-    }
-
-    if (filters.sort === 'az') {
-      result.sort((a, b) => a.name.localeCompare(b.name))
-    } else if (filters.sort === 'za') {
-      result.sort((a, b) => b.name.localeCompare(a.name))
-    } else if (filters.sort === 'popular') {
-      result.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0))
-    } else if (filters.sort === 'newest') {
-      const community = result
-        .filter((r) => !r.isExternal && r.createdAt)
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      const communityNoDate = result.filter((r) => !r.isExternal && !r.createdAt)
-      const external = result
-        .filter((r) => r.isExternal)
-        .sort((a, b) => a.name.localeCompare(b.name))
-      result = [...community, ...communityNoDate, ...external]
-    }
-
-    return result
-  }, [allRecipes, searchTerm, filters, followingIds])
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-
   const handleSelectRecipe = (recipe) => {
     navigate(recipe.isExternal ? `/recipes/ext_${recipe.externalId}` : `/recipes/${recipe.id}`)
   }
@@ -200,7 +286,8 @@ const Recipes = ({ searchTerm }) => {
 
   const getPageNumbers = () => {
     const delta = isMobile ? 1 : 2
-    if (totalPages <= (isMobile ? 5 : 7)) {
+    const cap = isMobile ? 5 : 7
+    if (totalPages <= cap) {
       return Array.from({ length: totalPages }, (_, i) => i + 1)
     }
     const pages = []
@@ -214,42 +301,50 @@ const Recipes = ({ searchTerm }) => {
     return pages
   }
 
+  const hasActiveFilters =
+    filters.category !== 'all' ||
+    filters.cuisine !== 'all' ||
+    filters.source !== 'all' ||
+    filters.sort !== DEFAULT_FILTERS.sort
+
+  const isEmpty = !isLoading && !error && displayRecipes.length === 0
+
   return (
     <>
       <div className={styles['recipes-container']}>
         <h2>All Recipes</h2>
 
-        {!loading && !error && (
-          <RecipeFilters
-            categories={categoryList}
-            cuisines={cuisineList}
-            filters={filters}
-            onChange={handleFilterChange}
-            onReset={handleReset}
-          />
-        )}
-
-        {loading && (
-          <div className={styles['loading-wrap']}>
-            <div className={styles.spinner} />
-            <p>Loading all recipes...</p>
-          </div>
-        )}
+        {/* Filters always visible — they work on cached external data and
+            will update the internal query on the next keystroke/change */}
+        <RecipeFilters
+          categories={categoryList}
+          cuisines={cuisineList}
+          filters={filters}
+          onChange={handleFilterChange}
+          onReset={handleReset}
+        />
 
         {error && <p className={styles.error}>{error}</p>}
 
-        {!loading && !error && filtered.length === 0 && (
+        {/* Skeleton grid while loading */}
+        {isLoading && !error && (
+          <div className={styles['recipe-grid']}>
+            <RecipeCardSkeleton count={PAGE_SIZE} />
+          </div>
+        )}
+
+        {isEmpty && (
           <p className={styles['no-results']}>
             {filters.source === 'following'
-              ? "No recipes from people you follow yet."
+              ? 'No recipes from people you follow yet.'
               : `No recipes found${searchTerm?.trim() ? ` for "${searchTerm}"` : ''}.`}
           </p>
         )}
 
-        {!loading && !error && filtered.length > 0 && (
+        {!isLoading && !error && displayRecipes.length > 0 && (
           <>
             <div className={styles['recipe-grid']}>
-              {paginated.map((recipe) => (
+              {displayRecipes.map((recipe) => (
                 <RecipeCard
                   key={recipe.isExternal ? `ext_${recipe.externalId}` : recipe.id}
                   recipe={recipe}

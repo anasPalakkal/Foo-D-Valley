@@ -18,6 +18,49 @@ import { addRecentlyViewed } from '../../utils/recentlyViewed'
 import styles from './RecipeDetails.module.css'
 import Footer from '../../components/Footer/Footer'
 
+// Skeleton for the two-column recipe detail layout.
+// Mirrors the real layout structure so there's no layout shift on load.
+const RecipeDetailSkeleton = () => (
+  <div className={styles.page}>
+    <div className={`${styles['back-button']} ${styles.skeletonBtn}`} />
+
+    <div className={styles.layout}>
+      {/* Left column */}
+      <div className={styles.left}>
+        <div className={`${styles.imageWrap} ${styles.skeletonBlock}`} style={{ height: '360px' }} />
+        <div className={`${styles.skeletonLine} ${styles.skeletonTitle}`} />
+        <div className={styles.metaRow}>
+          <div className={styles.skeletonBadge} />
+          <div className={styles.skeletonBadge} />
+        </div>
+        <div className={`${styles.skeletonLine} ${styles.skeletonDesc}`} />
+        <div className={`${styles.skeletonLine} ${styles.skeletonDesc} ${styles.skeletonDescShort}`} />
+        <div className={styles.actionRow}>
+          <div className={styles.skeletonAction} />
+          <div className={styles.skeletonAction} />
+          <div className={styles.skeletonAction} />
+        </div>
+      </div>
+
+      {/* Right column */}
+      <div className={styles.right}>
+        <div className={styles.section}>
+          <div className={`${styles.skeletonLine} ${styles.skeletonSectionTitle}`} />
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className={`${styles.skeletonLine} ${styles.skeletonIngredient}`} style={{ width: `${60 + (i % 3) * 15}%` }} />
+          ))}
+        </div>
+        <div className={styles.section}>
+          <div className={`${styles.skeletonLine} ${styles.skeletonSectionTitle}`} />
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className={`${styles.skeletonLine} ${styles.skeletonStep}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+)
+
 const RecipeDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -32,18 +75,15 @@ const RecipeDetails = () => {
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // Likes
   const [isLiked, setIsLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(0)
   const [likeBusy, setLikeBusy] = useState(false)
 
-  // Comments
   const [comments, setComments] = useState([])
   const [commentText, setCommentText] = useState('')
   const [postingComment, setPostingComment] = useState(false)
   const [commentError, setCommentError] = useState('')
 
-  // Share
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -94,13 +134,12 @@ const RecipeDetails = () => {
         )
         setIsSaved(exists)
       } catch {
-        // Non-critical
+        // non-critical
       }
     }
     check()
   }, [user, recipe])
 
-  // Load like status + count once recipe resolves
   useEffect(() => {
     if (!recipe) return
     const loadLikes = async () => {
@@ -109,13 +148,12 @@ const RecipeDetails = () => {
         setIsLiked(result.isLiked)
         setLikesCount(result.likesCount)
       } catch {
-        // Non-critical, leave defaults
+        // non-critical
       }
     }
     loadLikes()
   }, [recipe, actualId, isExternal])
 
-  // Load comments once recipe resolves
   useEffect(() => {
     if (!recipe) return
     const loadComments = async () => {
@@ -123,7 +161,7 @@ const RecipeDetails = () => {
         const result = await getComments(actualId, isExternal)
         setComments(result)
       } catch {
-        // Non-critical
+        // non-critical
       }
     }
     loadComments()
@@ -145,7 +183,7 @@ const RecipeDetails = () => {
         setIsSaved(true)
       }
     } catch {
-      // Non-critical
+      // non-critical
     } finally {
       setSaving(false)
     }
@@ -156,7 +194,6 @@ const RecipeDetails = () => {
     if (likeBusy) return
     setLikeBusy(true)
 
-    // Optimistic update
     const prevLiked = isLiked
     const prevCount = likesCount
     setIsLiked(!prevLiked)
@@ -169,7 +206,6 @@ const RecipeDetails = () => {
       setIsLiked(result.liked)
       setLikesCount(result.likesCount)
     } catch {
-      // Roll back on failure
       setIsLiked(prevLiked)
       setLikesCount(prevCount)
     } finally {
@@ -202,18 +238,11 @@ const RecipeDetails = () => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Clipboard blocked — silently fail, non-critical feature
+      // clipboard blocked — silently fail
     }
   }
 
-  if (loading) {
-    return (
-      <div className={styles['loading-wrap']}>
-        <div className={styles.spinner} />
-        <p>Loading recipe...</p>
-      </div>
-    )
-  }
+  if (loading) return <RecipeDetailSkeleton />
 
   if (error || !recipe) {
     return <p className={styles.error}>{error}</p>
@@ -227,7 +256,6 @@ const RecipeDetails = () => {
         </button>
 
         <div className={styles.layout}>
-
           {/* ── Left column ── */}
           <div className={styles.left}>
             <div className={styles.imageWrap}>
@@ -255,7 +283,6 @@ const RecipeDetails = () => {
               <p className={styles.description}>{recipe.description}</p>
             )}
 
-            {/* ── Like / comment / share action row ── */}
             <div className={styles.actionRow}>
               <button
                 className={`${styles.actionButton} ${isLiked ? styles.actionButtonActive : ''}`}

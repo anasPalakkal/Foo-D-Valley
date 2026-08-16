@@ -258,31 +258,7 @@
   font-size: 0.75rem;
 }
 
-/* ── Loading / error states ── */
-.loading-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 100px 20px;
-  gap: 16px;
-  color: #b0413e;
-  min-height: 60vh;
-}
-
-.spinner {
-  width: 44px;
-  height: 44px;
-  border: 4px solid #ffd0bd;
-  border-top-color: #ff7043;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
+/* ── Error state ── */
 .error {
   text-align: center;
   color: #e53e3e;
@@ -290,47 +266,6 @@
   padding: 100px 20px;
 }
 
-/* ── Responsive ── */
-@media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .left {
-    position: static;
-  }
-
-  .image {
-    height: 280px;
-  }
-}
-
-@media (max-width: 600px) {
-  .page {
-    padding: 20px 16px 40px;
-  }
-
-  .title {
-    font-size: 1.4rem;
-  }
-
-  .image {
-    height: 220px;
-  }
-
-  .section {
-    padding: 18px 18px;
-  }
-
-  .sectionTitle {
-    font-size: 1.1rem;
-  }
-
-  .back-button {
-    margin-bottom: 20px;
-  }
-}
 /* ── Like / comment / share action row ── */
 .actionRow {
   display: flex;
@@ -497,4 +432,151 @@
   color: #444;
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .left {
+    position: static;
+  }
+
+  .image {
+    height: 280px;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 20px 16px 40px;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .image {
+    height: 220px;
+  }
+
+  .section {
+    padding: 18px;
+  }
+
+  .sectionTitle {
+    font-size: 1.1rem;
+  }
+
+  .back-button {
+    margin-bottom: 20px;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   Skeleton
+   ══════════════════════════════════════════════ */
+
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+/* Base shimmer style shared by all skeleton fill elements */
+.skeletonBlock,
+.skeletonLine,
+.skeletonBadge,
+.skeletonAction,
+.skeletonBtn {
+  background: linear-gradient(
+    90deg,
+    #f0e8e5 25%,
+    #ffe0d6 50%,
+    #f0e8e5 75%
+  );
+  background-size: 1200px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* Skeleton back button placeholder */
+.skeletonBtn {
+  width: 90px;
+  height: 38px;
+  border: none;
+  cursor: default;
+}
+
+/* Image area */
+.skeletonBlock {
+  border-radius: 16px;
+  width: 100%;
+}
+
+/* Text lines */
+.skeletonTitle {
+  height: 28px;
+  width: 75%;
+  border-radius: 6px;
+}
+
+.skeletonDesc {
+  height: 14px;
+  width: 90%;
+  border-radius: 4px;
+}
+
+.skeletonDescShort {
+  width: 60%;
+}
+
+/* Badge pills */
+.skeletonBadge {
+  height: 28px;
+  width: 80px;
+  border-radius: 20px;
+}
+
+/* Action buttons */
+.skeletonAction {
+  height: 36px;
+  width: 72px;
+  border-radius: 8px;
+}
+
+/* Right-column section line fillers */
+.skeletonSectionTitle {
+  height: 22px;
+  width: 40%;
+  margin-bottom: 16px;
+  border-radius: 6px;
+}
+
+.skeletonIngredient {
+  height: 14px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.skeletonStep {
+  height: 14px;
+  width: 100%;
+  margin-bottom: 18px;
+  border-radius: 4px;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .skeletonBlock,
+  .skeletonLine,
+  .skeletonBadge,
+  .skeletonAction,
+  .skeletonBtn {
+    animation: none;
+    background: #f0e8e5;
+  }
 }
