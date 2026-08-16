@@ -35,7 +35,7 @@ const createRecipe = async (req, res) => {
         author: { connect: { id: req.user.id } },
       },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, avatarUrl: true } },
       },
     })
 
@@ -88,7 +88,7 @@ const updateRecipe = async (req, res) => {
         imageUrl,
       },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, avatarUrl: true } },
       },
     })
 
@@ -99,29 +99,88 @@ const updateRecipe = async (req, res) => {
   }
 }
 
-// GET /api/recipes?sort=popular&limit=5
+// GET /api/recipes
+// Supports server-side pagination and filtering for internal (community) recipes.
+// Query params:
+//   page      - page number, default 1
+//   limit     - page size, default 12
+//   sort      - 'newest' | 'popular' | 'az' | 'za', default 'newest'
+//   category  - filter by category string (case-insensitive)
+//   cuisine   - filter by cuisine string (case-insensitive)
+//   search    - full-text filter on title
+//   source    - 'following' requires auth; filters to followed-user recipes only
 const getRecipes = async (req, res) => {
-  const { sort, limit } = req.query
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 12))
+  const skip = (page - 1) * limit
+  const { sort = 'newest', category, cuisine, search, source } = req.query
 
   try {
-    const recipes = await prisma.recipe.findMany({
-      where: { isExternal: false, author: { isDeleted: false } },
-      include: {
-        author: { select: { id: true, name: true } },
-        _count: { select: { likes: true, comments: true } },
-      },
-      orderBy:
-        sort === 'popular'
-          ? { likes: { _count: 'desc' } }
-          : { createdAt: 'desc' },
-      ...(limit && { take: parseInt(limit) }),
-    })
+    // Build WHERE clause
+    const where = {
+      isExternal: false,
+      author: { isDeleted: false },
+    }
+
+    if (category && category !== 'all') {
+      where.category = { equals: category, mode: 'insensitive' }
+    }
+
+    if (cuisine && cuisine !== 'all') {
+      where.cuisine = { equals: cuisine, mode: 'insensitive' }
+    }
+
+    if (search && search.trim()) {
+      where.title = { contains: search.trim(), mode: 'insensitive' }
+    }
+
+    // 'following' filter: only recipes from users the current user follows
+    if (source === 'following' && req.user) {
+      const following = await prisma.follow.findMany({
+        where: { followerId: req.user.id },
+        select: { followingId: true },
+      })
+      const followingIds = following.map((f) => f.followingId)
+      // If user follows nobody, return empty rather than all recipes
+      where.authorId = followingIds.length > 0 ? { in: followingIds } : { in: [] }
+    }
+
+    // Build ORDER BY
+    const orderBy =
+      sort === 'popular'
+        ? { likes: { _count: 'desc' } }
+        : sort === 'az'
+        ? { title: 'asc' }
+        : sort === 'za'
+        ? { title: 'desc' }
+        : { createdAt: 'desc' } // 'newest' default
+
+    // Run count and data fetch in parallel
+    const [total, recipes] = await Promise.all([
+      prisma.recipe.count({ where }),
+      prisma.recipe.findMany({
+        where,
+        include: {
+          author: { select: { id: true, name: true, avatarUrl: true } },
+          _count: { select: { likes: true, comments: true } },
+        },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+    ])
 
     const result = req.user
       ? await attachIsLiked(recipes, req.user.id)
       : recipes.map((r) => ({ ...r, isLiked: false }))
 
-    res.json(result)
+    res.json({
+      recipes: result,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      hasMore: page * limit < total,
+    })
   } catch (error) {
     console.error('Get recipes error:', error)
     res.status(500).json({ message: 'Internal server error' })
@@ -136,7 +195,7 @@ const getRecipeById = async (req, res) => {
     const recipe = await prisma.recipe.findFirst({
       where: { id, author: { isDeleted: false } },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, avatarUrl: true } },
         _count: { select: { likes: true, comments: true } },
       },
     })
@@ -198,7 +257,7 @@ const getPopularRecipes = async (req, res) => {
       prisma.recipe.findMany({
         where: { isExternal: false, author: { isDeleted: false } },
         include: {
-          author: { select: { id: true, name: true } },
+          author: { select: { id: true, name: true, avatarUrl: true } },
           _count: { select: { likes: true, comments: true } },
         },
         orderBy: { likes: { _count: 'desc' } },
@@ -256,7 +315,7 @@ const getFeed = async (req, res) => {
             author: { isDeleted: false },
           },
           include: {
-            author: { select: { id: true, name: true } },
+            author: { select: { id: true, name: true, avatarUrl: true } },
             _count: { select: { likes: true, comments: true } },
           },
           orderBy: { createdAt: 'desc' },
@@ -266,12 +325,11 @@ const getFeed = async (req, res) => {
       }
     }
 
-    // Fallback: guest, no follows, or followed users have no recipes
     if (!isFollowingFeed) {
       recipes = await prisma.recipe.findMany({
         where: { isExternal: false, author: { isDeleted: false } },
         include: {
-          author: { select: { id: true, name: true } },
+          author: { select: { id: true, name: true, avatarUrl: true } },
           _count: { select: { likes: true, comments: true } },
         },
         orderBy: { createdAt: 'desc' },
@@ -287,13 +345,6 @@ const getFeed = async (req, res) => {
 }
 
 // GET /api/recipes/recommendations?limit=8
-// "Because you liked X" - built from the categories/cuisines of the user's
-// own likes and favorites. Only INTERNAL likes/favorites carry category or
-// cuisine data - a like or favorite on a TheMealDB (external) recipe has no
-// category/cuisine stored against it (see Favorite/RecipeLike schema), so
-// external activity can't contribute to this signal. A user who only
-// interacts with TheMealDB recipes will get an empty basis and an empty
-// recipes list here - that's expected, not a bug.
 const getRecommendations = async (req, res) => {
   const limit = parseInt(req.query.limit) || 8
 
@@ -338,7 +389,7 @@ const getRecommendations = async (req, res) => {
         ],
       },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, avatarUrl: true } },
         _count: { select: { likes: true, comments: true } },
       },
       orderBy: { likes: { _count: 'desc' } },
