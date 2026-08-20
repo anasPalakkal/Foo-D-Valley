@@ -5,6 +5,7 @@ import styles from './Home.module.css'
 import Footer from '../../components/Footer/Footer'
 import RecipeCard from '../../components/RecipeCard/RecipeCard'
 import PostRecipeModal from '../../components/PostRecipeModal/PostRecipeModal'
+import RecipeCard, { RecipeCardSkeleton } from '../../components/RecipeCard/RecipeCard'
 import {
   getFeed,
   getPopularRecipes,
@@ -60,18 +61,18 @@ const SLIDES = [
 const mapFavoriteToCard = (fav) =>
   fav.isExternal
     ? {
-        id: `fav-ext-${fav.externalId}`,
-        externalId: fav.externalId,
-        isExternal: true,
-        name: fav.externalName,
-        image: fav.externalImage,
-      }
+      id: `fav-ext-${fav.externalId}`,
+      externalId: fav.externalId,
+      isExternal: true,
+      name: fav.externalName,
+      image: fav.externalImage,
+    }
     : {
-        id: fav.recipe?.id,
-        isExternal: false,
-        name: fav.recipe?.title,
-        image: fav.recipe?.imageUrl,
-      }
+      id: fav.recipe?.id,
+      isExternal: false,
+      name: fav.recipe?.title,
+      image: fav.recipe?.imageUrl,
+    }
 
 const Home = () => {
   const [feedRecipes, setFeedRecipes] = useState([])
@@ -228,11 +229,11 @@ const Home = () => {
     setRecentlyViewed([])
   }
 
-  const renderState = (loading, error, empty, list, metricIcon) => {
+  const renderState = (loading, error, empty, list, count, metricIcon) => {
     if (loading) {
       return (
-        <div className={styles.loadingWrap}>
-          <div className={styles.spinner} />
+        <div className={styles.cardsGrid}>
+          <RecipeCardSkeleton count={count} compact />
         </div>
       )
     }
@@ -258,8 +259,8 @@ const Home = () => {
   const recommendedHeading = recommended.basis?.category
     ? `Because you liked ${recommended.basis.category}`
     : recommended.basis?.cuisine
-    ? `Because you liked ${recommended.basis.cuisine} cuisine`
-    : 'Recommended for you'
+      ? `Because you liked ${recommended.basis.cuisine} cuisine`
+      : 'Recommended for you'
 
   return (
     <>
@@ -378,7 +379,8 @@ const Home = () => {
                 Be the first to share one.
               </button>
             </p>,
-            feedRecipes
+            feedRecipes,
+            LATEST_COUNT
           )}
         </section>
 
@@ -392,6 +394,7 @@ const Home = () => {
             popularError,
             <p className={styles.stateText}>No popular recipes yet.</p>,
             popularRecipes,
+            POPULAR_COUNT,
             FaThumbsUp
           )}
         </section>
