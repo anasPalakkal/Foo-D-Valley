@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FaUtensils, FaPencilAlt, FaGlobe, FaThumbsUp } from 'react-icons/fa'
 import styles from './Home.module.css'
 import Footer from '../../components/Footer/Footer'
-import RecipeCard from '../../components/RecipeCard/RecipeCard'
 import PostRecipeModal from '../../components/PostRecipeModal/PostRecipeModal'
 import RecipeCard, { RecipeCardSkeleton } from '../../components/RecipeCard/RecipeCard'
 import {
