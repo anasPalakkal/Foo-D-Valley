@@ -48,11 +48,22 @@ const SavedRecipes = () => {
     }
   }
 
+  const SKELETON_COUNT = 8
+
+  // ...
+
   if (loading) {
     return (
-      <div className={styles['loading-wrap']}>
-        <div className={styles.spinner} />
-        <p>Loading saved recipes...</p>
+      <div className={styles['saved-container']}>
+        <h2>Saved Recipes</h2>
+        <div className={styles['saved-grid']}>
+          {Array.from({ length: SKELETON_COUNT }, (_, i) => (
+            <div key={i} className={styles['skeleton-card']} aria-hidden="true">
+              <div className={styles['skeleton-image']} />
+              <div className={styles['skeleton-title']} />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }

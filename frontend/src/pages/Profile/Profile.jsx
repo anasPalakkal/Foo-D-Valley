@@ -249,9 +249,41 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className={styles.loadingWrap}>
-        <div className={styles.spinner} />
-      </div>
+      <>
+        <div className={styles.page}>
+          <div className={`${styles.skeletonBanner} ${styles.skeletonFill}`} />
+          <div className={styles.container}>
+            <div className={styles.profileHeader}>
+              <div className={`${styles.skeletonAvatarWrap} ${styles.skeletonFill}`} />
+              <div className={styles.headerRight}>
+                <div className={`${styles.skeletonNameLine} ${styles.skeletonFill}`} />
+                <div className={styles.skeletonStatsRow}>
+                  <div className={`${styles.skeletonStat} ${styles.skeletonFill}`} />
+                  <div className={`${styles.skeletonStat} ${styles.skeletonFill}`} />
+                  <div className={`${styles.skeletonStat} ${styles.skeletonFill}`} />
+                </div>
+                <div className={`${styles.skeletonBioLine} ${styles.skeletonFill}`} />
+              </div>
+            </div>
+
+            <div className={styles.skeletonTabsRow}>
+              <div className={`${styles.skeletonTab} ${styles.skeletonFill}`} />
+              <div className={`${styles.skeletonTab} ${styles.skeletonFill}`} />
+              <div className={`${styles.skeletonTab} ${styles.skeletonFill}`} />
+            </div>
+
+            <div className={styles.grid}>
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className={styles.card} aria-hidden="true">
+                  <div className={`${styles.skeletonPostImg} ${styles.skeletonFill}`} />
+                  <div className={`${styles.skeletonPostTitle} ${styles.skeletonFill}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </>
     )
   }
 
@@ -293,243 +325,259 @@ const Profile = () => {
 
   return (
     <>
-    <div className={styles.page}>
-      <div className={styles.banner}>
-        {profile.bannerUrl ? (
-          <img src={profile.bannerUrl} alt="Profile banner" className={styles.bannerImg} />
-        ) : (
-          <div className={styles.bannerFallback} />
-        )}
-      </div>
+      <div className={styles.page}>
+        <div className={styles.banner}>
+          {profile.bannerUrl ? (
+            <img src={profile.bannerUrl} alt="Profile banner" className={styles.bannerImg} />
+          ) : (
+            <div className={styles.bannerFallback} />
+          )}
+        </div>
 
-      <div className={styles.container}>
-        <div className={styles.profileHeader}>
-          <div className={styles.avatarWrap}>
-            {profile.avatarUrl ? (
-              <img src={profile.avatarUrl} alt={profile.name} className={styles.avatar} />
-            ) : (
-              <div className={styles.avatarFallback}>
-                {profile.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          <div className={styles.headerRight}>
-            <div className={styles.nameRow}>
-              <h1 className={styles.name}>{profile.name}</h1>
-              {isOwner ? (
-                <button className={styles.editBtn} onClick={() => setShowEditProfile(true)}>
-                  Edit Profile
-                </button>
+        <div className={styles.container}>
+          <div className={styles.profileHeader}>
+            <div className={styles.avatarWrap}>
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt={profile.name} className={styles.avatar} />
               ) : (
-                <button
-                  className={`${styles.followBtn} ${isFollowing ? styles.following : ''}`}
-                  onClick={handleFollowToggle}
-                  disabled={followLoading}
-                >
-                  {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
-                </button>
+                <div className={styles.avatarFallback}>
+                  {profile.name.charAt(0).toUpperCase()}
+                </div>
               )}
             </div>
 
-            <div className={styles.stats}>
-              <div className={`${styles.stat} ${styles.statClickable}`} onClick={() => goToTab('posts')}>
-                <span className={styles.statNum}>{postCount}</span>
-                <span className={styles.statLabel}>Posts</span>
-              </div>
-              <div className={`${styles.stat} ${styles.statClickable}`} onClick={() => goToTab('followers')}>
-                <span className={styles.statNum}>{followerCount}</span>
-                <span className={styles.statLabel}>Followers</span>
-              </div>
-              <div className={`${styles.stat} ${styles.statClickable}`} onClick={() => goToTab('following')}>
-                <span className={styles.statNum}>{followingCount}</span>
-                <span className={styles.statLabel}>Following</span>
-              </div>
-            </div>
-
-            {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
-          </div>
-        </div>
-
-        <div className={styles.tabs}>
-          <button
-            className={`${styles.tab} ${activeTab === 'posts' ? styles.activeTab : ''}`}
-            onClick={() => goToTab('posts')}
-          >
-            <IoGridOutline size={16} /> Posts
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'followers' ? styles.activeTab : ''}`}
-            onClick={() => goToTab('followers')}
-          >
-            <IoPeopleOutline size={16} /> Followers
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'following' ? styles.activeTab : ''}`}
-            onClick={() => goToTab('following')}
-          >
-            <IoPersonAddOutline size={16} /> Following
-          </button>
-        </div>
-
-        {/* Posts tab */}
-        {activeTab === 'posts' && (
-          <div className={styles.tabContent}>
-            {profile.recipes.length === 0 ? (
-              <div className={styles.emptyState}>
-                <p>No recipes posted yet.</p>
-                {isOwner && (
+            <div className={styles.headerRight}>
+              <div className={styles.nameRow}>
+                <h1 className={styles.name}>{profile.name}</h1>
+                {isOwner ? (
+                  <button className={styles.editBtn} onClick={() => setShowEditProfile(true)}>
+                    Edit Profile
+                  </button>
+                ) : (
                   <button
-                    className={styles.firstPostBtn}
-                    onClick={() => {
-                      setEditingRecipe(null)
-                      setShowPostModal(true)
-                    }}
+                    className={`${styles.followBtn} ${isFollowing ? styles.following : ''}`}
+                    onClick={handleFollowToggle}
+                    disabled={followLoading}
                   >
-                    Post your first recipe
+                    {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
                   </button>
                 )}
               </div>
-            ) : (
-              <div className={styles.grid} ref={menuRef}>
-                {profile.recipes.map((recipe) => (
-                  <div key={recipe.id} className={styles.card}>
-                    <Link to={`/recipes/${recipe.id}`} className={styles.cardLink}>
-                      {recipe.imageUrl ? (
-                        <img src={recipe.imageUrl} alt={recipe.title} className={styles.cardImg} />
-                      ) : (
-                        <div className={styles.cardImgFallback} />
-                      )}
-                      <div className={styles.cardTitle}>{recipe.title}</div>
-                    </Link>
 
-                    {isOwner && (
-                      <div className={styles.menuWrap}>
-                        <button
-                          className={styles.menuBtn}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setOpenMenuId(openMenuId === recipe.id ? null : recipe.id)
-                          }}
-                          aria-label="Options"
-                          disabled={editLoading}
-                        >
-                          <IoEllipsisVertical size={18} />
-                        </button>
-
-                        {openMenuId === recipe.id && (
-                          <div className={styles.dropdown}>
-                            <button
-                              className={styles.dropdownItem}
-                              onClick={() => handleEditClick(recipe)}
-                            >
-                              <IoCreateOutline size={15} /> Edit
-                            </button>
-                            <button
-                              className={`${styles.dropdownItem} ${styles.danger}`}
-                              onClick={() => {
-                                setDeleteConfirmId(recipe.id)
-                                setOpenMenuId(null)
-                              }}
-                            >
-                              <IoTrashOutline size={15} /> Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+              <div className={styles.stats}>
+                <div className={`${styles.stat} ${styles.statClickable}`} onClick={() => goToTab('posts')}>
+                  <span className={styles.statNum}>{postCount}</span>
+                  <span className={styles.statLabel}>Posts</span>
+                </div>
+                <div className={`${styles.stat} ${styles.statClickable}`} onClick={() => goToTab('followers')}>
+                  <span className={styles.statNum}>{followerCount}</span>
+                  <span className={styles.statLabel}>Followers</span>
+                </div>
+                <div className={`${styles.stat} ${styles.statClickable}`} onClick={() => goToTab('following')}>
+                  <span className={styles.statNum}>{followingCount}</span>
+                  <span className={styles.statLabel}>Following</span>
+                </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Followers tab */}
-        {activeTab === 'followers' && (
-          <div className={styles.tabContent}>
-            {followersLoading ? (
-              <div className={styles.listSpinnerWrap}>
-                <div className={styles.listSpinner} />
-              </div>
-            ) : followers.length === 0 ? (
-              <p className={styles.emptyListState}>No followers yet.</p>
-            ) : (
-              <div className={styles.userList}>
-                {followers.map((u) => renderUserRow(u, setFollowers, `followers:${userId}`))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Following tab */}
-        {activeTab === 'following' && (
-          <div className={styles.tabContent}>
-            {followingListLoading ? (
-              <div className={styles.listSpinnerWrap}>
-                <div className={styles.listSpinner} />
-              </div>
-            ) : following.length === 0 ? (
-              <p className={styles.emptyListState}>Not following anyone yet.</p>
-            ) : (
-              <div className={styles.userList}>
-                {following.map((u) => renderUserRow(u, setFollowing, `following:${userId}`))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {isOwner && (
-        <button
-          className={styles.fab}
-          onClick={() => {
-            setEditingRecipe(null)
-            setShowPostModal(true)
-          }}
-          aria-label="Post a recipe"
-          title="Post a recipe"
-        >
-          <IoAdd size={28} />
-        </button>
-      )}
-
-      {deleteConfirmId && (
-        <div className={styles.confirmBackdrop}>
-          <div className={styles.confirmBox}>
-            <p>Delete this recipe? This cannot be undone.</p>
-            <div className={styles.confirmActions}>
-              <button className={styles.confirmCancel} onClick={() => setDeleteConfirmId(null)}>
-                Cancel
-              </button>
-              <button className={styles.confirmDelete} onClick={() => handleDeleteRecipe(deleteConfirmId)}>
-                Delete
-              </button>
+              {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
             </div>
           </div>
+
+          <div className={styles.tabs}>
+            <button
+              className={`${styles.tab} ${activeTab === 'posts' ? styles.activeTab : ''}`}
+              onClick={() => goToTab('posts')}
+            >
+              <IoGridOutline size={16} /> Posts
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === 'followers' ? styles.activeTab : ''}`}
+              onClick={() => goToTab('followers')}
+            >
+              <IoPeopleOutline size={16} /> Followers
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === 'following' ? styles.activeTab : ''}`}
+              onClick={() => goToTab('following')}
+            >
+              <IoPersonAddOutline size={16} /> Following
+            </button>
+          </div>
+
+          {/* Posts tab */}
+          {activeTab === 'posts' && (
+            <div className={styles.tabContent}>
+              {profile.recipes.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <p>No recipes posted yet.</p>
+                  {isOwner && (
+                    <button
+                      className={styles.firstPostBtn}
+                      onClick={() => {
+                        setEditingRecipe(null)
+                        setShowPostModal(true)
+                      }}
+                    >
+                      Post your first recipe
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.grid} ref={menuRef}>
+                  {profile.recipes.map((recipe) => (
+                    <div key={recipe.id} className={styles.card}>
+                      <Link to={`/recipes/${recipe.id}`} className={styles.cardLink}>
+                        {recipe.imageUrl ? (
+                          <img src={recipe.imageUrl} alt={recipe.title} className={styles.cardImg} />
+                        ) : (
+                          <div className={styles.cardImgFallback} />
+                        )}
+                        <div className={styles.cardTitle}>{recipe.title}</div>
+                      </Link>
+
+                      {isOwner && (
+                        <div className={styles.menuWrap}>
+                          <button
+                            className={styles.menuBtn}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              setOpenMenuId(openMenuId === recipe.id ? null : recipe.id)
+                            }}
+                            aria-label="Options"
+                            disabled={editLoading}
+                          >
+                            <IoEllipsisVertical size={18} />
+                          </button>
+
+                          {openMenuId === recipe.id && (
+                            <div className={styles.dropdown}>
+                              <button
+                                className={styles.dropdownItem}
+                                onClick={() => handleEditClick(recipe)}
+                              >
+                                <IoCreateOutline size={15} /> Edit
+                              </button>
+                              <button
+                                className={`${styles.dropdownItem} ${styles.danger}`}
+                                onClick={() => {
+                                  setDeleteConfirmId(recipe.id)
+                                  setOpenMenuId(null)
+                                }}
+                              >
+                                <IoTrashOutline size={15} /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Followers tab */}
+          {activeTab === 'followers' && (
+            <div className={styles.tabContent}>
+              {followersLoading ? (
+                <div className={styles.userList}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <div key={i} className={styles.userRow} aria-hidden="true">
+                      <div className={styles.userRowLeft}>
+                        <div className={`${styles.skeletonUserRowAvatar} ${styles.skeletonFill}`} />
+                        <div className={`${styles.skeletonUserRowName} ${styles.skeletonFill}`} />
+                      </div>
+                      <div className={`${styles.skeletonUserRowBtn} ${styles.skeletonFill}`} />
+                    </div>
+                  ))}
+                </div>
+              ) : followers.length === 0 ? (
+                <p className={styles.emptyListState}>No followers yet.</p>
+              ) : (
+                <div className={styles.userList}>
+                  {followers.map((u) => renderUserRow(u, setFollowers, `followers:${userId}`))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Following tab */}
+          {activeTab === 'following' && (
+            <div className={styles.tabContent}>
+              {followingListLoading ? (
+                <div className={styles.userList}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <div key={i} className={styles.userRow} aria-hidden="true">
+                      <div className={styles.userRowLeft}>
+                        <div className={`${styles.skeletonUserRowAvatar} ${styles.skeletonFill}`} />
+                        <div className={`${styles.skeletonUserRowName} ${styles.skeletonFill}`} />
+                      </div>
+                      <div className={`${styles.skeletonUserRowBtn} ${styles.skeletonFill}`} />
+                    </div>
+                  ))}
+                </div>
+              ) : following.length === 0 ? (
+                <p className={styles.emptyListState}>No following yet.</p>
+              ) : (
+                <div className={styles.userList}>
+                  {following.map((u) => renderUserRow(u, setFollowers, `following:${userId}`))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
 
-      {showEditProfile && (
-        <EditProfileModal
-          profile={profile}
-          onClose={() => setShowEditProfile(false)}
-          onSuccess={handleProfileUpdated}
-        />
-      )}
+        {isOwner && (
+          <button
+            className={styles.fab}
+            onClick={() => {
+              setEditingRecipe(null)
+              setShowPostModal(true)
+            }}
+            aria-label="Post a recipe"
+            title="Post a recipe"
+          >
+            <IoAdd size={28} />
+          </button>
+        )}
 
-      {showPostModal && (
-        <PostRecipeModal
-          onClose={() => {
-            setShowPostModal(false)
-            setEditingRecipe(null)
-          }}
-          onSuccess={handlePostSuccess}
-          editRecipe={editingRecipe}
-        />
-      )}
-    </div>
-    <Footer/>
+        {deleteConfirmId && (
+          <div className={styles.confirmBackdrop}>
+            <div className={styles.confirmBox}>
+              <p>Delete this recipe? This cannot be undone.</p>
+              <div className={styles.confirmActions}>
+                <button className={styles.confirmCancel} onClick={() => setDeleteConfirmId(null)}>
+                  Cancel
+                </button>
+                <button className={styles.confirmDelete} onClick={() => handleDeleteRecipe(deleteConfirmId)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showEditProfile && (
+          <EditProfileModal
+            profile={profile}
+            onClose={() => setShowEditProfile(false)}
+            onSuccess={handleProfileUpdated}
+          />
+        )}
+
+        {showPostModal && (
+          <PostRecipeModal
+            onClose={() => {
+              setShowPostModal(false)
+              setEditingRecipe(null)
+            }}
+            onSuccess={handlePostSuccess}
+            editRecipe={editingRecipe}
+          />
+        )}
+      </div>
+      <Footer />
     </>
   )
 }
