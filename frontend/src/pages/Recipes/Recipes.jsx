@@ -272,7 +272,7 @@ const Recipes = ({ searchTerm }) => {
 
   const handleReset = () => {
     const search = searchParams.get('search')
-    setSearchParams(search ? { search } : {})
+    setSearchParams(search ? { search, sort: 'az' } : { sort: 'az' })
   }
 
   const handleSelectRecipe = (recipe) => {
