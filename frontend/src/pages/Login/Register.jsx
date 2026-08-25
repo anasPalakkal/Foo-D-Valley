@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Login.module.css';
+import { getErrorMessage } from '../../utils/errors';
 
 const Register = () => {
   const { register } = useAuth();
@@ -23,7 +24,7 @@ const Register = () => {
       await register(form.name, form.email, form.password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Try again.');
+      setError(getErrorMessage(err, 'Registration failed. Try again.'));
     } finally {
       setLoading(false);
     }

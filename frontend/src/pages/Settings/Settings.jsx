@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { changePassword, deleteAccount } from '../../api/api'
 import { useAuth } from '../../context/AuthContext'
+import { getErrorMessage } from '../../utils/errors'
 import styles from './Settings.module.css'
 
 const Settings = () => {
@@ -25,6 +26,8 @@ const Settings = () => {
         setPasswordError('')
         setPasswordSuccess('')
 
+        // Fast client-side checks only — cheap UX win, not the source of truth.
+        // Server re-validates everything (length, common-password list, max length).
         if (newPassword.length < 8) {
             return setPasswordError('New password must be at least 8 characters.')
         }
@@ -43,7 +46,7 @@ const Settings = () => {
             setNewPassword('')
             setConfirmNewPassword('')
         } catch (err) {
-            setPasswordError(err?.response?.data?.message || 'Failed to update password.')
+            setPasswordError(getErrorMessage(err, 'Failed to update password.'))
         } finally {
             setPasswordLoading(false)
         }
@@ -63,7 +66,7 @@ const Settings = () => {
             logout()
             navigate('/')
         } catch (err) {
-            setDeleteError(err?.response?.data?.message || 'Failed to delete account.')
+            setDeleteError(getErrorMessage(err, 'Failed to delete account.'))
             setDeleteLoading(false)
         }
     }

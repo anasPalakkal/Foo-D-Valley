@@ -9,9 +9,9 @@
  * Usage: router.post('/register', validate(registerSchema), register)
  *        router.get('/:id', validate(idParamSchema, 'params'), getRecipeById)
  */
-function validate(schema, source = 'body') {
+function validate(schema) {
   return (req, res, next) => {
-    const result = schema.safeParse(req[source]);
+    const result = schema.safeParse(req.body);
 
     if (!result.success) {
       const details = result.error.issues.map((issue) => ({
@@ -20,14 +20,12 @@ function validate(schema, source = 'body') {
       }));
 
       return res.status(400).json({
-        error: 'Validation failed',
+        message: details[0]?.message || 'Validation failed',
         details,
       });
     }
 
-    // Replace with parsed data so downstream code gets normalized values
-    // (trimmed strings, coerced numbers, etc.) instead of raw input.
-    req[source] = result.data;
+    req.body = result.data;
     next();
   };
 }

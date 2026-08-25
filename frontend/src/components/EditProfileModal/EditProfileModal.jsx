@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import styles from './EditProfileModal.module.css'
 import { IoClose, IoCamera, IoTrashOutline, IoImageOutline } from 'react-icons/io5'
 import { normalizeUser } from '../../context/AuthContext'
+import { getErrorMessage } from '../../utils/errors'
 
 const EditProfileModal = ({ profile, onClose, onSuccess }) => {
   const { updateUser } = useAuth()
@@ -119,7 +120,7 @@ const EditProfileModal = ({ profile, onClose, onSuccess }) => {
       onSuccess(updatedUser)
       onClose()
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to save changes.')
+      setError(getErrorMessage(err, 'Failed to save changes.'))
     } finally {
       setLoading(false)
     }

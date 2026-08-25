@@ -3,6 +3,7 @@ import { uploadRecipe, updateRecipe, getCategories, getCuisines } from '../../ap
 import CustomSelect from '../CustomSelect/CustomSelect'
 import styles from './PostRecipeModal.module.css'
 import { IoClose, IoAdd, IoTrash, IoImageOutline } from 'react-icons/io5'
+import { getErrorMessage } from '../../utils/errors'
 
 const emptyForm = {
   title: '',
@@ -120,7 +121,7 @@ const PostRecipeModal = ({ onClose, onSuccess, editRecipe = null }) => {
       onClose()
       onSuccess?.(result, isEdit)
     } catch (err) {
-      setError(err?.response?.data?.message || 'Something went wrong.')
+      setError(getErrorMessage(err, 'Something went wrong.'))
     } finally {
       setLoading(false)
     }
