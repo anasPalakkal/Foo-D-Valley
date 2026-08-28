@@ -46,6 +46,7 @@ function buildUpload(folder, transformation) {
 const recipeUpload = buildUpload('foodvalley/recipes', [{ width: 800, height: 600, crop: 'limit' }])
 const avatarUpload = buildUpload('foodvalley/avatars', [{ width: 300, height: 300, crop: 'fill', gravity: 'face' }])
 const bannerUpload = buildUpload('foodvalley/banners', [{ width: 1200, height: 400, crop: 'fill' }])
+const chatUpload = buildUpload('foodvalley/chat', [{ width: 1200, height: 1200, crop: 'limit' }])
 
 // Catches Multer/Cloudinary upload failures (bad format, size limit, etc.)
 // and returns clean JSON instead of an unhandled error object.
@@ -59,4 +60,4 @@ const handleUploadError = (err, req, res, next) => {
   next()
 }
 
-module.exports = { cloudinary, recipeUpload, avatarUpload, bannerUpload, handleUploadError }
+module.exports = { cloudinary, recipeUpload, avatarUpload, bannerUpload, chatUpload, handleUploadError }
