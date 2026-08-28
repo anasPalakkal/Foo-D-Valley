@@ -36,6 +36,16 @@ model User {
   refreshTokens       RefreshToken[]
   verificationTokens  VerificationToken[]
   passwordResetTokens PasswordResetToken[]
+
+  conversationParticipants ConversationParticipant[]
+  sentMessages             Message[]
+  messageDeletions         MessageDeletion[]
+
+  blocking   Block[] @relation("BlockingUser")
+  blockedBy  Block[] @relation("BlockedUser")
+
+  notifications        Notification[] @relation("NotificationRecipient")
+  notificationsCaused  Notification[] @relation("NotificationActor")
 }
 
 model RefreshToken {
@@ -112,6 +122,7 @@ model Recipe {
   favorites Favorite[]
   likes     RecipeLike[]
   comments  RecipeComment[]
+  messages Message[]
 }
 
 model Favorite {
@@ -163,4 +174,127 @@ model RecipeComment {
 
   isExternal Boolean @default(false)
   externalId String?
+}
+
+model Conversation {
+  id       Int     @id @default(autoincrement())
+  isGroup  Boolean @default(false)
+  directKey String? @unique // sorted "userAId_userBId", 1:1 only, null for groups
+  title    String?           // reserved for future group chats
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lastMessageAt       DateTime?
+  lastMessagePreview  String?
+  lastMessageSenderId Int?
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt          DateTime @default(now())
+  lastReadMessageId Int?
+  isMuted           Boolean  @default(false)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  RECIPE
+  SYSTEM
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Nullable + SetNull: deliberate deviation from this codebase's cascade
+  // convention. A hard-deleted sender's messages must survive so the other
+  // participant's history isn't erased too.
+  senderId Int?
+  sender   User? @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  type    MessageType @default(TEXT)
+  content String?     // TEXT/IMAGE caption text only — never a URL
+
+  imageUrl      String? // Cloudinary secure_url, set only when type = IMAGE
+  imagePublicId String? // Cloudinary public_id, needed to destroy() on delete-for-everyone
+
+  recipeId Int?
+  recipe   Recipe? @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+
+  clientId String? // client-generated idempotency key
+
+  createdAt DateTime  @default(now())
+  editedAt  DateTime?
+  deletedAt DateTime? // "delete for everyone" tombstone marker
+
+  deletions MessageDeletion[]
+
+  @@unique([conversationId, senderId, clientId])
+  @@index([conversationId, id])
+}
+
+model MessageDeletion {
+  id        Int     @id @default(autoincrement())
+  messageId Int
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+}
+
+model Block {
+  id Int @id @default(autoincrement())
+
+  blockerId Int
+  blocker   User @relation("BlockingUser", fields: [blockerId], references: [id], onDelete: Cascade)
+
+  blockedId Int
+  blocked   User @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+enum NotificationType {
+  FOLLOW
+  LIKE
+  COMMENT
+}
+
+model Notification {
+  id Int @id @default(autoincrement())
+
+  recipientId Int
+  recipient   User @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  actorId Int?
+  actor   User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  type       NotificationType
+  entityType String? // "recipe" | "comment", null for FOLLOW
+  entityId   Int?
+
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([recipientId, isRead])
 }
