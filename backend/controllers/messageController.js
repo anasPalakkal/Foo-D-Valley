@@ -1,5 +1,6 @@
 const prisma = require('../lib/prismaClient')
 const { cloudinary } = require('../lib/cloudinary')
+const { getIO } = require('../lib/socket')
 
 // POST /api/messages/image  (multipart, field 'image')
 // Upload-only — does NOT create a Message row. Client uploads here first,
@@ -43,7 +44,7 @@ const editMessage = async (req, res) => {
       data: { content: content.trim(), editedAt: new Date() },
     })
 
-    // Phase C wires: getIO().to(`conversation:${message.conversationId}`).emit('message:edited', updated)
+    getIO().to(`conversation:${message.conversationId}`).emit('message:edited', updated)
 
     res.json(updated)
   } catch (error) {
@@ -77,7 +78,7 @@ const deleteMessage = async (req, res) => {
         data: { deletedAt: new Date(), content: null, imageUrl: null, imagePublicId: null },
       })
 
-      // Phase C wires: getIO().to(`conversation:${message.conversationId}`).emit('message:deleted', {...})
+      getIO().to(`conversation:${message.conversationId}`).emit('message:deleted', { messageId: message.id, conversationId: message.conversationId })
 
       return res.json(updated)
     }
