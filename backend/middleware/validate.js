@@ -9,9 +9,10 @@
  * Usage: router.post('/register', validate(registerSchema), register)
  *        router.get('/:id', validate(idParamSchema, 'params'), getRecipeById)
  */
-function validate(schema) {
+function validate(schema, source = 'body') {
   return (req, res, next) => {
-    const result = schema.safeParse(req.body);
+    const data = source === 'params' ? req.params : source === 'query' ? req.query : req.body;
+    const result = schema.safeParse(data);
 
     if (!result.success) {
       const details = result.error.issues.map((issue) => ({
@@ -25,7 +26,10 @@ function validate(schema) {
       });
     }
 
-    req.body = result.data;
+    if (source === 'params') req.params = result.data;
+    else if (source === 'query') req.query = result.data;
+    else req.body = result.data;
+
     next();
   };
 }
