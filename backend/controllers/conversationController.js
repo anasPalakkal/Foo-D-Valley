@@ -1,20 +1,9 @@
 const prisma = require('../lib/prismaClient')
+const { isBlockedEitherDirection } = require('../services/block.service')
 
 function buildDirectKey(userIdA, userIdB) {
   const [a, b] = [userIdA, userIdB].sort((x, y) => x - y)
   return `${a}_${b}`
-}
-
-async function isBlockedEitherDirection(userIdA, userIdB) {
-  const block = await prisma.block.findFirst({
-    where: {
-      OR: [
-        { blockerId: userIdA, blockedId: userIdB },
-        { blockerId: userIdB, blockedId: userIdA },
-      ],
-    },
-  })
-  return !!block
 }
 
 // GET /api/conversations?before=<id>&limit=20
