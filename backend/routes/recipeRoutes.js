@@ -12,7 +12,7 @@ const {
 } = require('../controllers/recipeController')
 
 const { getLikeStatus, likeRecipe, unlikeRecipe, getBatchLikeCounts } = require('../controllers/likeController')
-const { getComments, createComment } = require('../controllers/commentController')
+const { getComments, createComment, editComment, deleteComment } = require('../controllers/commentController')
 const { protect, optionalProtect, requireVerified } = require('../middleware/authMiddleware')
 const { recipeUpload, handleUploadError } = require('../lib/cloudinary')
 const { validate } = require('../middleware/validate')
@@ -74,6 +74,8 @@ router.post(
   validate(createCommentSchema),
   createComment
 )
+router.patch('/comments/:commentId', protect, editComment)
+router.delete('/comments/:commentId', protect, deleteComment)
 router.post('/likes/batch', validate(batchLikesSchema), getBatchLikeCounts)
 
 module.exports = router
