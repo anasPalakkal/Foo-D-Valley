@@ -17,6 +17,7 @@ const { initializeSocket } = require('./lib/socket')
 const conversationRoutes = require('./routes/conversationRoutes')
 const messageRoutes = require('./routes/messageRoutes')
 const userRoutes = require('./routes/userRoutes')
+app.use('/api/notifications', require('./routes/notificationRoutes'))
 
 const app = express()
 app.set('trust proxy', 1)
