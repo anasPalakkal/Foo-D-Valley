@@ -1,5 +1,6 @@
 const prisma = require('../lib/prismaClient')
 const { isBlockedEitherDirection } = require('../services/block.service')
+const { getIO } = require('../lib/socket')
 
 function buildDirectKey(userIdA, userIdB) {
   const [a, b] = [userIdA, userIdB].sort((x, y) => x - y)
@@ -203,19 +204,26 @@ const markRead = async (req, res) => {
   }
 
   try {
-    // GREATEST at the DB level, not check-then-set in JS — guards against
-    // two devices/tabs racing to mark read out of order (Section 7 of the plan).
-    const affected = await prisma.$executeRaw`
+    // RETURNING gives us the actual post-update value in one round trip —
+    // needed because GREATEST means the value we broadcast isn't necessarily
+    // the messageId the client sent (a stale/out-of-order request must not
+    // regress the other participant's read receipt).
+    const rows = await prisma.$queryRaw`
       UPDATE "ConversationParticipant"
       SET "lastReadMessageId" = GREATEST(COALESCE("lastReadMessageId", 0), ${messageId})
       WHERE "conversationId" = ${conversationId} AND "userId" = ${req.user.id}
+      RETURNING "lastReadMessageId"
     `
 
-    if (affected === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({ message: 'Conversation not found' })
     }
 
-    // Phase C wires: getIO().to(`conversation:${conversationId}`).emit('message:read', {...})
+    getIO().to(`conversation:${conversationId}`).emit('message:read', {
+      conversationId,
+      userId: req.user.id,
+      lastReadMessageId: rows[0].lastReadMessageId,
+    })
 
     res.json({ message: 'Marked as read' })
   } catch (error) {
