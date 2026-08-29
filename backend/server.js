@@ -10,6 +10,7 @@ const favoriteRoutes = require('./routes/favoriteRoutes')
 const profileRoutes = require('./routes/profileRoutes')
 const followRoutes = require('./routes/followRoutes')
 const { startDeletionJob } = require('./jobs/deletion.job')
+const { startVerifyReminderJob } = require('./jobs/verifyReminder.job')
 const cookieParser = require('cookie-parser')
 const { lightRateLimit } = require('./middleware/rateLimiters')
 const externalRoutes = require('./routes/externalRoutes')
@@ -17,8 +18,7 @@ const { initializeSocket } = require('./lib/socket')
 const conversationRoutes = require('./routes/conversationRoutes')
 const messageRoutes = require('./routes/messageRoutes')
 const userRoutes = require('./routes/userRoutes')
-app.use('/api/notifications', require('./routes/notificationRoutes'))
-
+const notificationRoutes = require('./routes/notificationRoutes')
 const app = express()
 app.set('trust proxy', 1)
 app.use(helmet())
@@ -44,7 +44,7 @@ app.use('/api/messages', messageRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/users', followRoutes)
 app.use('/api/external', externalRoutes)
-
+app.use('/api/notifications', notificationRoutes)
 
 app.get('/', (req, res) => {
   res.json({ message: 'Foo D Valley API is running' })
@@ -59,4 +59,5 @@ const PORT = process.env.PORT || 5000
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
   startDeletionJob()
+  startVerifyReminderJob()
 })
