@@ -1,4 +1,5 @@
 const prisma = require('../lib/prismaClient')
+const { createNotification, deleteNotification, emitNotification } = require('../services/notification.service')
 
 const getLikesCount = async (id, isExternal) => {
   if (isExternal) {
@@ -41,21 +42,39 @@ const likeRecipe = async (req, res) => {
   const isExternal = req.query.type === 'external'
 
   try {
+    let recipe = null
     if (!isExternal) {
-      const recipe = await prisma.recipe.findUnique({ where: { id: parseInt(id) } })
+      recipe = await prisma.recipe.findUnique({ where: { id: parseInt(id) } })
       if (!recipe) {
         return res.status(404).json({ message: 'Recipe not found' })
       }
     }
 
-    await prisma.recipeLike.create({
-      data: {
-        user: { connect: { id: req.user.id } },
-        ...(isExternal
-          ? { isExternal: true, externalId: id }
-          : { recipe: { connect: { id: parseInt(id) } } }),
-      },
+    let notification = null
+
+    await prisma.$transaction(async (tx) => {
+      await tx.recipeLike.create({
+        data: {
+          user: { connect: { id: req.user.id } },
+          ...(isExternal
+            ? { isExternal: true, externalId: id }
+            : { recipe: { connect: { id: parseInt(id) } } }),
+        },
+      })
+
+      // External recipes have no Recipe row and no authorId — nobody to notify.
+      if (!isExternal) {
+        notification = await createNotification(tx, {
+          recipientId: recipe.authorId,
+          actorId: req.user.id,
+          type: 'LIKE',
+          entityType: 'recipe',
+          entityId: recipe.id,
+        })
+      }
     })
+
+    emitNotification(notification)
 
     const likesCount = await getLikesCount(id, isExternal)
     res.status(201).json({ liked: true, likesCount })
@@ -75,11 +94,30 @@ const unlikeRecipe = async (req, res) => {
   const isExternal = req.query.type === 'external'
 
   try {
-    if (isExternal) {
-      await prisma.recipeLike.deleteMany({ where: { userId: req.user.id, externalId: id } })
-    } else {
-      await prisma.recipeLike.deleteMany({ where: { userId: req.user.id, recipeId: parseInt(id) } })
+    let recipe = null
+    if (!isExternal) {
+      recipe = await prisma.recipe.findUnique({
+        where: { id: parseInt(id) },
+        select: { id: true, authorId: true },
+      })
     }
+
+    await prisma.$transaction(async (tx) => {
+      if (isExternal) {
+        await tx.recipeLike.deleteMany({ where: { userId: req.user.id, externalId: id } })
+      } else {
+        await tx.recipeLike.deleteMany({ where: { userId: req.user.id, recipeId: parseInt(id) } })
+        if (recipe) {
+          await deleteNotification(tx, {
+            recipientId: recipe.authorId,
+            actorId: req.user.id,
+            type: 'LIKE',
+            entityType: 'recipe',
+            entityId: recipe.id,
+          })
+        }
+      }
+    })
 
     const likesCount = await getLikesCount(id, isExternal)
     res.json({ liked: false, likesCount })
