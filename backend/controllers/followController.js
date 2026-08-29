@@ -1,4 +1,5 @@
 const prisma = require('../lib/prismaClient')
+const { createNotification, deleteNotification, emitNotification } = require('../services/notification.service')
 
 const followUser = async (req, res) => {
   const { userId } = req.params
@@ -14,12 +15,24 @@ const followUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' })
     }
 
-    const follow = await prisma.follow.create({
-      data: {
-        follower: { connect: { id: req.user.id } },
-        followingUser: { connect: { id: targetId } },
-      },
+    let follow, notification
+
+    await prisma.$transaction(async (tx) => {
+      follow = await tx.follow.create({
+        data: {
+          follower: { connect: { id: req.user.id } },
+          followingUser: { connect: { id: targetId } },
+        },
+      })
+
+      notification = await createNotification(tx, {
+        recipientId: targetId,
+        actorId: req.user.id,
+        type: 'FOLLOW',
+      })
     })
+
+    emitNotification(notification)
 
     res.status(201).json(follow)
   } catch (error) {
@@ -36,13 +49,18 @@ const unfollowUser = async (req, res) => {
   const targetId = Number(userId)
 
   try {
-    await prisma.follow.delete({
-      where: {
-        followerId_followingId: {
-          followerId: req.user.id,
-          followingId: targetId,
+    await prisma.$transaction(async (tx) => {
+      await tx.follow.delete({
+        where: {
+          followerId_followingId: { followerId: req.user.id, followingId: targetId },
         },
-      },
+      })
+
+      await deleteNotification(tx, {
+        recipientId: targetId,
+        actorId: req.user.id,
+        type: 'FOLLOW',
+      })
     })
 
     res.json({ message: 'Unfollowed successfully' })
