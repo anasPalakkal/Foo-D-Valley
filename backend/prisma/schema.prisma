@@ -21,6 +21,7 @@ model User {
 
   isVerified Boolean @default(false)
   lastLoginAt DateTime?
+  lastVerifyReminderAt DateTime?
 
 
   favorites  Favorite[]
