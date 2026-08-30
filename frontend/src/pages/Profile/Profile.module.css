@@ -199,6 +199,35 @@
   cursor: not-allowed;
 }
 
+.messageBtn {
+  padding: 8px 20px;
+  border: 1.5px solid #b0413e;
+  background: #fff;
+  color: #b0413e;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.messageBtn:hover {
+  background: #b0413e;
+  color: #fff;
+}
+
+.messageBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.messageError {
+  font-size: 0.8rem;
+  color: #e74c3c;
+  margin: 6px 0 0;
+}
+
 /* ─── Tabs ───────────────────────────────────────────────────── */
 .tabs {
   display: flex;

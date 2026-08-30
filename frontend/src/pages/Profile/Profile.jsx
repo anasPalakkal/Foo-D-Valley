@@ -10,6 +10,7 @@ import {
   getFollowers,
   getFollowing,
   deleteRecipe,
+  createConversation,
 } from '../../api/api'
 import EditProfileModal from '../../components/EditProfileModal/EditProfileModal'
 import PostRecipeModal from '../../components/PostRecipeModal/PostRecipeModal'
@@ -40,6 +41,8 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('posts')
   const [isFollowing, setIsFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
+  const [messageLoading, setMessageLoading] = useState(false)
+  const [messageError, setMessageError] = useState('')
 
   const [followers, setFollowers] = useState([])
   const [following, setFollowing] = useState([])
@@ -164,6 +167,24 @@ const Profile = () => {
       // counts re-sync on next fetch
     } finally {
       setFollowLoading(false)
+    }
+  }
+
+  const handleMessageStart = async () => {
+    if (!authUser) return navigate('/login')
+    setMessageError('')
+    setMessageLoading(true)
+    try {
+      const data = await createConversation(profile.id)
+      navigate(`/messages/${data.id}`)
+    } catch (err) {
+      setMessageError(
+        err?.response?.status === 403
+          ? 'You cannot message this user.'
+          : 'Could not start conversation.'
+      )
+    } finally {
+      setMessageLoading(false)
     }
   }
 
@@ -362,13 +383,22 @@ const Profile = () => {
                     Edit Profile
                   </button>
                 ) : (
-                  <button
-                    className={`${styles.followBtn} ${isFollowing ? styles.following : ''}`}
-                    onClick={handleFollowToggle}
-                    disabled={followLoading}
-                  >
-                    {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
-                  </button>
+                  <>
+                    <button
+                      className={`${styles.followBtn} ${isFollowing ? styles.following : ''}`}
+                      onClick={handleFollowToggle}
+                      disabled={followLoading}
+                    >
+                      {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
+                    </button>
+                    <button
+                      className={styles.messageBtn}
+                      onClick={handleMessageStart}
+                      disabled={messageLoading}
+                    >
+                      {messageLoading ? '...' : 'Message'}
+                    </button>
+                  </>
                 )}
               </div>
 
@@ -387,6 +417,7 @@ const Profile = () => {
                 </div>
               </div>
 
+              {messageError && <p className={styles.messageError}>{messageError}</p>}
               {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
             </div>
           </div>
@@ -529,7 +560,7 @@ const Profile = () => {
                 <p className={styles.emptyListState}>No following yet.</p>
               ) : (
                 <div className={styles.userList}>
-                  {following.map((u) => renderUserRow(u, setFollowers, `following:${userId}`))}
+                  {following.map((u) => renderUserRow(u, setFollowing, `following:${userId}`))}
                 </div>
               )}
             </div>
