@@ -411,13 +411,80 @@ export const getUnreadNotificationCount = async () => {
   return data
 }
 
-// ─── Conversations ────────────────────────────────────────────────────────────
-// Path unconfirmed against actual conversationRoutes.js — verify against your
-// real route file. listConversations (backend) already returns unreadCount
-// per conversation per the Phase E/F handoff; summed client-side here.
+// Returns { notifications, hasMore } — shape inferred from listConversations'
+// identical cursor pattern (before/limit -> { items, hasMore }), same author,
+// same session. High-confidence pattern match, not confirmed against
+// notificationController.js directly.
+export const listNotifications = async (before, limit = 20) => {
+  const { data } = await api.get('/notifications', { params: { before, limit } })
+  return data
+}
 
-export const getConversations = async () => {
-  const { data } = await api.get('/conversations')
+export const markNotificationRead = async (id) => {
+  const { data } = await api.patch(`/notifications/${id}/read`)
+  return data
+}
+
+export const markAllNotificationsRead = async () => {
+  const { data } = await api.patch('/notifications/read-all')
+  return data
+}
+
+// ─── Conversations ────────────────────────────────────────────────────────────
+
+// Returns { conversations, hasMore }
+export const getConversations = async (before, limit = 20) => {
+  const { data } = await api.get('/conversations', { params: { before, limit } })
+  return data
+}
+
+export const createConversation = async (recipientUserId) => {
+  const { data } = await api.post('/conversations', { recipientUserId })
+  return data
+}
+
+export const getConversationById = async (id) => {
+  const { data } = await api.get(`/conversations/${id}`)
+  return data
+}
+
+// Returns { messages, hasMore } — messages already oldest-first server-side.
+export const getMessages = async (conversationId, before, limit = 30) => {
+  const { data } = await api.get(`/conversations/${conversationId}/messages`, {
+    params: { before, limit },
+  })
+  return data
+}
+
+export const markConversationRead = async (conversationId, messageId) => {
+  const { data } = await api.patch(`/conversations/${conversationId}/read`, { messageId })
+  return data
+}
+
+export const toggleConversationMute = async (conversationId, isMuted) => {
+  const { data } = await api.patch(`/conversations/${conversationId}/mute`, { isMuted })
+  return data
+}
+
+// ─── Messages ─────────────────────────────────────────────────────────────────
+// Sending itself is socket-driven (Phase A-D), not REST — no "createMessage"
+// function here on purpose. These three are the REST-only side confirmed by
+// messageController.js.
+
+export const uploadChatImage = async (formData) => {
+  const { data } = await api.post('/messages/image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
+export const editMessage = async (id, content) => {
+  const { data } = await api.patch(`/messages/${id}`, { content })
+  return data
+}
+
+export const deleteMessage = async (id, scope = 'me') => {
+  const { data } = await api.delete(`/messages/${id}`, { params: { scope } })
   return data
 }
 
