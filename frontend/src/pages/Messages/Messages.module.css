@@ -8,7 +8,7 @@
   font-size: 1.4rem;
   font-weight: 700;
   color: #b0413e;
-  margin: 0 0 20px;
+  margin: 0;
 }
 
 .list {
@@ -123,6 +123,24 @@
 .loadMoreBtn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #b0413e;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 480px) {

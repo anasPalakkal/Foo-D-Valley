@@ -162,6 +162,24 @@
   cursor: default;
 }
 
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #b0413e;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 480px) {
   .page {
     padding: 20px 14px 40px;
