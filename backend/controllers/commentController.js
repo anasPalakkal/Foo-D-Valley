@@ -160,4 +160,28 @@ const deleteComment = async (req, res) => {
   }
 }
 
-module.exports = { getComments, createComment, editComment, deleteComment }
+// GET /api/recipes/comments/:commentId/context
+// COMMENT notifications store the comment's id (see createComment — entityId
+// must stay unique per comment for deleteNotification to target correctly),
+// not the recipe's. This resolves comment -> recipe for notification clicks.
+const getCommentContext = async (req, res) => {
+  const commentId = Number(req.params.commentId)
+
+  try {
+    const comment = await prisma.recipeComment.findUnique({
+      where: { id: commentId },
+      select: { recipeId: true, isExternal: true, externalId: true },
+    })
+
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' })
+    }
+
+    res.json(comment)
+  } catch (error) {
+    console.error('getCommentContext error:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+module.exports = { getComments, createComment, editComment, deleteComment, getCommentContext }

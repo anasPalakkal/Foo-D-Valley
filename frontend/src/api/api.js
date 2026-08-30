@@ -221,6 +221,11 @@ export const unlikeRecipe = async (id, isExternal) => {
   return data
 }
 
+export const getBatchLikeCounts = async (recipeIds, externalIds) => {
+  const { data } = await api.post('/recipes/likes/batch', { recipeIds, externalIds })
+  return data
+}
+
 // ─── Comments ─────────────────────────────────────────────────────────────────
 
 export const getComments = async (id, isExternal) => {
@@ -235,10 +240,8 @@ export const postComment = async (id, isExternal, content) => {
   return data
 }
 
-export const getBatchLikeCounts = async (recipeIds, externalIds) => {
-  const { data } = await api.post('/recipes/likes/batch', { recipeIds, externalIds })
-  return data
-}
+export const getCommentContext = (commentId) =>
+  api.get(`/recipes/comments/${commentId}/context`).then((res) => res.data)
 
 // ─── Favorites ────────────────────────────────────────────────────────────────
 

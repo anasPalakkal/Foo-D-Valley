@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Footer from '../../components/Footer/Footer';
 import {
@@ -246,6 +246,14 @@ const Profile = () => {
       setEditLoading(false)
     }
   }
+
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.state?.tab === 'followers' || location.state?.tab === 'following') {
+      goToTab(location.state.tab)
+    }
+  }, [location.state])
 
   if (loading) {
     return (
