@@ -404,4 +404,21 @@ export const deleteAccount = async (password) => {
   return data
 }
 
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export const getUnreadNotificationCount = async () => {
+  const { data } = await api.get('/notifications/unread-count')
+  return data
+}
+
+// ─── Conversations ────────────────────────────────────────────────────────────
+// Path unconfirmed against actual conversationRoutes.js — verify against your
+// real route file. listConversations (backend) already returns unreadCount
+// per conversation per the Phase E/F handoff; summed client-side here.
+
+export const getConversations = async () => {
+  const { data } = await api.get('/conversations')
+  return data
+}
+
 export default api

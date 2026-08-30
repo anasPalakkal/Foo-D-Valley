@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FaUtensils, FaPencilAlt, FaGlobe, FaThumbsUp } from 'react-icons/fa'
+import { FaUtensils, FaPencilAlt, FaGlobe, FaThumbsUp, FaBell, FaEnvelope } from 'react-icons/fa'
 import styles from './Home.module.css'
 import Footer from '../../components/Footer/Footer'
 import PostRecipeModal from '../../components/PostRecipeModal/PostRecipeModal'
@@ -13,9 +13,12 @@ import {
   getFavorites,
   getRecommendations,
   getProfile,
+  getUnreadNotificationCount,
+  getConversations,
 } from '../../api/api.js'
 import { getRecentlyViewed, clearRecentlyViewed } from '../../utils/recentlyViewed'
 import { useAuth } from '../../context/AuthContext'
+import { useSocket } from '../../context/SocketContext'
 
 const LATEST_COUNT = 9
 const POPULAR_COUNT = 9
@@ -88,11 +91,15 @@ const Home = () => {
   const [recommended, setRecommended] = useState({ basis: null, recipes: [] })
   const [activityNudge, setActivityNudge] = useState('')
 
+  const [notifUnread, setNotifUnread] = useState(0)
+  const [msgUnread, setMsgUnread] = useState(0)
+
   const [activeSlide, setActiveSlide] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const timerRef = useRef(null)
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
+  const { socket } = useSocket()
 
   const fetchFeed = async () => {
     try {
@@ -183,12 +190,57 @@ const Home = () => {
         const daysSince = Math.floor((Date.now() - new Date(lastPostedAt).getTime()) / 86400000)
         setActivityNudge(
           daysSince >= ACTIVITY_NUDGE_DAYS
-            ? `You haven't posted in ${daysSince} days — got something new cooking?`
+            ? `You haven't posted in ${daysSince} days , got something new cooking?`
             : ''
         )
       })
       .catch(() => setActivityNudge(''))
   }, [user])
+
+  // Initial unread counts — keyed on user?.id rather than the user object
+  // itself, since AuthContext's updateUser() (profile edits, avatar changes)
+  // creates a new user reference on every call. Keying on the object would
+  // refire this on every unrelated profile update.
+  useEffect(() => {
+    if (!user) {
+      setNotifUnread(0)
+      setMsgUnread(0)
+      return
+    }
+    getUnreadNotificationCount()
+      .then((data) => setNotifUnread(data.count ?? 0))
+      .catch(() => setNotifUnread(0))
+
+    getConversations()
+      .then((conversations) =>
+        setMsgUnread(
+          (conversations || []).reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+        )
+      )
+      .catch(() => setMsgUnread(0))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
+
+  // Live badge updates. Payload shape assumed to match the documented
+  // notification/message contracts — verify field names once the actual
+  // socket handler payloads are confirmed.
+  useEffect(() => {
+    if (!socket || !user) return
+
+    const handleNewNotification = () => setNotifUnread((prev) => prev + 1)
+    const handleNewMessage = (message) => {
+      if (message?.senderId === user.id) return
+      setMsgUnread((prev) => prev + 1)
+    }
+
+    socket.on('notification:new', handleNewNotification)
+    socket.on('message:new', handleNewMessage)
+
+    return () => {
+      socket.off('notification:new', handleNewNotification)
+      socket.off('message:new', handleNewMessage)
+    }
+  }, [socket, user])
 
   // Guard against running the guest-only slide timer while session restore
   // is still in flight — user is null during that window too, but nothing
@@ -280,6 +332,25 @@ const Home = () => {
               </p>
             </div>
             <div className={styles.quickActions}>
+              {/* Notifications / messages — highest priority action group,
+                  placed first so they read before Saved/Browse on both
+                  desktop and the wrapped mobile row. */}
+              <div className={styles.iconActions}>
+                <Link to="/notifications" className={styles.iconBtn} aria-label="Notifications">
+                  <FaBell />
+                  {notifUnread > 0 && (
+                    <span className={styles.iconBadge}>
+                      {notifUnread > 9 ? '9+' : notifUnread}
+                    </span>
+                  )}
+                </Link>
+                <Link to="/messages" className={styles.iconBtn} aria-label="Messages">
+                  <FaEnvelope />
+                  {msgUnread > 0 && (
+                    <span className={styles.iconBadge}>{msgUnread > 9 ? '9+' : msgUnread}</span>
+                  )}
+                </Link>
+              </div>
               <button className={styles.quickActionPrimary} onClick={handleShareClick}>
                 <FaPencilAlt /> Post a Recipe
               </button>
