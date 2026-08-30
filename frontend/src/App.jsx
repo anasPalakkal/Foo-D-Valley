@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { SocketProvider } from './context/SocketContext'
 import { ToastProvider } from './components/Toast/ToastProvider'
 import Navbar from './components/Navbar/Navbar'
 import Recipes from './pages/Recipes/Recipes'
@@ -35,35 +36,37 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router>
-        <ToastProvider>
-          <div id="main">
-            <SearchSync setSearchTerm={setSearchTerm} />
-            <Navbar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/recipes" element={<Recipes searchTerm={searchTerm} />} />
-              <Route path="/recipes/:id" element={<RecipeDetails />} />
-              <Route path="/saved" element={<SavedRecipes />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/verify-email" element={<VerifyEmail />} />
-              <Route path="/profile/:userId" element={<Profile />} />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </div>
-        </ToastProvider>
-      </Router>
+      <SocketProvider>
+        <Router>
+          <ToastProvider>
+            <div id="main">
+              <SearchSync setSearchTerm={setSearchTerm} />
+              <Navbar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/recipes" element={<Recipes searchTerm={searchTerm} />} />
+                <Route path="/recipes/:id" element={<RecipeDetails />} />
+                <Route path="/saved" element={<SavedRecipes />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/profile/:userId" element={<Profile />} />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </div>
+          </ToastProvider>
+        </Router>
+      </SocketProvider>
     </AuthProvider>
   )
 }
