@@ -107,7 +107,13 @@ const Messages = () => {
                     const other = c.otherParticipant
                     return (
                         <Link key={c.id} to={`/messages/${c.id}`} className={styles.item}>
-                            <img src={other?.avatarUrl || '/D.png'} alt="" className={styles.avatar} />
+                            {other?.avatarUrl ? (
+                                <img src={other.avatarUrl} alt="" className={styles.avatar} />
+                            ) : (
+                                <div className={styles.avatarFallback}>
+                                    {(other?.name || '?').charAt(0).toUpperCase()}
+                                </div>
+                            )}
                             <div className={styles.itemBody}>
                                 <div className={styles.itemTop}>
                                     <span className={styles.itemName}>

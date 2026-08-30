@@ -158,9 +158,24 @@ const Notifications = () => {
 
                     const content = (
                         <>
-                            <span className={styles.iconWrap}>
-                                <Icon />
-                            </span>
+                            {notification.actor ? (
+                                <span className={styles.avatarWrap}>
+                                    {notification.actor.avatarUrl ? (
+                                        <img src={notification.actor.avatarUrl} alt="" className={styles.actorAvatar} />
+                                    ) : (
+                                        <div className={styles.actorAvatarFallback}>
+                                            {notification.actor.name.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <span className={styles.iconBadge}>
+                                        <Icon />
+                                    </span>
+                                </span>
+                            ) : (
+                                <span className={styles.iconWrap}>
+                                    <Icon />
+                                </span>
+                            )}
                             <div className={styles.itemBody}>
                                 <p className={styles.itemText}>{config.text(notification)}</p>
                                 <span className={styles.itemTime}>{timeAgo(notification.createdAt)}</span>

@@ -142,6 +142,19 @@
   padding: 4px;
   flex-shrink: 0;
 }
+.avatarFallback {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #ffe4d6;
+  color: #b0413e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
 
 @media (max-width: 480px) {
   .page {
@@ -156,4 +169,11 @@
     width: 40px;
     height: 40px;
   }
+
+  .avatarFallback {
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
+}
+
 }
