@@ -1,0 +1,141 @@
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+}
+
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #b0413e;
+  margin: 0 0 20px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #f5e5df;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.item:hover {
+  background: #fff8f5;
+  border-color: #ffd0bd;
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #ffe4d6;
+}
+
+.itemBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.itemName {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #4a2c2a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemTime {
+  font-size: 0.72rem;
+  color: #a88783;
+  flex-shrink: 0;
+}
+
+.itemPreview {
+  margin: 2px 0 0;
+  font-size: 0.84rem;
+  color: #8a6763;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unreadBadge {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e64a19;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stateText {
+  text-align: center;
+  color: #888;
+  padding: 40px 0;
+  font-size: 0.92rem;
+}
+
+.loadMoreBtn {
+  display: block;
+  margin: 20px auto 0;
+  background: none;
+  border: 1.5px solid #ffd0bd;
+  color: #b0413e;
+  padding: 9px 24px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.loadMoreBtn:hover:not(:disabled) {
+  background: #fff0eb;
+}
+
+.loadMoreBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 20px 14px 40px;
+  }
+
+  .item {
+    padding: 10px 12px;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+  }
+}
