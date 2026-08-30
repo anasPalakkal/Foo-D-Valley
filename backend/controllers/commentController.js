@@ -1,6 +1,5 @@
 const prisma = require('../lib/prismaClient')
-const { createNotification, emitNotification } = require('../services/notification.service')
-
+const { createNotification, emitNotification, deleteNotification } = require('../services/notification.service')
 // GET /api/recipes/:id/comments?type=external
 const getComments = async (req, res) => {
   const { id } = req.params

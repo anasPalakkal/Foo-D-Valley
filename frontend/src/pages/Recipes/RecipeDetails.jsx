@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { FaHeart, FaArrowLeft, FaExternalLinkAlt, FaRegCommentDots, FaLink } from 'react-icons/fa'
+import { FaHeart, FaArrowLeft, FaExternalLinkAlt, FaRegCommentDots, FaLink, FaEllipsisV } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
 import {
   getRecipeById,
@@ -13,6 +13,8 @@ import {
   unlikeRecipe,
   getComments,
   postComment,
+  editComment,
+  deleteComment,
 } from '../../api/api'
 import { addRecentlyViewed } from '../../utils/recentlyViewed'
 import styles from './RecipeDetails.module.css'
@@ -83,6 +85,12 @@ const RecipeDetails = () => {
   const [commentText, setCommentText] = useState('')
   const [postingComment, setPostingComment] = useState(false)
   const [commentError, setCommentError] = useState('')
+
+  const [openMenuId, setOpenMenuId] = useState(null)
+  const [editingId, setEditingId] = useState(null)
+  const [editDraft, setEditDraft] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
 
   const [copied, setCopied] = useState(false)
 
@@ -167,6 +175,15 @@ const RecipeDetails = () => {
     loadComments()
   }, [recipe, actualId, isExternal])
 
+    useEffect(() => {
+    if (!openMenuId) return
+    const handler = (e) => {
+      if (!e.target.closest(`.${styles.commentMenuWrap}`)) setOpenMenuId(null)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [openMenuId])
+
   const handleToggleSave = async () => {
     if (!user) return navigate('/login')
     setSaving(true)
@@ -228,6 +245,46 @@ const RecipeDetails = () => {
       setCommentError('Could not post comment. Try again.')
     } finally {
       setPostingComment(false)
+    }
+  }
+
+    const handleEditStart = (c) => {
+    setOpenMenuId(null)
+    setEditingId(c.id)
+    setEditDraft(c.content)
+  }
+
+  const handleEditCancel = () => {
+    setEditingId(null)
+    setEditDraft('')
+  }
+
+  const handleEditSave = async () => {
+    const content = editDraft.trim()
+    if (!content || editSaving) return
+    setEditSaving(true)
+    try {
+      const updated = await editComment(editingId, content)
+      setComments((prev) => prev.map((c) => (c.id === editingId ? updated : c)))
+      setEditingId(null)
+      setEditDraft('')
+    } catch {
+      // leave edit box open on failure — user can retry
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const handleDeleteComment = async (commentId) => {
+    setOpenMenuId(null)
+    setDeletingId(commentId)
+    try {
+      await deleteComment(commentId)
+      setComments((prev) => prev.filter((c) => c.id !== commentId))
+    } catch {
+      // could add a toast here
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -378,28 +435,82 @@ const RecipeDetails = () => {
             </p>
           )}
 
-          <div className={styles.commentList}>
-            {comments.length === 0 && (
-              <p className={styles.noComments}>No comments yet. Be the first to share your thoughts.</p>
-            )}
-            {comments.map((c) => (
-              <div key={c.id} className={styles.commentItem}>
-                {c.user?.avatarUrl ? (
-                  <img src={c.user.avatarUrl} alt={c.user.name} className={styles.commentAvatar} />
-                ) : (
-                  <div className={styles.commentAvatarFallback}>
-                    {c.user?.name?.charAt(0).toUpperCase() || '?'}
+                    <div className={styles.commentListScroll}>
+            <div className={styles.commentList}>
+              {comments.length === 0 && (
+                <p className={styles.noComments}>No comments yet. Be the first to share your thoughts.</p>
+              )}
+              {comments.map((c) => {
+                const isMine = user && c.user?.id === user.id
+                const isEditing = editingId === c.id
+                return (
+                  <div key={c.id} className={styles.commentItem}>
+                    <Link to={`/profile/${c.user?.id}`} className={styles.commentAvatarLink}>
+                      {c.user?.avatarUrl ? (
+                        <img src={c.user.avatarUrl} alt={c.user.name} className={styles.commentAvatar} />
+                      ) : (
+                        <div className={styles.commentAvatarFallback}>
+                          {c.user?.name?.charAt(0).toUpperCase() || '?'}
+                        </div>
+                      )}
+                    </Link>
+                    <div className={styles.commentBody}>
+                      <div className={styles.commentMeta}>
+                        <Link to={`/profile/${c.user?.id}`} className={styles.commentAuthorLink}>
+                          <strong>{c.user?.name || 'Unknown'}</strong>
+                        </Link>
+                        <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                        {c.editedAt && <span className={styles.commentEdited}>· edited</span>}
+                      </div>
+
+                      {isEditing ? (
+                        <div className={styles.commentEditBox}>
+                          <textarea
+                            className={styles.commentEditInput}
+                            value={editDraft}
+                            onChange={(e) => setEditDraft(e.target.value)}
+                            rows={2}
+                            autoFocus
+                          />
+                          <div className={styles.commentEditActions}>
+                            <button onClick={handleEditSave} disabled={editSaving || !editDraft.trim()}>
+                              {editSaving ? 'Saving...' : 'Save'}
+                            </button>
+                            <button onClick={handleEditCancel}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p>{c.content}</p>
+                      )}
+                    </div>
+
+                    {isMine && !isEditing && (
+                      <div className={styles.commentMenuWrap}>
+                        <button
+                          className={styles.commentMenuBtn}
+                          onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)}
+                          aria-label="Comment options"
+                          disabled={deletingId === c.id}
+                        >
+                          <FaEllipsisV />
+                        </button>
+                        {openMenuId === c.id && (
+                          <div className={styles.commentMenu}>
+                            <button onClick={() => handleEditStart(c)}>Edit</button>
+                            <button
+                              className={styles.commentMenuDanger}
+                              onClick={() => handleDeleteComment(c.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className={styles.commentBody}>
-                  <div className={styles.commentMeta}>
-                    <strong>{c.user?.name || 'Unknown'}</strong>
-                    <span>{new Date(c.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <p>{c.content}</p>
-                </div>
-              </div>
-            ))}
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>

@@ -243,6 +243,16 @@ export const postComment = async (id, isExternal, content) => {
 export const getCommentContext = (commentId) =>
   api.get(`/recipes/comments/${commentId}/context`).then((res) => res.data)
 
+export const editComment = async (commentId, content) => {
+  const { data } = await api.patch(`/recipes/comments/${commentId}`, { content })
+  return data
+}
+
+export const deleteComment = async (commentId) => {
+  const { data } = await api.delete(`/recipes/comments/${commentId}`)
+  return data
+}
+
 // ─── Favorites ────────────────────────────────────────────────────────────────
 
 export const getFavorites = async () => {
