@@ -212,33 +212,36 @@ const Home = () => {
       .catch(() => setNotifUnread(0))
 
     getConversations()
-      .then((conversations) =>
+      .then((data) =>
         setMsgUnread(
-          (conversations || []).reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+          (data.conversations || []).reduce((sum, c) => sum + (c.unreadCount || 0), 0)
         )
       )
       .catch(() => setMsgUnread(0))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
-  // Live badge updates. Payload shape assumed to match the documented
-  // notification/message contracts — verify field names once the actual
-  // socket handler payloads are confirmed.
+  // Live badge updates. notification:new confirmed via the Phase G handoff
+  // (per-user room convention, same as messaging). conversation:updated is
+  // used instead of message:new deliberately — Home isn't inside any
+  // conversation room, so message:new (room-scoped) would never reach it;
+  // conversation:updated is broadcast to each participant's personal
+  // user:${userId} room regardless of what page they're on.
   useEffect(() => {
     if (!socket || !user) return
 
     const handleNewNotification = () => setNotifUnread((prev) => prev + 1)
-    const handleNewMessage = (message) => {
-      if (message?.senderId === user.id) return
+    const handleConversationUpdated = (update) => {
+      if (update.lastMessageSenderId === user.id) return
       setMsgUnread((prev) => prev + 1)
     }
 
     socket.on('notification:new', handleNewNotification)
-    socket.on('message:new', handleNewMessage)
+    socket.on('conversation:updated', handleConversationUpdated)
 
     return () => {
       socket.off('notification:new', handleNewNotification)
-      socket.off('message:new', handleNewMessage)
+      socket.off('conversation:updated', handleConversationUpdated)
     }
   }, [socket, user])
 

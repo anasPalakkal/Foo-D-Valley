@@ -16,6 +16,9 @@ import ResetPassword from './pages/Login/ResetPassword'
 import VerifyEmail from './pages/Login/VerifyEmail'
 import Profile from './pages/Profile/Profile'
 import Settings from './pages/Settings/Settings'
+import Notifications from './pages/Notifications/Notifications'
+import Messages from './pages/Messages/Messages'
+import Conversation from './pages/Messages/Conversation'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import './App.css'
 
@@ -59,6 +62,30 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/notifications"
+                  element={
+                    <ProtectedRoute>
+                      <Notifications />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/messages"
+                  element={
+                    <ProtectedRoute>
+                      <Messages />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/messages/:id"
+                  element={
+                    <ProtectedRoute>
+                      <Conversation />
                     </ProtectedRoute>
                   }
                 />
