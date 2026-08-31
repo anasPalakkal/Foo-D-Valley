@@ -8,10 +8,7 @@ const SocketContext = createContext(null)
 // Backend mounts Socket.IO on the httpServer root, not under /api — strip the
 // /api suffix from the same env var api.js uses, so there's one source of truth
 // for the server origin instead of a second env var to keep in sync.
-const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(
-  /\/api\/?$/,
-  ''
-)
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000'
 
 export const SocketProvider = ({ children }) => {
   const { user, loading } = useAuth()
