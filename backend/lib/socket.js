@@ -35,7 +35,7 @@ async function socketAuthMiddleware(socket, next) {
 function initializeSocket(httpServer) {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL,
+      origin: "https://foo-d-valley.vercel.app",
       credentials: true,
     },
   });
