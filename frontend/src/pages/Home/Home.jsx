@@ -419,7 +419,7 @@ const Home = () => {
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2>{recommendedHeading}</h2>
-              <Link to="/recipes" className={styles.seeAll}>See all →</Link>
+              <Link to="/recipes" className={styles.seeAll}>See all</Link>
             </div>
             <div className={styles.cardsGrid}>
               {recommended.recipes.map((recipe) => (
@@ -435,7 +435,7 @@ const Home = () => {
             <Link
               to={isFollowingFeed ? "/recipes?source=following&sort=newest" : "/recipes?sort=newest"}
               className={styles.seeAll}>
-              See all →
+              See all
             </Link>
           </div>
 
@@ -460,7 +460,7 @@ const Home = () => {
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2>Most Popular</h2>
-            <Link to="/recipes?sort=popular" className={styles.seeAll}>See all →</Link>
+            <Link to="/recipes?sort=popular" className={styles.seeAll}>See all</Link>
           </div>
           {renderState(
             popularLoading,
@@ -490,7 +490,7 @@ const Home = () => {
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2>Your Saved Recipes</h2>
-              <Link to="/saved" className={styles.seeAll}>See all →</Link>
+              <Link to="/saved" className={styles.seeAll}>See all</Link>
             </div>
             <div className={styles.previewGrid}>
               {savedRecipes.map((recipe) => (
