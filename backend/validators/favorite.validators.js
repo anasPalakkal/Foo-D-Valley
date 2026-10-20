@@ -56,8 +56,15 @@ const addFavoriteSchema = z
  */
 function validateFavoriteIdParam(req, res, next) {
   const { recipeId } = req.params;
-  const isExternal = req.query.type === 'external';
-
+  const type = req.query.type ?? 'internal';
+  if (!['internal', 'external', 'ai'].includes(type)) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: [{ field: 'type', message: 'Invalid type' }],
+    });
+  }
+  const isExternal = type === 'external';
+  
   if (!isExternal) {
     if (!/^\d+$/.test(recipeId)) {
       return res.status(400).json({

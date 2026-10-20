@@ -26,6 +26,7 @@ model User {
 
   favorites  Favorite[]
   recipes    Recipe[]
+  aiRecipes  AiRecipe[]
 
   // Self-referential many-to-many for follow system
   following Follow[] @relation("Following")
@@ -139,7 +140,10 @@ model Favorite {
   isExternal    Boolean @default(false)
   externalId    String?
   externalName  String?
-  externalImage String?
+    externalImage String?
+
+  aiRecipeId Int?      @unique
+  aiRecipe   AiRecipe? @relation(fields: [aiRecipeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, recipeId])
   @@unique([userId, externalId])
@@ -299,4 +303,25 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([recipientId, isRead])
+}
+
+model AiRecipe {
+  id               Int      @id @default(autoincrement())
+  title            String
+  description      String?
+  servings         Int?
+  prepTimeMinutes  Int?
+  cookTimeMinutes  Int?
+  ingredients      Json     // [{ name, quantity, unit }]
+  steps            Json     // [{ content }]
+  nutrition        Json?
+  imageUrl         String?
+  imageCredit      String?
+  createdAt        DateTime @default(now())
+
+  userId   Int
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favorite Favorite?
+
+  @@index([userId])
 }

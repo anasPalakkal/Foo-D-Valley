@@ -4,7 +4,10 @@ const getFavorites = async (req, res) => {
   try {
     const favorites = await prisma.favorite.findMany({
       where: { userId: req.user.id },
-      include: { recipe: true },
+      include: {
+        recipe: true,
+        aiRecipe: { select: { id: true, title: true, imageUrl: true } },
+      },
       orderBy: { createdAt: 'desc' }, // most recently saved first
     })
 
@@ -63,7 +66,12 @@ const removeFavorite = async (req, res) => {
   const { type } = req.query
 
   try {
-    if (type === 'external') {
+    if (type === 'ai') {
+      // Deleting the AiRecipe cascades to its Favorite row
+      await prisma.aiRecipe.deleteMany({
+        where: { id: Number(recipeId), userId: req.user.id },
+      })
+    } else if (type === 'external') {
       await prisma.favorite.deleteMany({
         where: { userId: req.user.id, externalId: recipeId },
       })
