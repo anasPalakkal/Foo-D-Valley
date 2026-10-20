@@ -23,8 +23,12 @@ const RecipeCard = ({ recipe, onSelect, compact = false, metricIcon: MetricIcon 
       onClick={handleClick}
     >
       <div className={styles.imageWrap}>
-        <img src={recipe.image} alt={recipe.name} className={styles.image} />
-        {!recipe.isExternal && (
+        {recipe.image ? (
+          <img src={recipe.image} alt={recipe.name} className={styles.image} />
+        ) : (
+          <div className={`${styles.image} ${styles.imagePlaceholder}`} />
+        )}
+        {!recipe.isExternal && !recipe.isAi && (
           <span className={styles.communityBadge}>Community</span>
         )}
         {recipe.likesCount > 0 && (

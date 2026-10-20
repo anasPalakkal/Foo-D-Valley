@@ -61,20 +61,29 @@ const SLIDES = [
 ]
 
 const mapFavoriteToCard = (fav) =>
-  fav.isExternal
+  fav.aiRecipe
     ? {
-      id: `fav-ext-${fav.externalId}`,
-      externalId: fav.externalId,
-      isExternal: true,
-      name: fav.externalName,
-      image: fav.externalImage,
-    }
-    : {
-      id: fav.recipe?.id,
+      id: `fav-ai-${fav.aiRecipe.id}`,
+      aiId: fav.aiRecipe.id,
       isExternal: false,
-      name: fav.recipe?.title,
-      image: fav.recipe?.imageUrl,
+      isAi: true,
+      name: fav.aiRecipe.title,
+      image: fav.aiRecipe.imageUrl,
     }
+    : fav.isExternal
+      ? {
+        id: `fav-ext-${fav.externalId}`,
+        externalId: fav.externalId,
+        isExternal: true,
+        name: fav.externalName,
+        image: fav.externalImage,
+      }
+      : {
+        id: fav.recipe?.id,
+        isExternal: false,
+        name: fav.recipe?.title,
+        image: fav.recipe?.imageUrl,
+      }
 
 const Home = () => {
   const [feedRecipes, setFeedRecipes] = useState([])
@@ -265,6 +274,7 @@ const Home = () => {
   }
 
   const handleSelectRecipe = (recipe) => {
+    if (recipe.isAi) return navigate(`/recipes/ai_${recipe.aiId}`)
     navigate(recipe.isExternal ? `/recipes/ext_${recipe.externalId}` : `/recipes/${recipe.id}`)
   }
 

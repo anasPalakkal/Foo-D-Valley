@@ -20,6 +20,7 @@ import Notifications from './pages/Notifications/Notifications'
 import Messages from './pages/Messages/Messages'
 import Conversation from './pages/Messages/Conversation'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
+import AssistantWidget from './components/AssistantWidget/AssistantWidget'
 import './App.css'
 
 const SearchSync = ({ setSearchTerm }) => {
@@ -90,6 +91,7 @@ function App() {
                   }
                 />
               </Routes>
+              <AssistantWidget />
             </div>
           </ToastProvider>
         </Router>

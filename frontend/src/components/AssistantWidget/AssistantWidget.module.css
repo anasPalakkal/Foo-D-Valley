@@ -1,0 +1,397 @@
+.launcher {
+    position: fixed;
+    right: 20px;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 900;
+    width: 56px;
+    height: 56px;
+    border: none;
+    border-radius: 50%;
+    background: #FF7043;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.launcher:hover {
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 10px 24px rgba(255, 112, 67, 0.45);
+    background: #ff5722;
+}
+
+.launcher:active {
+    transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .launcher,
+    .launcher:hover,
+    .launcher:active {
+        transition: none;
+        transform: none;
+    }
+}
+
+.panel {
+    position: fixed;
+    right: 20px;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 950;
+    width: 380px;
+    height: min(620px, calc(100dvh - 40px));
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: #FF7043;
+    color: #fff;
+}
+
+.title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.counter {
+    font-size: 0.75rem;
+    opacity: 0.85;
+}
+
+.headerActions {
+    display: flex;
+    gap: 4px;
+}
+
+.iconBtn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    border-radius: 6px;
+}
+
+.iconBtn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overscroll-behavior: contain;
+}
+
+.empty {
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.chip {
+    border: 1px solid #FF7043;
+    background: #fff;
+    color: #FF7043;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.chip:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.msg {
+    max-width: 92%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+}
+
+.user {
+    align-self: flex-end;
+    background: #FF7043;
+    color: #fff;
+}
+
+.bot {
+    align-self: flex-start;
+    background: #f3f0ee;
+    color: #222;
+}
+
+.errorMsg {
+    background: #fdecea;
+    color: #8a1f1b;
+}
+
+.text {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.recipe {
+    margin-top: 10px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    color: #222;
+}
+
+.recipeImage {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+
+.credit {
+    display: block;
+    font-size: 0.7rem;
+    color: #777;
+    margin: 3px 0 6px;
+}
+
+.recipeTitle {
+    margin: 4px 0;
+    font-size: 1rem;
+}
+
+.recipeMeta {
+    margin: 0 0 6px;
+    font-size: 0.78rem;
+    color: #777;
+}
+
+.recipeDesc {
+    margin: 0 0 8px;
+    font-size: 0.84rem;
+}
+
+.details {
+    font-size: 0.84rem;
+    margin-bottom: 6px;
+}
+
+.details summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.details ul,
+.details ol {
+    margin: 6px 0 0;
+    padding-left: 20px;
+}
+
+.saveBtn,
+.savedLink {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #FF7043;
+    color: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.saveBtn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.savedLink {
+    background: #2e7d32;
+}
+
+.inlineError {
+    color: #8a1f1b;
+    font-size: 0.8rem;
+    margin: 6px 0 0;
+}
+
+.gate {
+    padding: 24px;
+    text-align: center;
+}
+
+.form {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px 4px;
+    border-top: 1px solid #eee;
+}
+
+.input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    /* prevents iOS zoom on focus */
+}
+
+.sendBtn {
+    border: none;
+    background: #FF7043;
+    color: #fff;
+    border-radius: 8px;
+    padding: 0 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.sendBtn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.notice {
+    margin: 0;
+    padding: 4px 12px 8px;
+    font-size: 0.68rem;
+    color: #888;
+}
+
+@media (max-width: 640px) {
+    .launcher {
+        right: 14px;
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+        width: 48px;
+        height: 48px;
+    }
+
+    .panel {
+        right: 10px;
+        left: 10px;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        width: auto;
+        height: min(520px, calc(100dvh - 90px));
+        border-radius: 16px;
+    }
+
+    .header {
+        padding: 9px 12px;
+    }
+
+    .title {
+        font-size: 0.92rem;
+    }
+
+    .counter {
+        font-size: 0.7rem;
+    }
+
+    .iconBtn {
+        padding: 4px;
+    }
+
+    .body {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .empty {
+        font-size: 0.82rem;
+    }
+
+    .chip {
+        padding: 5px 10px;
+        font-size: 0.76rem;
+    }
+
+    .msg {
+        padding: 8px 10px;
+        font-size: 0.83rem;
+        max-width: 94%;
+    }
+
+    .recipe {
+        padding: 8px;
+    }
+
+    .recipeImage {
+        height: 110px;
+    }
+
+    .recipeTitle {
+        font-size: 0.92rem;
+    }
+
+    .recipeMeta {
+        font-size: 0.72rem;
+    }
+
+    .recipeDesc {
+        font-size: 0.78rem;
+    }
+
+    .details {
+        font-size: 0.78rem;
+    }
+
+    .saveBtn,
+    .savedLink {
+        padding: 6px 12px;
+        font-size: 0.78rem;
+    }
+
+    .gate {
+        padding: 18px;
+        font-size: 0.85rem;
+    }
+
+    .form {
+        padding: 8px 10px 2px;
+        gap: 6px;
+    }
+
+    .input {
+        padding: 8px 10px;
+    }
+
+    /* keep font-size at 16px to avoid iOS zoom */
+    .sendBtn {
+        padding: 0 12px;
+    }
+
+    .notice {
+        padding: 3px 10px 6px;
+        font-size: 0.64rem;
+    }
+}

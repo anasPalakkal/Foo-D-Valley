@@ -739,3 +739,19 @@
     background: #f0e8e5;
   }
 }
+
+.aiNote {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #888;
+}
+.aiNote a {
+  color: #b0413e;
+  text-decoration: none;
+}
+.aiNote a:hover {
+  text-decoration: underline;
+}

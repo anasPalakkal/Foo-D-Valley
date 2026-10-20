@@ -32,6 +32,7 @@ const SavedRecipes = () => {
 
   const handleRemove = async (e, fav) => {
     e.stopPropagation() // prevent card click when clicking heart
+    if (fav.aiRecipeId && !window.confirm('Delete this saved recipe permanently?')) return
     try {
       await removeFavorite(fav)
       setFavorites((prev) => prev.filter((f) => f.id !== fav.id))
@@ -41,7 +42,9 @@ const SavedRecipes = () => {
   }
 
   const handleCardClick = (fav) => {
-    if (fav.isExternal) {
+    if (fav.aiRecipeId) {
+      navigate(`/recipes/ai_${fav.aiRecipeId}`)
+    } else if (fav.isExternal) {
       navigate(`/recipes/ext_${fav.externalId}`)
     } else {
       navigate(`/recipes/${fav.recipe?.id}`)
@@ -89,8 +92,8 @@ const SavedRecipes = () => {
       ) : (
         <div className={styles['saved-grid']}>
           {favorites.map((fav) => {
-            const name = fav.isExternal ? fav.externalName : fav.recipe?.title
-            const image = fav.isExternal ? fav.externalImage : fav.recipe?.imageUrl
+            const name = fav.aiRecipe ? fav.aiRecipe.title : fav.isExternal ? fav.externalName : fav.recipe?.title
+            const image = fav.aiRecipe ? fav.aiRecipe.imageUrl : fav.isExternal ? fav.externalImage : fav.recipe?.imageUrl
 
             return (
               <div
@@ -100,7 +103,11 @@ const SavedRecipes = () => {
                 style={{ cursor: 'pointer' }}
               >
                 <div className={styles['image-wrapper']}>
-                  <img src={image} alt={name} />
+                  {image ? (
+                    <img src={image} alt={name} />
+                  ) : (
+                    <div className={styles['image-placeholder']} />
+                  )}
                   <FaHeart
                     className={styles['heart-icon']}
                     onClick={(e) => handleRemove(e, fav)}

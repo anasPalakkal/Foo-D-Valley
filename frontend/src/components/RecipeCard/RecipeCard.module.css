@@ -299,3 +299,7 @@
     background: #f0e8e5;
   }
 }
+
+.imagePlaceholder {
+  background: linear-gradient(135deg, #fff0eb, #ffd0bd);
+}

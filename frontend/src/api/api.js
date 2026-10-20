@@ -275,8 +275,9 @@ export const addFavorite = async (recipe) => {
 }
 
 export const removeFavorite = async (recipe) => {
-  const idToRemove = recipe.isExternal ? recipe.externalId : recipe.recipeId
-  const type = recipe.isExternal ? 'external' : 'internal'
+  const isAi = recipe.aiRecipeId != null
+  const type = isAi ? 'ai' : recipe.isExternal ? 'external' : 'internal'
+  const idToRemove = isAi ? recipe.aiRecipeId : recipe.isExternal ? recipe.externalId : recipe.recipeId
   const { data } = await api.delete(`/favorites/${idToRemove}?type=${type}`)
   return data
 }
@@ -498,6 +499,28 @@ export const editMessage = async (id, content) => {
 
 export const deleteMessage = async (id, scope = 'me') => {
   const { data } = await api.delete(`/messages/${id}`, { params: { scope } })
+  return data
+}
+
+// ─── Assistant ────────────────────────────────────────────────────────────────
+
+// Fire-and-forget: wakes the sleeping ElaAI service while the user is typing.
+export const warmAssistant = () => api.post('/assistant/warm').catch(() => {})
+
+// Returns { reply: { kind, text, recipe }, remaining }. Long timeout: ElaAI cold start can take ~60s.
+export const sendAssistantMessage = async (prompt) => {
+  const { data } = await api.post('/assistant/chat', { prompt }, { timeout: 80000 })
+  return data
+}
+
+// Returns { id }. A 409 ALREADY_SAVED response also carries the existing id.
+export const saveAssistantRecipe = async (recipe) => {
+  const { data } = await api.post('/assistant/save-recipe', recipe)
+  return data
+}
+
+export const getAiRecipe = async (id) => {
+  const { data } = await api.get(`/assistant/recipes/${id}`)
   return data
 }
 
