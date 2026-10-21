@@ -21,6 +21,7 @@ import Messages from './pages/Messages/Messages'
 import Conversation from './pages/Messages/Conversation'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import AssistantWidget from './components/AssistantWidget/AssistantWidget'
+import ScrollToTop from './components/ScrollToTop/ScrollToTop'
 import './App.css'
 
 const SearchSync = ({ setSearchTerm }) => {
@@ -44,6 +45,7 @@ function App() {
         <Router>
           <ToastProvider>
             <div id="main">
+              <ScrollToTop />
               <SearchSync setSearchTerm={setSearchTerm} />
               <Navbar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
               <Routes>
