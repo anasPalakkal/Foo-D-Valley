@@ -14,7 +14,7 @@ const strictLimiter = new Ratelimit({
 // so the ceiling needs headroom for legitimate multi-tab usage.
 const moderateLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(30, '15 m'),
+  limiter: Ratelimit.slidingWindow(60, '15 m'),
   prefix: 'ratelimit:moderate',
   analytics: true,
 });
@@ -39,6 +39,28 @@ const lightLimiter = new Ratelimit({
   analytics: true,
 });
 
+// Login, per-IP ceiling across all emails. Loose enough for shared NAT,
+// tight enough to stop credential stuffing from one address.
+const loginIpLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(40, '15 m'),
+  prefix: 'ratelimit:login-ip',
+  analytics: true,
+});
+
+const loginLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '15 m'),
+  prefix: 'ratelimit:login',
+  analytics: true,
+});
+
+const loginIpRateLimit = buildMiddleware(loginIpLimiter, (req) => `${req.ip}:login-ip`);
+
+const loginRateLimit = buildMiddleware(
+  loginLimiter,
+  (req) => `${req.ip}:login:${String(req.body?.email || '').toLowerCase().trim().slice(0, 254)}`);
+
 /**
  * Builds an Express middleware from an Upstash Ratelimit instance.
  * Keys by IP + route path, so register/login/forgot-password/etc each
@@ -46,12 +68,11 @@ const lightLimiter = new Ratelimit({
  * Fails open on Redis errors — an outage should not take auth endpoints
  * down; it just temporarily loses rate-limit coverage.
  */
-function buildMiddleware(limiter) {
-  return async (req, res, next) => {
-    const identifier = `${req.ip}:${req.path}`;
 
+function buildMiddleware(limiter, keyFn = (req) => `${req.ip}:${req.path}`) {
+  return async (req, res, next) => {
     try {
-      const { success, limit, remaining, reset } = await limiter.limit(identifier);
+      const { success, limit, remaining, reset } = await limiter.limit(keyFn(req));
 
       res.setHeader('X-RateLimit-Limit', limit);
       res.setHeader('X-RateLimit-Remaining', remaining);
@@ -76,4 +97,5 @@ const moderateRateLimit = buildMiddleware(moderateLimiter);
 const writeRateLimit = buildMiddleware(writeLimiter);
 const lightRateLimit = buildMiddleware(lightLimiter);
 
-module.exports = { strictRateLimit, moderateRateLimit, writeRateLimit, lightRateLimit };
+
+module.exports = { strictRateLimit, moderateRateLimit, writeRateLimit, lightRateLimit, loginRateLimit, loginIpRateLimit };

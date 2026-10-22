@@ -14,7 +14,7 @@ const {
 } = require("../controllers/authController");
 const { protect } = require("../middleware/authMiddleware");
 const { validate } = require("../middleware/validate");
-const { strictRateLimit, moderateRateLimit } = require("../middleware/rateLimiters");
+const { strictRateLimit, moderateRateLimit, loginRateLimit, loginIpRateLimit } = require("../middleware/rateLimiters");
 const {
   registerSchema,
   loginSchema,
@@ -23,7 +23,7 @@ const {
 } = require("../validators/auth.validators");
 
 router.post("/register", strictRateLimit, validate(registerSchema), register);
-router.post("/login", strictRateLimit, validate(loginSchema), login);
+router.post("/login", loginIpRateLimit, loginRateLimit, validate(loginSchema), login);
 router.post("/refresh", moderateRateLimit, refresh);
 router.post("/logout", logout);
 router.post("/logout-all", protect, logoutAll);
