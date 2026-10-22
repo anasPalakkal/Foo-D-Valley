@@ -21,7 +21,10 @@ const userRoutes = require('./routes/userRoutes')
 const notificationRoutes = require('./routes/notificationRoutes')
 const assistantRoutes = require('./routes/assistantRoutes')
 const app = express()
-app.set('trust proxy', 1)
+
+// Client -> Vercel -> Cloudflare -> Render LB -> app: 4 trusted hops,
+// so req.ip resolves to the real client address.
+app.set('trust proxy', 4)
 app.use(helmet())
 
 app.use(cors({
@@ -29,6 +32,7 @@ app.use(cors({
   credentials: true,              // required so the browser sends/receives the refresh cookie
 }))
 app.use(express.json({ limit: '200kb' }))
+
 // TEMP: verify trust proxy hop count. Remove after confirming.
 app.use((req, res, next) => {
   if (req.path === '/api/auth/login' || req.path === '/api/auth/refresh') {
@@ -40,6 +44,7 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 app.use(cookieParser())
 
 // Global backstop rate limiter — generous ceiling, just to stop abuse/DoS
