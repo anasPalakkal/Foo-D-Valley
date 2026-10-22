@@ -29,6 +29,17 @@ app.use(cors({
   credentials: true,              // required so the browser sends/receives the refresh cookie
 }))
 app.use(express.json({ limit: '200kb' }))
+// TEMP: verify trust proxy hop count. Remove after confirming.
+app.use((req, res, next) => {
+  if (req.path === '/api/auth/login' || req.path === '/api/auth/refresh') {
+    console.log({
+      ip: req.ip,
+      xff: req.headers['x-forwarded-for'],
+      socket: req.socket.remoteAddress,
+    });
+  }
+  next();
+});
 app.use(cookieParser())
 
 // Global backstop rate limiter — generous ceiling, just to stop abuse/DoS
