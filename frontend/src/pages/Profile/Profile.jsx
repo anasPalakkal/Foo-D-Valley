@@ -1,3 +1,4 @@
+import usePageTitle from '../../hooks/usePageTitle'
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
@@ -59,6 +60,8 @@ const Profile = () => {
   const [openMenuId, setOpenMenuId] = useState(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const menuRef = useRef()
+
+  usePageTitle(profile?.name)
 
   const isOwner = authUser && Number(userId) === authUser.id
 

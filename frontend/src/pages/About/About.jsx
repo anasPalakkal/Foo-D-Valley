@@ -1,4 +1,5 @@
 import React from 'react';
+import usePageTitle from '../../hooks/usePageTitle'
 import { Link } from 'react-router-dom';
 import {
   FaGithub,
@@ -48,6 +49,7 @@ const FEATURES = [
 ];
 
 const About = () => {
+  usePageTitle('About')
   return (
     <>
       <div className={styles.page}>

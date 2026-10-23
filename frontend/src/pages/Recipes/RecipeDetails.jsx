@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import usePageTitle from '../../hooks/usePageTitle'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { FaHeart, FaArrowLeft, FaExternalLinkAlt, FaRegCommentDots, FaLink, FaEllipsisV } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
@@ -93,6 +94,7 @@ const RecipeDetails = () => {
   const [editDraft, setEditDraft] = useState('')
   const [editSaving, setEditSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  usePageTitle(recipe?.name)
 
   const [copied, setCopied] = useState(false)
 
