@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { getMe, login as apiLogin, register as apiRegister, logoutRequest, doRefresh, setAccessToken } from '../api/api'
 
 const AuthContext = createContext(null)
@@ -13,30 +13,37 @@ export const normalizeUser = (user) => ({
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  // True when the session could not be verified (server asleep, rate limited,
+  // network down). Distinct from "logged out": the cookie may still be valid.
+  const [authError, setAuthError] = useState(false)
 
-  // On mount there is no access token in memory yet (page was just loaded/refreshed).
-  // The only way to know if the user has a valid session is to ask the server —
-  // the httpOnly refresh cookie, if present and valid, gets exchanged for a new
-  // access token. If it fails (no cookie, expired, revoked), the user is logged out.
-  useEffect(() => {
-    const restoreSession = async () => {
-      try {
-        const accessToken = await doRefresh()
-        setAccessToken(accessToken)
-        const me = await getMe()
-        setUser(normalizeUser(me))
-      } catch {
+  const restoreSession = useCallback(async () => {
+    setAuthError(false)
+    setLoading(true)
+    try {
+      await doRefresh() // sets the access token internally
+      const me = await getMe()
+      setUser(normalizeUser(me))
+    } catch (err) {
+      const status = err.response?.status
+      if (status === 401 || status === 403) {
+        // Server explicitly rejected the session: no cookie, expired, revoked.
         setAccessToken(null)
         setUser(null)
-      } finally {
-        setLoading(false)
+      } else {
+        // 429, 5xx, timeout, network error: do not claim the user is logged out.
+        setAuthError(true)
       }
+    } finally {
+      setLoading(false)
     }
-    restoreSession()
   }, [])
 
-  // api.js dispatches this when a refresh attempt fails mid-session (e.g. token
-  // expired, revoked, or reuse detected). Treat it as a forced logout.
+  useEffect(() => {
+    restoreSession()
+  }, [restoreSession])
+
+  // Dispatched by api.js only when refresh is explicitly rejected (401/403).
   useEffect(() => {
     const handleForcedLogout = () => setUser(null)
     window.addEventListener('auth:logout', handleForcedLogout)
@@ -58,11 +65,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setAccessToken(null)
     setUser(null)
-    // Revoke the refresh token server-side too — clearing local state alone
-    // leaves the DB row (and the httpOnly cookie) still valid.
-    logoutRequest().catch(() => {
-      // Non-critical: client-side state is already cleared either way.
-    })
+    logoutRequest().catch(() => {})
   }
 
   const updateUser = (partialUser) => {
@@ -70,7 +73,9 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{ user, loading, authError, retrySession: restoreSession, login, register, logout, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   )
