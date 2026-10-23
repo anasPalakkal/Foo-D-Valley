@@ -3,6 +3,7 @@ import axios from 'axios'
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   withCredentials: true,
+  timeout: 20000,
 })
 
 let accessToken = null
@@ -23,7 +24,7 @@ let refreshPromise = null
 export const doRefresh = () => {
   if (!refreshPromise) {
     refreshPromise = api
-      .post('/auth/refresh')
+      .post('/auth/refresh', null, { timeout: 70000 })
       .then(({ data }) => {
         setAccessToken(data.accessToken)
         return data.accessToken
@@ -35,22 +36,42 @@ export const doRefresh = () => {
   return refreshPromise
 }
 
+// Auth endpoints never go through the refresh flow: a 401 there means
+// "bad credentials" or "no session", not "expired access token".
+const NO_REFRESH_URLS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+]
+
+const RETRYABLE_STATUS = [502, 503, 504]
+const MAX_GET_RETRIES = 2
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
+    const status = error.response?.status
 
-    if (
-      error.response?.status !== 401 ||
-      original._retried ||
-      original.url === '/auth/refresh'
-    ) {
-      if (
-        error.response?.status === 403 &&
-        error.response?.data?.code === 'EMAIL_NOT_VERIFIED'
-      ) {
-        window.dispatchEvent(new Event('auth:unverified'))
-      }
+    if (!original) return Promise.reject(error)
+
+    if (status === 403 && error.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+      window.dispatchEvent(new Event('auth:unverified'))
+    }
+
+    // Cold start / transient upstream failure: retry idempotent GETs only.
+    // 429 is deliberately not retried.
+    const isTransient = !error.response || RETRYABLE_STATUS.includes(status)
+    if (original.method === 'get' && isTransient && (original._retryCount ?? 0) < MAX_GET_RETRIES) {
+      original._retryCount = (original._retryCount ?? 0) + 1
+      await new Promise((r) => setTimeout(r, 1500 * original._retryCount))
+      return api(original)
+    }
+
+    if (status !== 401 || original._retried || NO_REFRESH_URLS.includes(original.url)) {
       return Promise.reject(error)
     }
 
@@ -61,8 +82,13 @@ api.interceptors.response.use(
       original.headers.Authorization = `Bearer ${newToken}`
       return api(original)
     } catch (refreshError) {
-      setAccessToken(null)
-      window.dispatchEvent(new Event('auth:logout'))
+      // Only an explicit rejection of the refresh token ends the session.
+      // 429, 5xx, timeouts and network errors leave auth state untouched.
+      const refreshStatus = refreshError.response?.status
+      if (refreshStatus === 401 || refreshStatus === 403) {
+        setAccessToken(null)
+        window.dispatchEvent(new Event('auth:logout'))
+      }
       return Promise.reject(refreshError)
     }
   }
