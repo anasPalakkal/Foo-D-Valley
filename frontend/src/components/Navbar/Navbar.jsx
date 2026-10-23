@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import { IoAlertCircleOutline, IoPersonOutline, IoBookmarkOutline, IoSettingsOutline, IoLogOutOutline } from 'react-icons/io5';
-import { resendVerification } from '../../api/api.js';
+import { resendVerification, getCategories } from '../../api/api.js';
+import Logo from '../Logo/Logo';
 import { useAuth } from '../../context/AuthContext';
-import { getCategories } from '../../api/api.js';
 import CategoryDropdown from '../CategoryDropdown/CategoryDropdown';
 import SearchBar from '../SearchBar/SearchBar';
 import styles from './Navbar.module.css';
@@ -120,8 +120,8 @@ const Navbar = ({ searchTerm, setSearchTerm }) => {
 
         {/* brand logo */}
         <div className={styles.logo}>
-          <Link to="/">
-            Foo <span className={styles.logoD}>D</span> Valley
+          <Link to="/" aria-label="Foo D Valley home">
+            <Logo variant="light" className={styles.logoSvg} />
           </Link>
         </div>
 

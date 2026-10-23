@@ -24,18 +24,13 @@
 }
 
 .logo {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #b0413e;
-  text-decoration: none;
-  font-family: 'Pacifico', cursive;
+  display: block;
   width: fit-content;
 }
 
-.logoD {
-  font-size: 2.1rem;
-  color: #ff7043;
-  margin: 0 3px;
+.logoSvg {
+  height: 44px;
+  width: auto;
 }
 
 .tagline {
@@ -217,13 +212,8 @@
     margin-bottom: 8px;
   }
 
-  .logo {
-    font-size: 1.3rem;
-  }
-
-  .logoD {
-    font-size: 1.5rem;
-    margin: 0 2px;
+  .logoSvg {
+    height: 36px;
   }
 
   .tagline {
@@ -325,7 +315,7 @@
     pointer-events: none;
   }
 
-  .navCol > *:not(summary) {
+  .navCol>*:not(summary) {
     display: flex !important;
   }
 }

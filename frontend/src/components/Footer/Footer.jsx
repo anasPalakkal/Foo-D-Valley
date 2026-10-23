@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FaUtensils, FaHeart, FaArrowUp } from 'react-icons/fa';
 import styles from './Footer.module.css';
+import Logo from '../Logo/Logo';
 
 const Footer = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -35,8 +36,8 @@ const Footer = () => {
 
         {/* Brand column */}
         <div className={styles.brand}>
-          <Link to="/" className={styles.logo}>
-            Foo<span className={styles.logoD}>D</span> Valley
+          <Link to="/" className={styles.logo} aria-label="Foo D Valley home">
+            <Logo variant="brand" className={styles.logoSvg} />
           </Link>
           <p className={styles.tagline}>
             Discover recipes from every corner of the world — or share one of your own.
