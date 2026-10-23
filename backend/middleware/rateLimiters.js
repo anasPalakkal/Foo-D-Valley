@@ -79,9 +79,8 @@ function buildMiddleware(limiter, keyFn = (req) => `${req.ip}:${req.path}`) {
       res.setHeader('X-RateLimit-Reset', reset);
 
       if (!success) {
-        return res.status(429).json({
-          error: 'Too many requests. Please try again later.',
-        });
+        res.setHeader('Retry-After', Math.max(1, Math.ceil((reset - Date.now()) / 1000)))
+        return res.status(429).json({ error: 'Too many requests. Please try again later.' })
       }
 
       next();
