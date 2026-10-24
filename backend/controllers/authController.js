@@ -8,6 +8,7 @@ const {
   revokeAllUserTokens,
 } = require("../services/authToken.service");
 const { setRefreshCookie, clearRefreshCookie, COOKIE_NAME } = require("../lib/cookies");
+const { isDemoUser, demoForbidden } = require("../lib/demo");
 const {
   sendVerificationEmail,
   sendPasswordResetEmail,
@@ -195,6 +196,7 @@ const logout = async (req, res) => {
 
 /** POST /api/auth/logout-all — revokes every session for the current user. */
 const logoutAll = async (req, res) => {
+  if (isDemoUser(req.user.id)) return demoForbidden(res);
   await revokeAllUserTokens(req.user.id);
   clearRefreshCookie(res);
   res.json({ message: "Logged out of all devices" });
@@ -257,7 +259,7 @@ const forgotPassword = async (req, res) => {
 
   const user = await prisma.user.findUnique({ where: { email } });
 
-  if (user) {
+  if (user && !isDemoUser(user.id)) {
     const { raw, tokenHash, expiresAt } = generateOpaqueToken(30);
     await prisma.passwordResetToken.create({
       data: { tokenHash, expiresAt, user: { connect: { id: user.id } } },
@@ -281,7 +283,9 @@ const resetPassword = async (req, res) => {
   const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });
 
   if (!record || record.usedAt || record.expiresAt < new Date()) {
-    return res.status(400).json({ message: "Invalid or expired reset link" });
+    if (isDemoUser(record.userId)) {
+      return res.status(400).json({ message: "Invalid or expired reset link" });
+    }
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);

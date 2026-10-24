@@ -1,6 +1,7 @@
 const prisma = require('../lib/prismaClient')
 const { cloudinary } = require('../lib/cloudinary')
 const { userSelect } = require('./authController')
+const { isDemoUser, demoForbidden } = require('../lib/demo')
 
 const bcrypt = require('bcryptjs')
 const DELETION_DAYS = 14
@@ -180,6 +181,7 @@ const uploadBanner = async (req, res) => {
 const changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body
 
+  if (isDemoUser(req.user.id)) return demoForbidden(res)
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
@@ -208,6 +210,7 @@ const changePassword = async (req, res) => {
 const deleteAccount = async (req, res) => {
   const { password } = req.body
 
+  if (isDemoUser(req.user.id)) return demoForbidden(res)
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
