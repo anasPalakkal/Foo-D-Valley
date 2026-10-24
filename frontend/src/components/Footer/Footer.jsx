@@ -63,7 +63,7 @@ const Footer = () => {
           <summary className={styles.colHeading}>Get in Touch</summary>
           <ul className={styles.navList}>
             <li>
-              <a href="mailto:hello@foodvalley.com">hello@foodvalley.com</a>
+              <a href="mailto:foodvalley.dev@gmail.com">foodvalley.dev@gmail.com</a>
             </li>
             <li>
               <a href="https://www.themealdb.com" target="_blank" rel="noreferrer">
