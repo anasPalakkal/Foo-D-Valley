@@ -1,132 +1,154 @@
-import React from 'react';
+import React from 'react'
+import { Link } from 'react-router-dom'
 import usePageTitle from '../../hooks/usePageTitle'
-import { Link } from 'react-router-dom';
-import {
-  FaGithub,
-  FaLinkedin,
-  FaInstagram,
-  FaGlobeAmericas,
-  FaPencilAlt,
-  FaHeart,
-  FaUserFriends,
-  FaShieldAlt,
-  FaBookmark,
-} from 'react-icons/fa';
-import styles from './About.module.css';
-import Footer from '../../components/Footer/Footer';
+import Footer from '../../components/Footer/Footer'
+import styles from './About.module.css'
+
+// Optional values. Empty strings hide the related UI.
+const CONTACT_EMAIL = 'foodvalley.dev@gmail.com'
+const REPO_URL = '' // e.g. https://github.com/<user>/foo-d-valley
+const DEMO = { email: 'demo@example.com', password: 'demo1234' }
 
 const FEATURES = [
   {
-    icon: FaGlobeAmericas,
-    title: 'A global recipe catalog',
-    text: "Thousands of dishes pulled in from TheMealDB, browsable by category and cuisine.",
+    title: 'Browse a large catalog',
+    text: 'Thousands of recipes from around the world, filterable by category and cuisine, alongside recipes posted by members.',
   },
   {
-    icon: FaPencilAlt,
-    title: 'Post your own recipes',
-    text: 'Add title, ingredients, steps, and a photo. Edit or delete anytime from your profile.',
+    title: 'Post your own',
+    text: 'Add ingredients, steps and a photo. Edit or delete from your profile at any time.',
   },
   {
-    icon: FaHeart,
-    title: 'Like and comment',
-    text: 'React to recipes and leave comments, on both community and TheMealDB recipes.',
+    title: 'Like, comment and save',
+    text: 'Works on both community and TheMealDB recipes. Saved recipes are collected on one page.',
   },
   {
-    icon: FaBookmark,
-    title: 'Save your favorites',
-    text: 'Bookmark any recipe, internal or external, and find it again in Saved Recipes.',
+    title: 'Follow and message',
+    text: 'Follow other cooks, message them in real time, and see activity in your notifications.',
   },
   {
-    icon: FaUserFriends,
-    title: 'Follow other cooks',
-    text: 'Follow users you like and get their new recipes in your feed first.',
+    title: 'Control your account',
+    text: 'Email verification, password changes, and account deletion with a 14-day recovery window.',
   },
-  {
-    icon: FaShieldAlt,
-    title: 'Accounts you can trust',
-    text: 'Email verification, secure sessions, and a 14-day recovery window if you delete your account.',
-  },
-];
+]
+
+const STACK = [
+  ['Frontend', 'React and Vite, React Router, CSS Modules. Deployed on Vercel.'],
+  ['API', 'Node.js and Express on Render, with Prisma and PostgreSQL.'],
+  ['Sessions', 'A short-lived access token kept in memory and a refresh token in an httpOnly cookie.'],
+  ['Realtime', 'Socket.IO for messages and notifications.'],
+  ['Rate limiting', 'Sliding-window limits per endpoint, stored in Upstash Redis.'],
+  ['Images', 'Uploads go to Cloudinary. TheMealDB data is cached on the server and never stored in the database.'],
+]
+
+const Section = ({ title, children }) => (
+  <section className={styles.section}>
+    <h2 className={styles.sectionTitle}>{title}</h2>
+    <div className={styles.sectionBody}>{children}</div>
+  </section>
+)
 
 const About = () => {
   usePageTitle('About')
+
   return (
     <>
-      <div className={styles.page}>
+      <main className={styles.page}>
+        <div className={styles.wrap}>
+          <header className={styles.intro}>
+            <h1 className={styles.title}>Recipes from everywhere, and from the people you follow.</h1>
+            <p className={styles.lede}>
+              Search recipes from around the world, save the ones you like, follow other cooks,
+              and post your own.
+            </p>
+          </header>
 
-        {/* Hero */}
-        <section className={styles.hero}>
-          <h1 className={styles.heroTitle}>
-            Foo<span className={styles.logoD}>D</span> Valley
-          </h1>
-          <p className={styles.heroSub}>
-            A place to find recipes from around the world, and to share your own.
-          </p>
-        </section>
+          {DEMO.email && (
+            <Section title="Demo account">
+              <p>Sign in with this shared account to try the logged-in features without registering.</p>
+              <dl className={styles.creds}>
+                <dt>Email</dt>
+                <dd><code>{DEMO.email}</code></dd>
+                <dt>Password</dt>
+                <dd><code>{DEMO.password}</code></dd>
+              </dl>
+              <p className={styles.small}>
+                Other visitors use it too. Please do not post personal information.
+              </p>
+              <Link to="/login" className={styles.btn}>Go to sign in</Link>
+            </Section>
+          )}
 
-        {/* Intro */}
-        <section className={styles.intro}>
-          <p>
-            Foo D Valley combines a large existing recipe database with recipes posted
-            by the community. Search, filter, save what you like, and post your own
-            when you're ready.
-          </p>
-        </section>
+          <Section title="What you can do">
+            <ul className={styles.list}>
+              {FEATURES.map(({ title, text }) => (
+                <li key={title}>
+                  <strong>{title}</strong>
+                  <span>{text}</span>
+                </li>
+              ))}
+            </ul>
+          </Section>
 
-        {/* Features */}
-        <section className={styles.features}>
-          <h2 className={styles.sectionHeading}>What you can do here</h2>
-          <div className={styles.featureGrid}>
-            {FEATURES.map(({ icon: Icon, title, text }) => (
-              <div className={styles.featureItem} key={title}>
-                <Icon className={styles.featureIcon} />
-                <div>
-                  <h3 className={styles.featureTitle}>{title}</h3>
-                  <p className={styles.featureText}>{text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+          <Section title="AI recipe assistant">
+            <p>
+              Signed-in members with a verified email can ask the assistant for a recipe. The number
+              of requests per day is limited. You can save a generated recipe to a private list of up
+              to 30; saved AI recipes never appear in the public feed.
+            </p>
+            <p>
+              Your prompt is sent from this site&apos;s server to ElaAI, a separate recipe service by
+              the same developer, which uses Google Gemini to write the recipe. Photos come from
+              Pexels and are stock images, not generated. Do not include personal information in a
+              prompt.
+            </p>
+          </Section>
 
-        {/* Data attribution */}
-        <section className={styles.dataNote}>
-          <p>
-            Recipe data for the global catalog is provided by{' '}
-            <a href="https://www.themealdb.com" target="_blank" rel="noopener noreferrer">
-              TheMealDB
-            </a>
-            . Community recipes are uploaded directly by Foo D Valley users.
-          </p>
-        </section>
+          <Section title="How it's built">
+            <dl className={styles.stack}>
+              {STACK.map(([term, detail]) => (
+                <React.Fragment key={term}>
+                  <dt>{term}</dt>
+                  <dd>{detail}</dd>
+                </React.Fragment>
+              ))}
+            </dl>
+          </Section>
 
-        {/* Developer */}
-        <section className={styles.developer}>
-          <div className={styles.devAvatar}>M</div>
-          <div className={styles.devInfo}>
-            <h3 className={styles.devName}>Mohammed Anas</h3>
-            <p className={styles.devRole}>Developer</p>
-            <a href="mailto:mohammedanasp1234@gmail.com" className={styles.devEmail}>
-              mohammedanasp1234@gmail.com
-            </a>
-            <div className={styles.socialLinks}>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-                <FaGithub className={styles.icon} />
+          <Section title="Credits">
+            <p>
+              Catalog data from{' '}
+              <a className={styles.link} href="https://www.themealdb.com" target="_blank" rel="noopener noreferrer">
+                TheMealDB
               </a>
-              <a href="https://www.linkedin.com/in/anaspalakkal" target="_blank" rel="noopener noreferrer">
-                <FaLinkedin className={styles.icon} />
+              . AI recipe photos from{' '}
+              <a className={styles.link} href="https://www.pexels.com" target="_blank" rel="noopener noreferrer">
+                Pexels
               </a>
-              <a href="https://instagram.com/anas.food.dev" target="_blank" rel="noopener noreferrer">
-                <FaInstagram className={styles.icon} />
-              </a>
-            </div>
-          </div>
-        </section>
+              . Community recipes belong to the members who posted them.
+            </p>
+          </Section>
 
-      </div>
+          <Section title="Contact">
+            <p>
+              Questions, bug reports or removal requests:{' '}
+              <a className={styles.link} href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+              {REPO_URL && (
+                <>
+                  {'. Source code: '}
+                  <a className={styles.link} href={REPO_URL} target="_blank" rel="noopener noreferrer">
+                    GitHub repository
+                  </a>
+                </>
+              )}
+              .
+            </p>
+          </Section>
+        </div>
+      </main>
       <Footer />
     </>
-  );
-};
+  )
+}
 
-export default About;
+export default About

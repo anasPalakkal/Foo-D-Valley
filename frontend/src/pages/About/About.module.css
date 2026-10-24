@@ -1,234 +1,220 @@
 .page {
-  background-color: #fef8f5;
+  background: #fef8f5;
+  color: #2b1a19;
   font-family: 'Segoe UI', sans-serif;
-  color: #333;
-  min-height: 100vh;
+  padding-bottom: 24px;
 }
 
-/* ── Hero ── */
-.hero {
-  background: linear-gradient(135deg, #ff7043 0%, #b0413e 100%);
-  padding: 64px 24px;
-  text-align: center;
-  color: #fff;
-}
-
-.heroTitle {
-  font-family: 'Pacifico', cursive;
-  font-size: 2.6rem;
-  font-weight: 400;
-  margin: 0 0 12px;
-}
-
-.logoD {
-  color: #ffd6cc;
-}
-
-.heroSub {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.9);
-  max-width: 480px;
+.wrap {
+  max-width: 1040px;
   margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* ── Intro ── */
+.intro {
+  padding: 88px 0 56px;
+}
+
+.title {
+  max-width: 20ch;
+  margin: 0 0 24px;
+  font-size: clamp(2.1rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #7d2d2a;
+}
+
+.lede {
+  max-width: 56ch;
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+  line-height: 1.65;
+  color: #4d3835;
+}
+
+.note {
+  max-width: 56ch;
+  margin: 0;
+  font-size: 0.92rem;
   line-height: 1.6;
+  color: #7a615c;
 }
 
-/* ── Shared content width ── */
-.intro,
-.features,
-.dataNote,
-.developer {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 40px 24px;
-}
-
-.intro p {
-  font-size: 1rem;
-  line-height: 1.7;
-  color: #555;
-  text-align: center;
-  max-width: 640px;
-  margin: 0 auto;
-}
-
-/* ── Features ── */
-.sectionHeading {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #b0413e;
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.featureGrid {
+/* ── Sections: label on the left, content on the right ── */
+.section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px 40px;
+  grid-template-columns: 220px 1fr;
+  gap: 24px 48px;
+  padding: 40px 0;
+  border-top: 1px solid #f0d5c8;
 }
 
-.featureItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-.featureIcon {
-  font-size: 1.3rem;
-  color: #ff7043;
-  flex-shrink: 0;
-  margin-top: 3px;
-}
-
-.featureTitle {
-  font-size: 0.98rem;
+.sectionTitle {
+  position: sticky;
+  top: 84px;
+  align-self: start;
+  margin: 0;
+  font-size: 1rem;
   font-weight: 700;
-  color: #3a1f1e;
-  margin: 0 0 4px;
+  color: #7d2d2a;
 }
 
-.featureText {
-  font-size: 0.88rem;
-  color: #777;
-  line-height: 1.55;
+.sectionBody {
+  max-width: 62ch;
+  font-size: 0.97rem;
+  line-height: 1.7;
+  color: #4d3835;
+}
+
+.sectionBody p {
+  margin: 0 0 14px;
+}
+
+.sectionBody p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Feature list ── */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list li {
+  padding: 14px 0;
+  border-bottom: 1px solid #f3e1d8;
+}
+
+.list li:first-child {
+  padding-top: 0;
+}
+
+.list li:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.list strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #2b1a19;
+}
+
+/* ── Stack ── */
+.stack {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 14px 24px;
   margin: 0;
 }
 
-/* ── Data attribution ── */
-.dataNote {
-  padding-top: 0;
-  padding-bottom: 0;
+.stack dt {
+  font-weight: 600;
+  color: #2b1a19;
 }
 
-.dataNote p {
-  text-align: center;
+.stack dd {
+  margin: 0;
+}
+
+/* ── Demo credentials ── */
+.creds {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 10px 16px;
+  margin: 18px 0;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid #f0cdbd;
+  border-radius: 8px;
+}
+
+.creds dt {
+  font-weight: 600;
+}
+
+.creds dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.creds code {
+  padding: 2px 6px;
+  background: #fff0eb;
+  border-radius: 4px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.small {
   font-size: 0.85rem;
-  color: #888;
-  border-top: 1px solid #ffd5c2;
-  padding-top: 28px;
+  color: #7a615c;
 }
 
-.dataNote a {
-  color: #ff7043;
+.btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 10px 20px;
+  background: #d84315;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.92rem;
   font-weight: 600;
   text-decoration: none;
+  transition: background-color 0.2s ease;
 }
 
-.dataNote a:hover {
+.btn:hover {
+  background: #bf360c;
+}
+
+/* ── Links ── */
+.link {
+  color: #a93a3a;
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-/* ── Developer ── */
-.developer {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+.link:hover {
+  color: #d84315;
 }
 
-.devAvatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background-color: #ff7043;
-  color: #fff;
-  font-size: 1.7rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.devInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.devName {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #3a1f1e;
-  margin: 0;
-}
-
-.devRole {
-  font-size: 0.85rem;
-  color: #999;
-  margin: 0 0 4px;
-}
-
-.devEmail {
-  font-size: 0.85rem;
-  color: #b0413e;
-  text-decoration: none;
-}
-
-.devEmail:hover {
-  text-decoration: underline;
-}
-
-.socialLinks {
-  display: flex;
-  gap: 14px;
-  margin-top: 8px;
-}
-
-.socialLinks a {
-  color: #b0413e;
-  transition: color 0.2s ease;
-}
-
-.socialLinks a:hover {
-  color: #ff7043;
-}
-
-.icon {
-  font-size: 1.3rem;
+.link:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid #d84315;
+  outline-offset: 2px;
 }
 
 /* ── Responsive ── */
-@media (max-width: 768px) {
-  .hero {
-    padding: 48px 20px;
+@media (max-width: 760px) {
+  .wrap {
+    padding: 0 20px;
   }
 
-  .heroTitle {
-    font-size: 2.1rem;
+  .intro {
+    padding: 56px 0 40px;
   }
 
-  .featureGrid {
+  .lede {
+    font-size: 1.05rem;
+  }
+
+  .section {
     grid-template-columns: 1fr;
-    gap: 22px;
+    gap: 14px;
+    padding: 32px 0;
   }
 
-  .intro,
-  .features,
-  .dataNote,
-  .developer {
-    padding: 32px 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .heroTitle {
-    font-size: 1.8rem;
+  .sectionTitle {
+    position: static;
   }
 
-  .heroSub {
-    font-size: 0.9rem;
-  }
-
-  .developer {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
-  }
-
-  .devInfo {
-    align-items: center;
-  }
-
-  .socialLinks {
-    justify-content: center;
+  .stack {
+    grid-template-columns: 110px 1fr;
+    gap: 12px 16px;
   }
 }
