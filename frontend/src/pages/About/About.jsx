@@ -6,7 +6,7 @@ import styles from './About.module.css'
 // Optional values. Empty strings hide the related UI.
 const CONTACT_EMAIL = 'foodvalley.dev@gmail.com'
 const REPO_URL = '' // e.g. https://github.com/<user>/foo-d-valley
-const DEMO = { email: 'demo@example.com', password: 'demo1234' }
+const DEMO = { email: 'demo@valley.com', password: 'demo1234' }
 
 const FEATURES = [
   {
