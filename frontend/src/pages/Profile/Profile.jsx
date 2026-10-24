@@ -2,7 +2,6 @@ import usePageTitle from '../../hooks/usePageTitle'
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import Footer from '../../components/Footer/Footer';
 import {
   getProfile,
   getRecipeById,
@@ -314,7 +313,6 @@ const Profile = () => {
             </div>
           </div>
         </div>
-        <Footer />
       </>
     )
   }
@@ -619,7 +617,6 @@ const Profile = () => {
           />
         )}
       </div>
-      <Footer />
     </>
   )
 }

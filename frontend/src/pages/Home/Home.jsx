@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FaUtensils, FaPencilAlt, FaGlobe, FaThumbsUp, FaBell, FaEnvelope } from 'react-icons/fa'
 import styles from './Home.module.css'
-import Footer from '../../components/Footer/Footer'
 import PostRecipeModal from '../../components/PostRecipeModal/PostRecipeModal'
 import RecipeCard, { RecipeCardSkeleton } from '../../components/RecipeCard/RecipeCard'
 import {
@@ -517,8 +516,6 @@ const Home = () => {
           onSuccess={handleRecipePosted}
         />
       )}
-
-      <Footer />
     </>
   )
 }

@@ -20,7 +20,6 @@ import {
 } from '../../api/api'
 import { addRecentlyViewed } from '../../utils/recentlyViewed'
 import styles from './RecipeDetails.module.css'
-import Footer from '../../components/Footer/Footer'
 
 // Skeleton for the two-column recipe detail layout.
 // Mirrors the real layout structure so there's no layout shift on load.
@@ -550,7 +549,6 @@ const RecipeDetails = () => {
           </div>
         )}
       </div>
-      <Footer />
     </>
   )
 }

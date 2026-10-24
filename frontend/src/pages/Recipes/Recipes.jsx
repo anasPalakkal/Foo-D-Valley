@@ -10,7 +10,6 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import RecipeCard, { RecipeCardSkeleton } from '../../components/RecipeCard/RecipeCard'
 import RecipeFilters from '../../components/RecipeFilters/RecipeFilters'
-import Footer from '../../components/Footer/Footer'
 import styles from './Recipes.module.css'
 
 const PAGE_SIZE = 12
@@ -389,7 +388,6 @@ const Recipes = ({ searchTerm }) => {
           </>
         )}
       </div>
-      <Footer />
     </>
   )
 }

@@ -22,6 +22,9 @@ import Conversation from './pages/Messages/Conversation'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import AssistantWidget from './components/AssistantWidget/AssistantWidget'
 import ScrollToTop from './components/ScrollToTop/ScrollToTop'
+import Footer from './components/Footer/Footer'
+import Privacy from './pages/Legal/Privacy'
+import Terms from './pages/Legal/Terms'
 import './App.css'
 
 const SearchSync = ({ setSearchTerm }) => {
@@ -34,6 +37,14 @@ const SearchSync = ({ setSearchTerm }) => {
   }, [location.search])
 
   return null
+}
+
+const NO_FOOTER = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/messages']
+
+const FooterGate = () => {
+  const { pathname } = useLocation()
+  const hidden = NO_FOOTER.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  return hidden ? null : <Footer />
 }
 
 function App() {
@@ -54,6 +65,8 @@ function App() {
                 <Route path="/recipes/:id" element={<RecipeDetails />} />
                 <Route path="/saved" element={<SavedRecipes />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -93,6 +106,7 @@ function App() {
                   }
                 />
               </Routes>
+              <FooterGate />
               <AssistantWidget />
             </div>
           </ToastProvider>
