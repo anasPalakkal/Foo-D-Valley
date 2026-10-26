@@ -20,6 +20,7 @@ const messageRoutes = require('./routes/messageRoutes')
 const userRoutes = require('./routes/userRoutes')
 const notificationRoutes = require('./routes/notificationRoutes')
 const assistantRoutes = require('./routes/assistantRoutes')
+const { startDemoCleanupJob } = require('./jobs/demoCleanup.job')
 const app = express()
 
 // Client -> Vercel -> Cloudflare -> Render LB -> app: 4 trusted hops,
@@ -66,4 +67,5 @@ httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
   startDeletionJob()
   startVerifyReminderJob()
+  startDemoCleanupJob()
 })
