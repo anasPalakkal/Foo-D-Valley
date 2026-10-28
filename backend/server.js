@@ -57,10 +57,21 @@ app.get('/', (req, res) => {
   res.json({ message: 'Foo D Valley API is running' })
 })
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' })
+})
+
 // Socket.IO needs the raw http.Server, not the Express app — Express alone
 // has no upgrade-request handling for WebSockets.
 const httpServer = http.createServer(app)
 initializeSocket(httpServer)
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err)
+  if (res.headersSent) return next(err)
+  const status = err.status >= 400 && err.status < 600 ? err.status : 500
+  res.status(status).json({ message: err.expose ? err.message : 'Internal server error' })
+})
 
 const PORT = process.env.PORT || 5000
 httpServer.listen(PORT, () => {
