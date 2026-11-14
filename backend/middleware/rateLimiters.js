@@ -79,6 +79,13 @@ function buildMiddleware(limiter, keyFn = (req) => `${req.ip}:${req.path}`) {
       res.setHeader('X-RateLimit-Reset', reset);
 
       if (!success) {
+        // TEMP: find out which limiter fires and for which IP. Remove after diagnosing.
+        console.warn('[RateLimit] blocked', {
+          limit,
+          ip: req.ip,
+          xff: req.headers['x-forwarded-for'],
+          path: req.originalUrl,
+        })
         res.setHeader('Retry-After', Math.max(1, Math.ceil((reset - Date.now()) / 1000)))
         return res.status(429).json({ error: 'Too many requests. Please try again later.' })
       }
